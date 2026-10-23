@@ -51,10 +51,10 @@ until the last phase, once.
 - [x] Check: fast tests pass.
 
 ## Phase 6 - the replay (IT8, G1)
-- [ ] `score()` as a pure function: maps labels of later intents (`answer_policy`, `answer_product`, `start_return`, `check_buyer_role`) to `hand_off`; fast test on it.
-- [ ] `replay.py`: 40 conversations from `data/conversations.json`, each as a verified session of the order's owner (a fixed default customer when the message has no order number), run in parallel; prints action per conversation, score of 40, and every conversation with `needs_human` that stayed with the assistant. It never opens `held_out.json`.
-- [ ] First run, no tuning: write the baseline score and the misses at the bottom of this file.
-- [ ] Check: `python replay.py` runs end to end and prints the baseline.
+- [x] `score()` as a pure function: maps labels of later intents (`answer_policy`, `answer_product`, `start_return`, `check_buyer_role`) to `hand_off`; fast test on it.
+- [x] `replay.py`: 40 conversations from `data/conversations.json`, each as a verified session of the order's owner (a fixed default customer when the message has no order number), run in parallel; prints action per conversation, score of 40, and every conversation with `needs_human` that stayed with the assistant. It never opens `held_out.json`.
+- [x] First run, no tuning: write the baseline score and the misses at the bottom of this file.
+- [x] Check: `python replay.py` runs end to end and prints the baseline.
 
 ## Phase 7 - prompt and tool descriptions until G1 holds (B2, B3, B5)
 - [ ] System prompt: ask for the order number when there is none (B3); anything this build does not cover -> `hand_off`, no answer attempted (B5); an angry or asking customer -> `hand_off`; dates and statuses only from tools; no promises about money.
@@ -70,3 +70,10 @@ until the last phase, once.
 1. The spec does not say how a customer names herself. Plan: she types her email in the widget; the code goes to that address (only if it has orders); verified means that email is the session's customer.
 2. Action for scoring comes from code (which tool ran), not from the model's words. A plain reply with no tool counts as `ask_order_number`; on any other label it is a miss, which is exactly the B5 failure we want to see.
 3. Commits: one per phase, only when you ask.
+
+## Baseline (Phase 6, first run, no tuning)
+`python replay.py`: **38 of 40**. Conversations that needed a person and stayed with the assistant: 0.
+Misses:
+- C17: expected `give_status`, the assistant only asked a question (counted as `ask_order_number`).
+- C26: expected `ask_order_number`, the assistant handed off.
+One run only; the model is not deterministic, so the score can move by a point or two between runs.
