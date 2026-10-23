@@ -151,16 +151,17 @@ Found in Phase 1: price, tax, quantity, market (`MKT_CD`) and customer type (`CU
 
 ## Phase 5 - the draft in the holding table (B15, B16, IT18, IT19)
 Found in Phase 1 and D2: `LL_RTN_REQ_STG(REQ_ID, ORD_NO, LN_NO, RFND_AMT, REQ_KEY, STG_STAT_CD, CRT_TS)`; no customer, currency or reason column. The idempotency key goes in `REQ_KEY` (64 chars: a sha256 hex). Ravi's answers (OQ-S3-3, written into the spec as D4 on 2026-10-23): `REQ_KEY` is unique, so the table keeps one draft per key; Ledgerline makes `REQ_ID` (the insert does not name it); a new draft is `STG_STAT_CD` = `W`; only Ledgerline's job sets `A` or `R`, we never do; his team clears the `TEST-` rows. Nothing blocks the insert text now.
-- [ ] `drafts.py`: the only code that uses `LL_WRITER`. One fixed `INSERT INTO LL_RTN_REQ_STG` with bind parameters, the
+- [x] `drafts.py`: the only code that uses `LL_WRITER`. One fixed `INSERT INTO LL_RTN_REQ_STG` with bind parameters, the
       idempotency key in `REQ_KEY`, status `W`, no `REQ_ID` in the column list (Ledgerline makes it). `idempotency_key(session, order, line)`
       is a sha256 hex of the three (64 characters). A second insert with the same key is a unique violation (D4): the code
       catches exactly that error, reads the existing draft by `REQ_KEY` (one fixed `SELECT`) and returns it; it writes nothing more.
-- [ ] `FakeDrafts` with the same interface (the columns of D2); the amount in a draft is a `Decimal` and comes from `money.py`, not from an argument.
-- [ ] Fast tests: one draft per key (the fake raises the same unique violation); a retry returns the same draft; a different line of the same order is a different
+- [x] `FakeDrafts` with the same interface (the columns of D2); the amount in a draft is a `Decimal` and comes from `money.py`, not from an argument.
+- [x] Fast tests: one draft per key (the fake raises the same unique violation); a retry returns the same draft; a different line of the same order is a different
       draft; the only write statement is the one `INSERT` into `LL_RTN_REQ_STG`; no other table name in a write; `float`
       amount raises; the module has no `UPDATE`/`DELETE`/`MERGE`; the status written is `W` and the letters `A` and `R` appear
       nowhere as a value we write; the insert does not name `REQ_ID`; any other database error is raised, not swallowed.
-- [ ] Check: fast tests green. (The real insert is proved once, in Phase 10.)
+- [x] Check: fast tests green. (The real insert is proved once, in Phase 10.)
+      Result 2026-10-23: `test_drafts.py` 20 tests; whole fast suite 571 passed, ruff and mypy clean. The real insert is not run.
 
 ## Phase 6 - the approval task in ServiceNow (B15, B16, IT18, IT19)
 Found in Phase 1 and D3: `fde_tasks` creates and reads `sc_task` with the fields `short_description` and `u_draft`. `u_draft` carries the draft's key (the same hash as `REQ_KEY`), so "look for a task with that key" is `GET sc_task?sysparm_query=u_draft=<key>`. The order, item and amount have no field of their own: they go into `short_description`. `interaction` can be created but not read.
