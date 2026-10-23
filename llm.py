@@ -28,3 +28,18 @@ def ask(prompt, schema=None, model=MODEL, usage=None):
     if schema:
         return json.loads(text)
     return text
+
+
+def chat(system, tools, messages, usage=None):
+    """One turn of the tool-using conversation. Return the response."""
+    response = client.messages.create(
+        model=MODEL,
+        max_tokens=1000,
+        output_config={"effort": "low"},
+        system=system,
+        tools=tools,
+        messages=messages,
+    )
+    if usage is not None:
+        usage.append(response.usage)
+    return response

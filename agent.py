@@ -1,7 +1,7 @@
 """The agent loop: Claude asks for tools, our code runs them."""
 import json
 
-from llm import MODEL, client
+from llm import chat
 from tools import TOOLS, delivery_status, find_order
 
 SYSTEM = """You are the DemoStore support assistant.
@@ -23,16 +23,7 @@ def answer(message, customer, usage=None, history=()):
     messages = list(history)
     messages.append({"role": "user", "content": message})
     while True:
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=1000,
-            output_config={"effort": "low"},
-            system=SYSTEM,
-            tools=TOOLS,
-            messages=messages,
-        )
-        if usage is not None:
-            usage.append(response.usage)
+        response = chat(SYSTEM, TOOLS, messages, usage)
         if response.stop_reason != "tool_use":
             return response.content[-1].text
         messages.append({"role": "assistant",

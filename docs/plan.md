@@ -26,10 +26,10 @@ until the last phase, once.
 - [x] Check: fast tests pass.
 
 ## Phase 2 - every model call goes through `llm.py` (IT7)
-- [ ] `llm.chat(system, tools, messages, usage)` wraps the tool-using call; `agent.py` stops importing `client`.
-- [ ] `conftest.py` with a scripted fake model (a list of canned responses: tool_use, then text) for fast tests.
-- [ ] Fast tests of the loop with the fake: tool_use -> tool result -> final text. `test_unverified_chat_gets_no_order_data`: a chat with no customer asks `find_order` for a real order and the tool result sent back holds no order data (B1 -> IT2).
-- [ ] Check: fast tests pass; `grep -n "client.messages" *.py` finds only `llm.py`.
+- [x] `llm.chat(system, tools, messages, usage)` wraps the tool-using call; `agent.py` stops importing `client`.
+- [x] `conftest.py` with a scripted fake model (a list of canned responses: tool_use, then text) for fast tests.
+- [x] Fast tests of the loop with the fake: tool_use -> tool result -> final text. `test_unverified_chat_gets_no_order_data`: a chat with no customer asks `find_order` for a real order and the tool result sent back holds no order data (B1 -> IT2).
+- [x] Check: fast tests pass; `grep -n "client.messages" *.py` finds only `llm.py`.
 
 ## Phase 3 - the one-time code (B1, IT3)
 - [ ] `verify.py`: `start(email)` writes a six-digit code to `data/outbox.jsonl` only for an email that has orders, and answers the same either way (no hint who is a customer); `check(email, code)`. Valid 10 minutes, 3 tries, then dead. Clock injectable.
