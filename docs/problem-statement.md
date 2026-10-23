@@ -4,10 +4,10 @@ Source: `docs/discovery-notes.md`, week 1 (5-7 Oct 2026). Brackets give the line
 
 ## Who has the problem
 
-- **Customers** wait for an answer in support chat, most of all during sales [L8, L21].
+- **Customers** wait for an answer in support chat, most of all during sales [L9, L21].
 - **Support agents** (team of Marco Rossi, Head of Customer Support) answer "where is my order" chats all day and want fewer repeat questions [L23, L24]. They work in ServiceNow [L24].
 - **Company customers** (Hannah Weber, Head of DemoStore Business Sales) need to be served faster [L62]. Some chats come from company customers with their own contract terms [L45].
-- **Sponsor**: Lena Brandt, Chief Digital Officer. Her answer to what should be different in three months: customers wait less and support costs stop growing [L7-L8].
+- **Sponsor**: Lena Brandt, Chief Digital Officer. Her answer to what should be different in three months: customers wait less and support costs stop growing [L8-L9].
 
 ## What it costs today
 
@@ -17,19 +17,19 @@ Source: `docs/discovery-notes.md`, week 1 (5-7 Oct 2026). Brackets give the line
   - Where is my order: about four minutes; the agent said two [L29, L31]. The agent copies the order number from ServiceNow, checks Ledgerline (ERP), then also checks the carrier's website, because the ERP status comes from last night's carrier file. Then the agent sends a saved reply and changes the date by hand [L30]. The agent: "I never trust the carrier file in the morning" [L32].
   - Return, customer in Germany: about eight minutes [L34, L37]. The agent uses her own spreadsheet with the return window for each market instead of Confluence [L35].
 - **Inconsistency.** The return rules exist in at least two places: Confluence and an agent's spreadsheet [L18, L35-L36]. Whether they match is not known [L36]. Marco wants the same answer for the same case [L24].
-- **Cost of support.** Lena says support costs keep growing [L8]. There is no measured problem yet; the pressure comes from other stores [L9].
+- **Cost of support.** Lena says support costs keep growing [L9]. There is no measured problem yet; the pressure comes from other stores [L10].
 
 ## What success looks like
 
 In the stakeholders' words:
 
-- Customers wait less during sales [L8].
-- Support costs stop growing [L8].
+- Customers wait less during sales [L9].
+- Support costs stop growing [L9].
 - Agents stop answering "where is my order" chats all day [L23].
 - Fewer customers ask the same thing twice (Marco's number for a better experience) [L26]; fewer repeat questions [L24].
 - The same case gets the same answer [L24].
 - Company customers are served faster [L62]; one company's private terms are never shown to another company [L65].
-- No money spent on a tool nobody uses, and no public mistake such as a bot that invented a refund rule [L10].
+- No money spent on a tool nobody uses, and no public mistake such as a bot that invented a refund rule [L11].
 - No bot that makes angry customers angrier, and no agents cleaning up after wrong answers [L25].
 
 The notes give no numeric targets or baselines; see `requirements.md`, open questions.

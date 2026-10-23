@@ -16,7 +16,7 @@ As a customer, I want to know whether and how I can return an item [L17].
 
 Acceptance criteria:
 - The answer takes the market and the delivery date into account [L37].
-- The assistant never states an invented refund rule [L10].
+- The assistant never states an invented refund rule [L11].
 - A refund above a threshold needs approval by a person [L49]. The amount is unknown (OQ-1).
 - The same case gets the same answer [L24].
 
@@ -45,15 +45,15 @@ Acceptance criteria:
 - One company's private terms are never shown to another company (hard no) [L65].
 
 ### US-6. Sponsor reporting
-As the sponsor, I want short updates with numbers and clear choices, not tech detail [L11].
+As the sponsor, I want short updates with numbers and clear choices, not tech detail [L12].
 
 Acceptance criteria:
-- Updates are short and contain numbers [L11].
-- Updates present clear choices [L11].
+- Updates are short and contain numbers [L12].
+- Updates present clear choices [L12].
 
 ## Non-functional requirements
 
-- **Correctness.** No invented refund rules [L10].
+- **Correctness.** No invented refund rules [L11].
 - **Consistency.** The same answer for the same case [L24].
 - **ERP safety.** Read-only access to Ledgerline first [L58]; the exact list of what we read and write is documented [L58]; our code must not slow the ERP in the middle of a sale [L57].
 - **Least privilege.** No account with more rights than needed [L57].
@@ -69,20 +69,20 @@ Statements and numbers the notes do not support, plus things the notes say are u
 | # | Question | Source / why open | Suggested owner |
 |---|----------|-------------------|-----------------|
 | OQ-1 | Above which amount must a person approve a refund? | Marco does not know; set by the Finance and Returns Controller, not met yet; nobody answered [L49, L67] | Finance and Returns Controller |
-| OQ-2 | What are the baselines and targets (wait time, share of "where is my order" chats, repeat-question rate, support cost, agent clean-up)? | No measured problem yet [L9]; the notes give no targets | Marco Rossi, Lena Brandt |
+| OQ-2 | What are the baselines and targets (wait time, share of "where is my order" chats, repeat-question rate, support cost, agent clean-up)? | No measured problem yet [L10]; the notes give no targets | Marco Rossi, Lena Brandt |
 | OQ-3 | Is "about four in ten chats" correct? Can it be counted from a ServiceNow sample? | Marco's number, marked as unverified [L22] | Marco Rossi |
 | OQ-4 | Is the twenty-minute wait during sales measured? | Quote only [L21] | Marco Rossi |
 | OQ-5 | How fresh must order status be? Ledgerline status comes from last night's carrier file and agents also check the carrier's website; can the assistant get fresher data, or must it say the status may be stale? | Notes describe the workaround only [L30-L32]; no requirement stated | Ravi Menon, database administrator |
 | OQ-6 | Which return rules are correct: Confluence or the agent's spreadsheet? Do they match? Are there other private copies? | "Same as Confluence? Compare ?" [L35-L36] | Marco Rossi |
 | OQ-7 | How does the assistant read from Ledgerline, which has no API? What read-only access will its owner allow? | No API [L56]; read-only first [L58]; the access path is not decided | Ravi Menon, database administrator |
-| OQ-8 | Who is the assistant's user: customers directly, agents inside ServiceNow, or both? Which channel, hours, languages and markets? | Lena asked for "a chatbot" [L6]; Marco says agents work in ServiceNow [L24]; a German-market return was seen [L34]; channel and markets not stated | Lena Brandt, Marco Rossi |
+| OQ-8 | Who is the assistant's user: customers directly, agents inside ServiceNow, or both? Which channel, hours, languages and markets? | Lena asked for "a chatbot" [L7]; Marco says agents work in ServiceNow [L24]; a German-market return was seen [L34]; channel and markets not stated | Lena Brandt, Marco Rossi |
 | OQ-9 | What should happen when the order cannot be found or the assistant is not sure? | No line in the notes (moved from requirements) | Marco Rossi |
 | OQ-10 | When handing off to a person: what does the agent receive (conversation so far, order data), and does the bot ask anything first? | No line in the notes (moved from requirements); repeat questions are a pain [L24, L26] | Marco Rossi |
 | OQ-11 | Which cases always go to a person: contract-price requests (agents pass them on today [L40]), refunds above the threshold [L49], angry customers [L41]? What should the assistant do with a contract-price request it cannot answer reliably? | Today's handling is seen; the target handling is not stated | Marco Rossi, Hannah Weber |
 | OQ-12 | How are company customers identified and their roles (buyer, manager) checked? Where do contract terms live besides Atlas prices? | Roles [L63]; prices from Atlas [L64]; how roles are checked is not stated | Hannah Weber, Ravi Menon |
 | OQ-13 | What data may be stored and for how long? What does the Data Protection Officer require? | Not met yet [L67]; no requirements recorded | Sofia Lindqvist |
 | OQ-14 | How do we find out whether wrong answers happened and how many (how to measure "agents cleaning up")? | Fear stated [L25]; no measure stated | Marco Rossi |
-| OQ-15 | What is the deadline (three months?), the budget, and how is "a tool nobody uses" measured? | Three-month horizon appears in a question [L7]; no deadline, budget or adoption target; fear at [L10] | Lena Brandt |
+| OQ-15 | What is the deadline (three months?), the budget, and how is "a tool nobody uses" measured? | Three-month horizon appears in a question [L8]; no deadline, budget or adoption target; fear at [L11] | Lena Brandt |
 | OQ-16 | Are the one-chat timings (about four and eight minutes) typical? | Single observations [L31, L37] | Marco Rossi |
 | OQ-17 | Did Marco correct the summary sent on 6 Oct? | Summary sent [L51]; no reply recorded | Marco Rossi |
 | OQ-18 | Who approves the exact list of what we read and write, and how is the code review run? | Ravi asked for both [L58]; the process is not defined | Ravi Menon |
