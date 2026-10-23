@@ -26,9 +26,11 @@ def clock():
     return datetime.now(UTC)
 
 
-def _stale(news_date):
-    """True when the carrier's last news is more than 30 hours old (IT14). No news is not stale."""
-    if not news_date:
+def _stale(news_date, carrier_status=None):
+    """True when the carrier's last news is more than 30 hours old (IT14). No news is not stale.
+
+    A delivered parcel's news is final, so the rule applies only to parcels that are not delivered."""
+    if not news_date or carrier_status == "delivered":
         return False
     return checks.news_age(date.fromisoformat(news_date), clock()) > checks.MAX_NEWS_AGE
 
@@ -42,7 +44,7 @@ def find_order(number, customer):
         return {"error": "no such order for this customer"}
     result = {k: order[k] for k in ("number", "customer", "market", "status", "items",
                                     "promised", "tracking")}
-    if any(_stale(p["news_date"]) for p in order["parcels"]):
+    if any(_stale(p["news_date"], p["carrier_status"]) for p in order["parcels"]):
         # The code removes the date; the prompt only says what to do with the flag.
         result["promised"] = None
         result["offer_person"] = True
@@ -58,7 +60,7 @@ def delivery_status(tracking, customer):
         return {"error": "no such parcel"}
     result = {"tracking": parcel["tracking"], "status": parcel["carrier_status"],
               "place": parcel["place"], "date": parcel["news_date"]}
-    if _stale(parcel["news_date"]):
+    if _stale(parcel["news_date"], parcel["carrier_status"]):
         result["date"] = None
         result["offer_person"] = True
     return result

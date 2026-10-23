@@ -64,6 +64,17 @@ def test_news_at_30h01m_gives_no_date_and_the_flag(monkeypatch):
     assert "2026-10-21" not in json.dumps(order) + json.dumps(parcel)
 
 
+def test_a_delivered_parcel_keeps_its_dates_however_old_the_news(monkeypatch):
+    # B9, IT14: a delivered parcel's news is final, so the 30-hour rule applies only to the others.
+    tom = "tom.baker@example.com"
+    at(monkeypatch, timedelta(days=30))
+    parcel = delivery_status("EP-7718001", tom)
+    assert parcel["status"] == "delivered" and parcel["date"] == "2026-10-14"
+    assert "offer_person" not in parcel
+    order = find_order("DS-20388", tom)
+    assert order["promised"] is not None and "offer_person" not in order
+
+
 def test_another_customers_order_or_parcel_is_the_same_error_as_unknown():
     tom = "tom.baker@example.com"
     assert find_order("DS-20417", tom) == find_order("DS-00000", tom)

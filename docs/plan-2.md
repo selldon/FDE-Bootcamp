@@ -135,6 +135,10 @@ or the file's own time) - decide before this phase. Parcels: `LL_SHPMT` has dupl
 - [x] Check: fast tests, ruff, mypy, tsc green; final replay score written below.
       Fast tests 103 passed, ruff, mypy, tsc clean (2026-10-23). Final replay on the copy (Phase 8, no change since):
       38 of 40; needed a person but stayed: 0. Misses: C17, C26.
+      After the review fix (a delivered parcel's news is final, so the 30-hour rule skips it; 104 fast tests passed),
+      two replays on 2026-10-23: 37 of 40 (misses C16, C17, C26) and 38 of 40 (misses C16, C26); needed a person but
+      stayed: 0 in both. Both meet G2. The score varies between runs. C16 missed in both: Ledgerline says `part shipped`
+      while both parcels are delivered (question for Ravi in `docs/quick-fixes.md`).
 
 ## Decisions to confirm
 1. Fast tests for the store use a `FakeStore` (a dict), and the upsert itself is proved by the live check on the real
