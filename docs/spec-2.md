@@ -24,15 +24,29 @@ and no conversation that needs a person stays with the assistant.
 |---|---|---|
 | IT9 | B7, B10 | The middleware is the only code that reads Ledgerline: one fixed query per question, the read-only account from `.env`, the order number and the customer as bind parameters, the owner check inside the query. Ledgerline's letter codes become our words through one mapping table (N new, S part shipped, F shipped, D delivered, X cancelled). |
 | IT10 | B7, B8 | The order store is a few tables in our own PostgreSQL (`STORE_URL`): orders and parcels in our shape. The chat tools `find_order` and `delivery_status` read only the order store, never Ledgerline or the carrier directly. |
-| IT11 | B7, B8, B11 | An hourly pipeline fills the order store: orders and shipments through the middleware, and the newest carrier file from the SFTP server. It loads only what changed since the last successful run; the time it keeps moves forward only after a run has passed its checks. |
+| IT11 | B7, B8, B11 | An hourly pipeline fills the order store: orders and shipments through the middleware, and the newest carrier file from the SFTP server. Ledgerline has no change time on any table, so each run reads all orders and shipments (33 orders in the copy); IT12 makes that safe. The store keeps the time of the last successful run; it moves forward only after a run has passed its checks. When Ledgerline gets a change column (OQ-S2-1), the run reads only the rows that changed since that time. |
 | IT12 | B11 | Every write to the order store is an upsert by key (order number, tracking number), so running the same load twice leaves the store the same. |
 | IT13 | B7, B8 | Four checks on every load, as tests in code: the number of rows is close to a normal run, every parcel belongs to an order we know, every status is one of ours, the newest carrier news is recent enough. A failed check stops the load; the store keeps the last good data. |
-| IT14 | B9 | The age of the carrier's news is decided in code: older than 30 hours means no date, and the reply offers a person. |
+| IT14 | B9 | The age of the carrier's news is decided in code: older than 30 hours means no date, and the reply offers a person. The carrier gives a date without a time, so the age counts from the end of the news date (midnight at the end of that day, in UTC): news dated the 22nd is 0 hours old at the end of the 22nd and turns 30 hours old at 06:00 on the 24th. The same age rule serves the fourth check of IT13. |
 
 Tests: the fast tests use fakes of Ledgerline and the SFTP server and never touch the real systems. One live check, run
 on request, reads the real copy and the real SFTP server.
 
-## 3. Boundaries
+## 3. Open questions
+
+| ID | Question | For |
+|---|---|---|
+| OQ-S2-1 | Can Ledgerline's order tables (`LL_ORD_HDR`, `LL_SHPMT`) get a change column (the time of the last change to the row), so the pipeline can read only what changed? Today none has one, and `ORD_DT` does not move when the status does. We ask for it; we do not add it ourselves, and until it exists every run reads all orders. | Ravi Menon, the database administrator |
+| OQ-S2-2 | The carrier's file gives a date with no time. Does the carrier publish the time the file was produced, so the age of its news can be more exact? Until then IT14 counts from the end of the news date. | Marco Rossi, Ravi Menon |
+
+## 4. Decisions
+
+| Date | Decision | Why |
+|---|---|---|
+| 2026-10-23 | Each run reads all orders and shipments; no "changed since" query (IT11). | Ledgerline has no change time and stays untouched. At pilot scale (33 orders) a full read is cheap, and every write is an upsert (IT12). Noted in `docs/quick-fixes.md`. |
+| 2026-10-23 | The age of the carrier's news counts from the end of its news date (IT14). | The file has a date but no time. The end of the day is the latest the news can be from, so the rule never says "fresh" for news that is older than it looks. |
+
+## 5. Boundaries
 
 **Out of scope for this build:** returns and refunds, contract prices, policy answers, real email, real ServiceNow,
 changes to the chat widget.
