@@ -22,3 +22,9 @@ def test_only_the_first_reply_says_it_is_an_ai():
     second = send("Do you sell laptops?", first["session_id"])
     assert first["reply"].startswith(GREETING)
     assert GREETING not in second["reply"]
+
+
+def test_reply_carries_the_intent():
+    reply = send("My order DS-20417 is late. Where is it?")
+    assert reply["intent"]["intent"] == "order_status"
+    assert reply["intent"]["language"] == "en"

@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from agent import answer
+from intent import Intent, classify
 
 GREETING = ("Hi, I am DemoStore's AI assistant. "
             "You can ask for a person at any time.")
@@ -22,6 +23,7 @@ class ChatIn(BaseModel):
 class ChatOut(BaseModel):
     session_id: str
     reply: str
+    intent: Intent
 
 
 @app.post("/chat")
@@ -32,6 +34,7 @@ def chat(body: ChatIn) -> ChatOut:
         session_id = str(uuid.uuid4())
         SESSIONS[session_id] = {"customer": None, "history": []}
     session = SESSIONS[session_id]
+    intent = classify(body.message)
     reply = answer(body.message, session["customer"],
                    history=session["history"])
     if not session["history"]:
@@ -40,7 +43,8 @@ def chat(body: ChatIn) -> ChatOut:
         {"role": "user", "content": body.message},
         {"role": "assistant", "content": reply},
     ]
-    return ChatOut(session_id=session_id, reply=reply)
+    return ChatOut(session_id=session_id, reply=reply,
+                   intent=intent)
 
 
 if __name__ == "__main__":
