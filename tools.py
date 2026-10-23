@@ -1,35 +1,67 @@
-"""Tools the agent may ask for: an order and its delivery."""
-import csv
+"""Tools the agent may ask for: an order and its delivery. They read only the order store."""
 import json
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
-with open("data/orders.json") as f:
-    ORDERS = json.load(f)
+import checks
+import store as order_store
+
+_store = None
+
+
+def get_store():
+    """The order store the tools read; the real one unless a test or the replay set another."""
+    global _store
+    if _store is None:
+        _store = order_store.Store()
+    return _store
+
+
+def set_store(db):
+    global _store
+    _store = db
+
+
+def clock():
+    """Now. Replaced in tests, so the age of the carrier's news is never read from the wall clock."""
+    return datetime.now(UTC)
+
+
+def _stale(news_date):
+    """True when the carrier's last news is more than 30 hours old (IT14). No news is not stale."""
+    if not news_date:
+        return False
+    return checks.news_age(date.fromisoformat(news_date), clock()) > checks.MAX_NEWS_AGE
 
 
 def find_order(number, customer):
     """One order, only for the customer who owns it."""
     if customer is None:
         return {"error": "customer not verified yet"}
-    for order in ORDERS:
-        if order["number"] == number and order["customer"] == customer:
-            return order
-    return {"error": "no such order for this customer"}
+    order = get_store().order_for_customer(number, customer)
+    if order is None:
+        return {"error": "no such order for this customer"}
+    result = {k: order[k] for k in ("number", "customer", "market", "status", "items",
+                                    "promised", "tracking")}
+    if any(_stale(p["news_date"]) for p in order["parcels"]):
+        # The code removes the date; the prompt only says what to do with the flag.
+        result["promised"] = None
+        result["offer_person"] = True
+    return result
 
 
 def delivery_status(tracking, customer):
     """The carrier's last status for one parcel of this customer."""
     if customer is None:
         return {"error": "customer not verified yet"}
-    owned = any(order["customer"] == customer
-                and tracking in order["tracking"] for order in ORDERS)
-    if not owned:
+    parcel = get_store().parcel_for_customer(tracking, customer)
+    if parcel is None:
         return {"error": "no such parcel"}
-    with open("data/carrier.csv") as f:
-        for row in csv.DictReader(f):
-            if row["tracking"] == tracking:
-                return row
-    return {"error": "no such parcel"}
+    result = {"tracking": parcel["tracking"], "status": parcel["carrier_status"],
+              "place": parcel["place"], "date": parcel["news_date"]}
+    if _stale(parcel["news_date"]):
+        result["date"] = None
+        result["offer_person"] = True
+    return result
 
 
 CASES = "data/cases.jsonl"

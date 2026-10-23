@@ -60,6 +60,8 @@ FROM parcels p JOIN orders o ON o.number = p.order_no
 WHERE p.tracking = %(tracking)s AND o.customer = %(customer)s
 """
 
+OWNER_OF = "SELECT customer FROM orders WHERE number = %(number)s"
+HAS_CUSTOMER = "SELECT 1 FROM orders WHERE customer = %(customer)s LIMIT 1"
 ORDER_NUMBERS = "SELECT number FROM orders"
 RECENT_RUNS = "SELECT order_rows, parcel_rows FROM load_state ORDER BY finished_at DESC LIMIT %s"
 WATERMARK = "SELECT max(finished_at) FROM load_state"
@@ -146,6 +148,17 @@ class Store:
                                   {"tracking": tracking, "customer": customer.lower()}).fetchone()
         return _parcel_from_db(record) if record else None
 
+    def owner_of(self, number):
+        """The customer who owns this order, or None. For the replay only, never for a chat."""
+        with self._connect() as conn:
+            record = conn.execute(OWNER_OF, {"number": number}).fetchone()
+        return record[0] if record else None
+
+    def has_customer(self, email):
+        """Whether this email has any order (decides if a code is sent)."""
+        with self._connect() as conn:
+            return conn.execute(HAS_CUSTOMER, {"customer": email.lower()}).fetchone() is not None
+
     def order_numbers(self):
         with self._connect() as conn:
             return {r[0] for r in conn.execute(ORDER_NUMBERS).fetchall()}
@@ -205,6 +218,13 @@ class FakeStore:
         if owner is None or owner["customer"] != customer.lower():
             return None
         return dict(row)
+
+    def owner_of(self, number):
+        row = self.orders.get(number)
+        return row["customer"] if row else None
+
+    def has_customer(self, email):
+        return any(o["customer"] == email.lower() for o in self.orders.values())
 
     def order_numbers(self):
         return set(self.orders)

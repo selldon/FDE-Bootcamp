@@ -5,7 +5,7 @@ import secrets
 import time
 from collections.abc import Callable
 
-from tools import ORDERS
+import tools
 
 TTL_SECONDS = 600
 MAX_TRIES = 3
@@ -21,7 +21,7 @@ class Verifier:
     def start(self, email: str) -> dict:
         """Same answer for every email: nothing tells who is a customer."""
         email = email.strip().lower()
-        if any(order["customer"] == email for order in ORDERS):
+        if tools.get_store().has_customer(email):
             code = f"{secrets.randbelow(10**6):06d}"
             self.pending[email] = {
                 "code": code, "expires": self.clock() + TTL_SECONDS, "tries": 0}

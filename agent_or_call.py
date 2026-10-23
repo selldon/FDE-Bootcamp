@@ -5,14 +5,11 @@ from concurrent.futures import ThreadPoolExecutor
 
 from agent import answer
 from intent import classify
+from replay import owner
 from tools import delivery_status, find_order
 
 with open("data/conversations.json") as f:
     chats = json.load(f)
-with open("data/orders.json") as f:
-    owners = {}
-    for order in json.load(f):
-        owners[order["number"]] = order["customer"]
 
 
 def one_call(message, customer, usage):
@@ -32,7 +29,7 @@ def one_call(message, customer, usage):
 
 def measure(path, chat):
     """One path on one conversation: calls, tokens, seconds."""
-    customer = owners[chat["order_number"]]
+    customer = owner(chat["order_number"])
     usage = []
     start = time.time()
     reply = path(chat["message"], customer, usage)

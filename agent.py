@@ -18,6 +18,9 @@ exchanges, policies, products - do not try to answer: call
 hand_off. Also call hand_off when the customer is angry or asks
 for a person.
 Dates and statuses come only from the tools, never from memory.
+If a tool result has offer_person set, the carrier's news is out of
+date: give no delivery date, say the news is old, and offer to pass
+the chat to a person.
 Never promise money: no refunds, credits or compensation."""
 
 MAX_ROUNDS = 10

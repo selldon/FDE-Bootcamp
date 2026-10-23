@@ -24,10 +24,8 @@ def taken(action):
 
 def owner(number):
     """Who owns the order, or the default customer when none is named."""
-    for order in tools.ORDERS:
-        if order["number"] == number:
-            return order["customer"]
-    return DEFAULT_CUSTOMER
+    found = tools.get_store().owner_of(number)
+    return found or DEFAULT_CUSTOMER
 
 
 def play(chat):

@@ -107,16 +107,16 @@ Found in Phase 1: files are `upload/carrier-YYYY-MM-DD.csv`, cp1252, and the col
 ## Phase 7 - the chat tools read the order store (B7-B10, IT10, IT14)
 Found in Phase 1: the carrier's news is a date without a time, so "older than 30 hours" needs a rule (end of the news date,
 or the file's own time) - decide before this phase. Parcels: `LL_SHPMT` has duplicate tracking numbers (35 rows, 33 distinct).
-- [ ] `find_order` and `delivery_status` read only the store; `tools.py` stops loading `data/orders.json` and
+- [x] `find_order` and `delivery_status` read only the store; `tools.py` stops loading `data/orders.json` and
       `data/carrier.csv`. The model's tool schemas are unchanged; the customer still comes from the session.
-- [ ] The 30-hour rule in code: when the carrier's last news for a parcel is more than 30 hours old, the tool result has
+- [x] The 30-hour rule in code: when the carrier's last news for a parcel is more than 30 hours old, the tool result has
       no delivery date and carries a flag that the reply offers a person. The age is computed from an injectable clock.
       The system prompt says what to do with the flag; the code does not rely on the prompt to hide the date.
-- [ ] `replay.py` finds the owner of an order through the store instead of `tools.ORDERS`.
-- [ ] Fast tests (re-pointed at the `FakeStore`, seeded from the existing fakes): the existing owner and unverified tests
+- [x] `replay.py` finds the owner of an order through the store instead of `tools.ORDERS`.
+- [x] Fast tests (re-pointed at the `FakeStore`, seeded from the existing fakes): the existing owner and unverified tests
       still pass; news at 29h59m gives the date; at 30h01m gives none and the flag; another customer's order or parcel gets
       the same error as an unknown one (B10); the dates in the reply come from the result.
-- [ ] Check: fast tests green; `grep -n "orders.json\|carrier.csv" *.py` finds only the seeding helper in `conftest.py`.
+- [x] Check: fast tests green; `grep -n "orders.json\|carrier.csv" *.py` finds only the seeding helper in `conftest.py`.
 
 ## Phase 8 - the replay on the copy (G2)
 - [ ] Run the pipeline so the store holds the copy's data; `replay.py` runs the 40 conversations against it.
