@@ -63,13 +63,13 @@ every run, or (b) compare row hashes with the store, before this phase starts.
 ## Phase 3 - the carrier's nightly file (B8, IT11)
 Found in Phase 1: files are `upload/carrier-YYYY-MM-DD.csv`, cp1252, and the columns differ between files (a
 `pickup_point` column appeared on the 22nd): read by header name with the csv module. Dates have no time of day.
-- [ ] `carrier.py`: the only module that imports `paramiko`. Finds the newest file on the SFTP server by the name pattern
+- [x] `carrier.py`: the only module that imports `paramiko`. Finds the newest file on the SFTP server by the name pattern
       found in Phase 1 and parses it into rows (tracking number, status, place, date/time of the news). A bad line is
       reported with its line number, not skipped quietly.
-- [ ] A fake SFTP (a folder of files behind the same small interface) for the fast tests.
-- [ ] Fast tests: the newest of several files is chosen; a normal file parses; a file with a bad line fails loudly; an
+- [x] A fake SFTP (a folder of files behind the same small interface) for the fast tests.
+- [x] Fast tests: the newest of several files is chosen; a normal file parses; a file with a bad line fails loudly; an
       empty folder is an error.
-- [ ] Check: fast tests green; live check reads the real newest file and prints the row count and the newest news time.
+- [ ] Check: fast tests green (done); live check reads the real newest file and prints the row count and the newest news time.
 
 ## Phase 4 - the order store (B7, B8, B11, IT10, IT12)
 - [ ] `store.py`: the tables in our PostgreSQL (`STORE_URL`) - `orders`, `parcels`, and `load_state` (the watermark and
