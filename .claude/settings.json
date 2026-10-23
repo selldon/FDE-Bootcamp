@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest *)",
+      "Bash(ruff check *)",
+      "Bash(mypy *)",
+      "Bash(python replay.py *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ],
+    "ask": [
+      "Bash(pip install *)",
+      "Bash(npm install *)",
+      "Bash(git push *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Bash(git * --no-verify*)",
+      "Bash(git commit -n *)",
+      "Bash(git push --force*)"
+    ]
+  }
+}

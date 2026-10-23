@@ -12,7 +12,7 @@ GREETING = ("Hi, I am DemoStore's AI assistant. "
             "You can ask for a person at any time.")
 
 app = FastAPI(title="DemoStore chat")
-SESSIONS = {}
+SESSIONS: dict[str, dict] = {}
 
 
 class ChatIn(BaseModel):
@@ -29,7 +29,7 @@ class ChatOut(BaseModel):
 @app.post("/chat")
 def chat(body: ChatIn) -> ChatOut:
     """One message in, one reply out."""
-    session_id = body.session_id
+    session_id = body.session_id or ""
     if session_id not in SESSIONS:
         session_id = str(uuid.uuid4())
         SESSIONS[session_id] = {"customer": None, "history": []}

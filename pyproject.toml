@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+markers = ["live: calls Claude for real, so it is not in the pre-commit hook"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true

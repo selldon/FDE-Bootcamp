@@ -6,8 +6,8 @@ with open("data/conversations.json") as f:
     chats = json.load(f)
 print(len(chats), "labeled conversations")
 
-intents = Counter()
-levels = Counter()
+intents: Counter[str] = Counter()
+levels: Counter[str] = Counter()
 people = 0
 for chat in chats:
     intents[chat["intent"]] += 1

@@ -1,7 +1,10 @@
 """Rules of the chat service, checked with real calls."""
+import pytest
 from fastapi.testclient import TestClient
 
 from app import GREETING, app
+
+pytestmark = pytest.mark.live
 
 client = TestClient(app)
 

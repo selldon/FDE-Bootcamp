@@ -11,9 +11,8 @@ def find_order(number, customer):
     if customer is None:
         return {"error": "customer not verified yet"}
     for order in ORDERS:
-        if order["number"] == number:
-            if order["customer"] == customer:
-                return order
+        if order["number"] == number and order["customer"] == customer:
+            return order
     return {"error": "no such order for this customer"}
 
 

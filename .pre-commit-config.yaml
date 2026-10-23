@@ -1,0 +1,27 @@
+# Checks that run before every commit, for people and for the agent alike. Only fast ones: the tests here use the
+# fakes and never call Claude (the replay of the 40 conversations runs on pull requests).
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff (linter)
+        entry: ruff check
+        language: system
+        types: [python]
+      - id: mypy
+        name: mypy (type checker)
+        entry: mypy
+        language: system
+        types: [python]
+      - id: pytest
+        name: fast tests
+        entry: python -m pytest -q -m "not live"
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: tsc
+        name: tsc (widget types)
+        entry: sh -c "cd widget && npx tsc -b"
+        language: system
+        files: ^widget/
+        pass_filenames: false
