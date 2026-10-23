@@ -130,19 +130,24 @@ Found in Phase 1: tax is `TAX_AMT` per line (all units, to confirm against `ORD_
 
 ## Phase 4 - the facts a return needs, from Ledgerline (B12, B14, IT15, IT17)
 Found in Phase 1: price, tax, quantity, market (`MKT_CD`) and customer type (`CUST_TYP_CD`: C, B) exist. No product-kind column; decided in D1: a mapping of `SKU_CD` in code, unknown SKU -> a person. Delivery date still comes from the carrier news in the store.
-- [ ] `kinds.py`: the mapping `SKU_CD` -> `earbuds` / `software` / `other`, one dict, no guessing from `ITEM_DESC`; `kind(sku)` returns `None` for a SKU not in it, and `prepare_return` (Phase 7) turns `None` into a hand-off to a person. The list of SKUs comes from a read-only `SELECT DISTINCT SKU_CD` (names only). **The kinds are Marco's to confirm (OQ-S3-2)**: until he answers, the mapping is marked `UNCONFIRMED` in the file and the replay (Phase 9) notes it. Fast tests: every SKU in the copy is in the mapping or goes to a person; an unknown SKU gives `None`; the description is never read.
-- [ ] `ledgerline.py`: one fixed query `order_lines(number, customer)` (owner check inside, bind parameters): per line the
+- [x] `kinds.py`: the mapping `SKU_CD` -> `earbuds` / `software` / `other`, one dict, no guessing from `ITEM_DESC`; `kind(sku)` returns `None` for a SKU not in it, and `prepare_return` (Phase 7) turns `None` into a hand-off to a person. The list of SKUs comes from a read-only `SELECT DISTINCT SKU_CD` (names only). **The kinds are Marco's to confirm (OQ-S3-2)**: until he answers, the mapping is marked `UNCONFIRMED` in the file and the replay (Phase 9) notes it. Fast tests: every SKU in the copy is in the mapping or goes to a person; an unknown SKU gives `None`; the description is never read.
+      Done 2026-10-23: 20 SKUs read from the copy (read-only `SELECT DISTINCT`); the copy has no earbuds and no software, so all 20 are `other` and `UNCONFIRMED`.
+- [x] `ledgerline.py`: one fixed query `order_lines(number, customer)` (owner check inside, bind parameters): per line the
       line number, item, product kind, quantity, price, tax, currency; and the customer's type. Money read **live at
       prepare time**, not from the hourly store (decision 1). Another customer's order returns nothing, as for an unknown one.
-- [ ] A mapping of Ledgerline's codes (customer type, product kind) to the words `returns.py` uses; an unknown code raises
+      Done 2026-10-23: `order_lines` (`ORDER_LINES` + `LINE_PARCELS`); amounts are `Decimal`.
+- [x] A mapping of Ledgerline's codes (customer type, product kind) to the words `returns.py` uses; an unknown code raises
       with the code in the message, never guessed (same rule as `STATUS`).
-- [ ] The delivery date of a line: the delivered parcel's news date from the store (`parcel_for_customer` / `order_for_customer`),
+      Done: `CUSTOMER_TYPE` (`C`, `B`) and `customer_type_word`; the kind goes through `kinds.kind` (`None` = a person).
+- [x] The delivery date of a line: the delivered parcel's news date from the store (`parcel_for_customer` / `order_for_customer`),
       through the line's parcel (`LL_SHPMT.LN_NO`). No delivered parcel -> "not delivered", not a date.
-- [ ] `FakeLedgerline` (a dict) with the same interface for the fast tests, seeded from `data/orders.json` plus prices.
-- [ ] Fast tests: no `INSERT`/`UPDATE`/`DELETE`/`MERGE`/`DROP` in the SQL, binds only; another customer's order is empty; every
+      Done: `delivery_date(line, customer, db)`; delivered only when every parcel of the line is, dated by the last one.
+- [x] `FakeLedgerline` (a dict) with the same interface for the fast tests, seeded from `data/orders.json` plus prices.
+- [x] Fast tests: no `INSERT`/`UPDATE`/`DELETE`/`MERGE`/`DROP` in the SQL, binds only; another customer's order is empty; every
       code maps; an unknown code is an error; a line with two parcels, a line with none.
-- [ ] Check: fast tests green; live read (on request) `pytest -m live test_ledgerline_live.py` reads the lines of one known
+- [x] Check: fast tests green; live read (on request) `pytest -m live test_ledgerline_live.py` reads the lines of one known
       order from the copy and the amounts add up to the order total.
+      Result 2026-10-23: fast suite 551 passed, ruff and mypy clean. The live read is written (`test_ledgerline_live.py`) but not run: on request.
 
 ## Phase 5 - the draft in the holding table (B15, B16, IT18, IT19)
 Found in Phase 1 and D2: `LL_RTN_REQ_STG(REQ_ID, ORD_NO, LN_NO, RFND_AMT, REQ_KEY, STG_STAT_CD, CRT_TS)`; no customer, currency or reason column. The idempotency key goes in `REQ_KEY` (64 chars: a sha256 hex). Ravi's answers (OQ-S3-3, written into the spec as D4 on 2026-10-23): `REQ_KEY` is unique, so the table keeps one draft per key; Ledgerline makes `REQ_ID` (the insert does not name it); a new draft is `STG_STAT_CD` = `W`; only Ledgerline's job sets `A` or `R`, we never do; his team clears the `TEST-` rows. Nothing blocks the insert text now.

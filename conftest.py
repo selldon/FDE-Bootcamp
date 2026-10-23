@@ -69,3 +69,36 @@ def fake_model(monkeypatch):
                             SimpleNamespace(create=model.create))
         return model
     return install
+
+
+SKU_OF = {"Aero 14 laptop": "AER-14-LAP", "Aero 14 Pro laptop": "AER-14-PRO-LAP", "Desk speakers S2": "DES-SPE-S2",
+          "Docking station D2": "DOC-STA-D2", "Gaming headset H3": "GAM-HEA-H3", "Inkjet printer P2": "INK-PRI-P2",
+          "Keyboard K2": "KEY-K2", "Laser printer P5": "LAS-PRI-P5", "Mouse M3": "MOU-M3",
+          "Nova 24 monitor": "NOV-24-MON", "Nova 27 monitor": "NOV-27-MON", "Nova 32 monitor": "NOV-32-MON",
+          "Power supply 850 W": "POW-SUP-850-W", "Smart speaker S1": "SMA-SPE-S1", "SSD 1 TB": "SSD-1-TB",
+          "SSD 2 TB": "SSD-2-TB", "Vento mini PC": "VEN-MIN-PC", "Volt 8 graphics card": "VOL-8-GRA-CAR",
+          "Webcam W1": "WEB-W1", "Wi-Fi router R6": "WI-FI-ROU-R6"}
+
+
+def seed_ledgerline(fake):
+    """Fill a FakeLedgerline from data/orders.json plus made-up prices: the only place that does it.
+
+    One line per item, 100.00 per unit and 20.00 tax, one unit. The parcels go to the lines pairwise;
+    when there are fewer parcels than items, every line shares the order's parcels.
+    """
+    from decimal import Decimal
+
+    import kinds
+    import ledgerline
+    with open("data/orders.json") as f:
+        orders = json.load(f)
+    for o in orders:
+        pairwise = len(o["tracking"]) == len(o["items"])
+        lines = [{"line": i + 1, "sku": SKU_OF[item], "item": item, "kind": kinds.kind(SKU_OF[item]),
+                  "quantity": 1, "unit_price": Decimal("100.00"), "tax": Decimal("20.00"),
+                  "tracking": [o["tracking"][i]] if pairwise else list(o["tracking"])}
+                 for i, item in enumerate(o["items"])]
+        fake.orders[o["number"]] = {"number": o["number"], "customer": o["customer"], "market": o["market"],
+                                    "currency": "EUR", "customer_type": "consumer", "lines": lines}
+    assert isinstance(fake, ledgerline.FakeLedgerline)
+    return fake
