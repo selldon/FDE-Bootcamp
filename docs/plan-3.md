@@ -76,7 +76,7 @@ Found in Phase 1 (`docs/live-shapes.md`, "Build 3"): `LL_ORD_LN` has `QTY`, `UNI
 2. The columns and unique key of `LL_RTN_REQ_STG` are not visible to the reader. Before Phase 5.
 3. `interaction` answers 401 for `fde_tasks`, and `sc_task` is empty (no field names). Before Phases 6 and 8.
 
-Answered 2026-10-23 and written into `docs/spec-3.md` first (section 3, D1-D3; OQ-S3-2, OQ-S3-3), then into the phases below:
+Answered 2026-10-23 and written into `docs/spec-3.md` first (section 3, D1-D3; OQ-S3-2, OQ-S3-3; later D4, D5), then into the phases below:
 1. D1: product kind from a mapping of `SKU_CD` in code; an unknown SKU goes to a person. OQ-S3-2 for Marco: the official kind of each SKU.
 2. D2: the seven columns, listed once through `LL_WRITER` with a query that returned no rows (nothing inserted).
 3. D3: `fde_tasks` creates and reads `sc_task` (`short_description`, `u_draft`); creates but cannot read `interaction` (`short_description`, `u_conversation`).
@@ -110,10 +110,12 @@ and the last day counts - read off the 30 cases (R02 UK 14 days: eligible; R03 U
 | T14 | Every decision carries a reason code from a fixed set; each of the four decisions in T1 has a reason | B12 |
 | T15 | `returns.py` imports nothing from `llm`, `store`, `ledgerline`, `tools`, `app` and does no I/O (a test of its imports) | IT15 |
 
-- [ ] Claude: write `test_returns.py` (T1-T15); mark it failing for the right reason (no `returns.py` yet); stop.
-- [ ] You: write `returns.py` until T1-T15 are green.
-- [ ] Claude: run the tests, ruff, mypy; report. No edits to `returns.py` by Claude.
-- [ ] Check: T1-T15 green; fast tests, ruff, mypy green. The 30 borderline cases give the right decision.
+- [x] Claude: write `test_returns.py` (T1-T15); mark it failing for the right reason (no `returns.py` yet); stop.
+      Done 2026-10-23: fails at collection with `ModuleNotFoundError: No module named 'returns'`. The shape it pins is in the file's docstring.
+- [x] You: write `returns.py` until T1-T15 are green.
+- [x] Claude: run the tests, ruff, mypy; report. No edits to `returns.py` by Claude.
+- [x] Check: T1-T15 green; fast tests, ruff, mypy green. The 30 borderline cases give the right decision.
+      Result 2026-10-23: `test_returns.py` 372 passed (T1-T15 expanded by parametrize); whole fast suite 495 passed; ruff, mypy clean.
 
 ## Phase 3 - the refund amount (B14, IT17)
 Found in Phase 1: tax is `TAX_AMT` per line (all units, to confirm against `ORD_TOT`), price is `UNIT_PRC`, quantity `QTY`; both are NUMBER with two decimals, currency on the order.
@@ -143,15 +145,16 @@ Found in Phase 1: price, tax, quantity, market (`MKT_CD`) and customer type (`CU
       order from the copy and the amounts add up to the order total.
 
 ## Phase 5 - the draft in the holding table (B15, B16, IT18, IT19)
-Found in Phase 1 and D2: `LL_RTN_REQ_STG(REQ_ID, ORD_NO, LN_NO, RFND_AMT, REQ_KEY, STG_STAT_CD, CRT_TS)`; no customer, currency or reason column. The idempotency key goes in `REQ_KEY` (64 chars: a sha256 hex). **Still unknown (OQ-S3-3, Ravi): whether `REQ_KEY` is unique, how `REQ_ID` is made (sequence, identity, or we pass it), and which `STG_STAT_CD` letter is a new draft.** The insert text cannot be fixed until he answers; stop and ask before writing it. Until `REQ_KEY` is known to be unique, the one-draft-per-key rule is kept by a `SELECT ... WHERE REQ_KEY = :key` before the insert, in code and in the fake, and the open question names the race.
+Found in Phase 1 and D2: `LL_RTN_REQ_STG(REQ_ID, ORD_NO, LN_NO, RFND_AMT, REQ_KEY, STG_STAT_CD, CRT_TS)`; no customer, currency or reason column. The idempotency key goes in `REQ_KEY` (64 chars: a sha256 hex). Ravi's answers (OQ-S3-3, written into the spec as D4 on 2026-10-23): `REQ_KEY` is unique, so the table keeps one draft per key; Ledgerline makes `REQ_ID` (the insert does not name it); a new draft is `STG_STAT_CD` = `W`; only Ledgerline's job sets `A` or `R`, we never do; his team clears the `TEST-` rows. Nothing blocks the insert text now.
 - [ ] `drafts.py`: the only code that uses `LL_WRITER`. One fixed `INSERT INTO LL_RTN_REQ_STG` with bind parameters, the
-      idempotency key as the unique key (adjusted to Phase 1). `idempotency_key(session, order, line)` is a hash of the three.
-      A second insert with the same key returns the existing draft and writes nothing (read it back, or catch the unique
-      violation and read - whichever Phase 1's table allows).
+      idempotency key in `REQ_KEY`, status `W`, no `REQ_ID` in the column list (Ledgerline makes it). `idempotency_key(session, order, line)`
+      is a sha256 hex of the three (64 characters). A second insert with the same key is a unique violation (D4): the code
+      catches exactly that error, reads the existing draft by `REQ_KEY` (one fixed `SELECT`) and returns it; it writes nothing more.
 - [ ] `FakeDrafts` with the same interface (the columns of D2); the amount in a draft is a `Decimal` and comes from `money.py`, not from an argument.
-- [ ] Fast tests: one draft per key; a retry returns the same draft; a different line of the same order is a different
+- [ ] Fast tests: one draft per key (the fake raises the same unique violation); a retry returns the same draft; a different line of the same order is a different
       draft; the only write statement is the one `INSERT` into `LL_RTN_REQ_STG`; no other table name in a write; `float`
-      amount raises; the module has no `UPDATE`/`DELETE`/`MERGE`.
+      amount raises; the module has no `UPDATE`/`DELETE`/`MERGE`; the status written is `W` and the letters `A` and `R` appear
+      nowhere as a value we write; the insert does not name `REQ_ID`; any other database error is raised, not swallowed.
 - [ ] Check: fast tests green. (The real insert is proved once, in Phase 10.)
 
 ## Phase 6 - the approval task in ServiceNow (B15, B16, IT18, IT19)
@@ -219,9 +222,8 @@ Found in Phase 1 and D3: `interaction` is create-only for `fde_tasks` (fields `s
 - [ ] `test_returns_live.py` (marked `live` and `writes`, run on request only, and `ask` rule from Phase 1 prompts first):
       writes **one** draft with the key `TEST-...` into the real `LL_RTN_REQ_STG` through `LL_WRITER`, creates one real task,
       reads both back (amount, order, line, status; the task by `u_draft`); creates **no** `interaction` (it cannot be read back, D3); runs the same call again and checks that the draft and the task are the
-      same, not two. The rows are left in place (we cannot delete); the key tells Ravi's team what they are.
-- [ ] Open question for Ravi Menon: who clears `TEST-` rows in the holding table and the tasks in ServiceNow (part of OQ-S3-3, in
-      `docs/spec-3.md`).
+      same, not two. The rows are left in place (we cannot delete); the key tells Ravi's team what they are, and his team clears them (D4).
+      The draft read back must have status `W` (we never set `A` or `R`).
 - [ ] `docs/quick-fixes.md`: add what was quick (candidates: pending offer and failed-try counter in the in-memory session,
       strict yes list, template summary fallback, no timeout on ServiceNow calls, no cleanup of test rows).
 - [ ] README: how to run the return flow, which command is the live check and that it writes.
@@ -241,10 +243,10 @@ Found in Phase 1 and D3: `interaction` is create-only for `fde_tasks` (fields `s
 7. If ServiceNow or the holding table fails, the customer is told it was not done and offered a person; never "done".
 8. Settings: allow the probe, `ask` before any live pytest run.
 9. Commits: one per phase, only when you ask.
-10. Until Marco confirms the SKU kinds, the mapping is ours and marked `UNCONFIRMED`; every SKU not in it goes to a person. Say if the replay may run on it.
+10. Until Marco confirms the SKU kinds, the mapping is ours and marked `UNCONFIRMED`; every SKU not in it goes to a person. Answered: the replay may run on it (D5).
 
 ## Open questions I cannot answer from the repo
 - (Answered in Phase 1: price, tax, quantity and customer type exist; product kind does not - D1.)
 - OQ-S3-1 (spec): who approves and how fast - the reply promises no time.
-- OQ-S3-2 (Marco, in the spec): the official kind of each SKU; the mapping is `UNCONFIRMED` until he answers.
-- OQ-S3-3 (Ravi, in the spec): is `REQ_KEY` unique, how is `REQ_ID` made, which `STG_STAT_CD` is a new draft, and who clears `TEST-` rows and tasks.
+- OQ-S3-2 (Marco, in the spec): the official kind of each SKU; the mapping is `UNCONFIRMED` until he answers; the replay may use it (D5).
+- OQ-S3-3 (Ravi): answered 2026-10-23, now D4 in the spec. No open question for Ravi remains.
