@@ -72,14 +72,14 @@ Found in Phase 1: files are `upload/carrier-YYYY-MM-DD.csv`, cp1252, and the col
 - [ ] Check: fast tests green (done); live check reads the real newest file and prints the row count and the newest news time.
 
 ## Phase 4 - the order store (B7, B8, B11, IT10, IT12)
-- [ ] `store.py`: the tables in our PostgreSQL (`STORE_URL`) - `orders`, `parcels`, and `load_state` (the watermark and
+- [x] `store.py`: the tables in our PostgreSQL (`STORE_URL`) - `orders`, `parcels`, and `load_state` (the watermark and
       the row counts of recent runs) - created with `CREATE TABLE IF NOT EXISTS`. Our shape and our words.
-- [ ] Every write is an upsert by key (order number, tracking number): `INSERT ... ON CONFLICT ... DO UPDATE`. One load is
+- [x] Every write is an upsert by key (order number, tracking number): `INSERT ... ON CONFLICT ... DO UPDATE`. One load is
       one transaction.
-- [ ] Reads for the chat tools: an order for a customer (owner check inside the query), a parcel for a customer.
-- [ ] An in-memory `FakeStore` with the same interface for the fast tests of the pipeline and the tools (a dict per table).
-- [ ] Fast tests on the `FakeStore` contract: writing the same rows twice leaves the same store; the owner check holds.
-- [ ] Check: fast tests green; live check on the real PostgreSQL: create the tables, write a small batch twice, count
+- [x] Reads for the chat tools: an order for a customer (owner check inside the query), a parcel for a customer.
+- [x] An in-memory `FakeStore` with the same interface for the fast tests of the pipeline and the tools (a dict per table).
+- [x] Fast tests on the `FakeStore` contract: writing the same rows twice leaves the same store; the owner check holds.
+- [ ] Check: fast tests, ruff, mypy green (done); live check (not run yet, on request) on the real PostgreSQL: create the tables, write a small batch twice, count
       rows and compare - the same both times.
 
 ## Phase 5 - the four checks (B7, B8, IT13)
