@@ -5,6 +5,7 @@
       "Bash(ruff check *)",
       "Bash(mypy *)",
       "Bash(python replay.py *)",
+      "Bash(python probe_live.py *)",
       "Bash(git status *)",
       "Bash(git diff *)",
       "Bash(git log *)",
@@ -12,6 +13,8 @@
       "Bash(git commit *)"
     ],
     "ask": [
+      "Bash(python -m pytest -m live*)",
+      "Bash(python -m pytest * -m live*)",
       "Bash(pip install *)",
       "Bash(npm install *)",
       "Bash(git push *)"

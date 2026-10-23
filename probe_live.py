@@ -2,8 +2,13 @@
 
 A tool for people, not a test. It writes nothing anywhere. Emails are masked.
 """
+import base64
+import json
 import re
 import stat
+import sys
+import urllib.error
+import urllib.request
 
 import oracledb
 import paramiko
@@ -103,8 +108,92 @@ def store():
         print("  (no tables yet)")
 
 
+BUILD3_TABLES = ["LL_CUST", "LL_ORD_HDR", "LL_ORD_LN", "LL_SHPMT", "LL_RTN_REQ_STG"]
+MAX_CODES = 12
+
+
+def ledgerline_build3():
+    """Build 3: names, types and counts of the tables a return needs. No rows, no emails."""
+    print("== Ledgerline, Build 3 (read-only account; column names, counts and code values only)")
+    conn = oracledb.connect(**config.ledgerline())
+    cur = conn.cursor()
+    cur.execute("SET TRANSACTION READ ONLY")
+    for table in BUILD3_TABLES:
+        cur.execute("SELECT owner, column_name, data_type, data_precision, data_scale "
+                    "FROM all_tab_columns WHERE table_name = :t ORDER BY owner, column_id", t=table)
+        columns = cur.fetchall()
+        if not columns:
+            print(f"\n{table}: not visible to the reader")
+            continue
+        owner = columns[0][0]
+        if not (IDENT.match(owner) and IDENT.match(table)):
+            print(f"\n-- skipped odd name {owner}.{table}")
+            continue
+        cur.execute(f"SELECT COUNT(*) FROM {owner}.{table}")
+        print(f"\n{owner}.{table}: {cur.fetchone()[0]} rows")
+        for _, name, kind, precision, scale in columns:
+            size = f"({precision},{scale})" if precision is not None else ""
+            line = f"  {name} {kind}{size}"
+            # code columns (..._CD, ..._TYP...): the distinct values are the mapping we need
+            if name.endswith("_CD") and IDENT.match(name):
+                cur.execute(f"SELECT {name}, COUNT(*) FROM {owner}.{table} "
+                            f"GROUP BY {name} ORDER BY 2 DESC FETCH FIRST {MAX_CODES} ROWS ONLY")
+                line += "  values: " + ", ".join(f"{v!r} x{n}" for v, n in cur.fetchall())
+            print(line)
+    cur.execute("SELECT constraint_name, constraint_type, table_name FROM all_constraints "
+                "WHERE table_name = 'LL_RTN_REQ_STG' AND constraint_type IN ('P', 'U')")
+    for name, kind, table in cur.fetchall():
+        cur.execute("SELECT column_name FROM all_cons_columns WHERE constraint_name = :c "
+                    "ORDER BY position", c=name)
+        print(f"\n{table} {'primary' if kind == 'P' else 'unique'} key {name}: "
+              + ", ".join(r[0] for r in cur.fetchall()))
+    conn.rollback()
+    conn.close()
+
+
+def get(path):
+    """One GET to ServiceNow with basic auth. Returns (json, headers); never any other verb."""
+    settings = config.servicenow()
+    token = base64.b64encode(f"{settings['user']}:{settings['password']}".encode()).decode()
+    request = urllib.request.Request(settings["url"] + path, method="GET", headers={
+        "Authorization": f"Basic {token}", "Accept": "application/json"})
+    with urllib.request.urlopen(request, timeout=10) as response:
+        return json.load(response), response.headers
+
+
+def servicenow_build3():
+    """Build 3: is ServiceNow reachable, and what fields do approval tasks and cases have. GET only."""
+    print("\n== ServiceNow (GET only; field names and counts, no values)")
+    settings = config.servicenow()
+    print(f"  url {settings['url']}  account {settings['user']}")
+    for table in ("sc_task", "interaction"):
+        try:
+            body, headers = get(f"/api/now/table/{table}?sysparm_limit=1&sysparm_exclude_reference_link=true")
+        except urllib.error.HTTPError as error:
+            print(f"  {table}: HTTP {error.code}")
+            continue
+        rows = body.get("result", [])
+        total = headers.get("X-Total-Count", f"{len(rows)} (first page)")
+        print(f"  {table}: {total} rows")
+        if rows:
+            print("    fields:", ", ".join(sorted(rows[0])))
+        else:
+            print("    no rows, so no field names to show")
+        try:
+            fields, _ = get(f"/api/now/table/sys_dictionary?sysparm_query=name={table}"
+                            "&sysparm_fields=element,internal_type,mandatory&sysparm_limit=200")
+            for f in fields.get("result", []):
+                if f.get("element"):
+                    print(f"    dictionary: {f['element']} {f.get('internal_type', '')} "
+                          f"{'mandatory' if f.get('mandatory') == 'true' else ''}".rstrip())
+        except (urllib.error.HTTPError, urllib.error.URLError) as error:
+            print(f"    dictionary: not available ({error})")
+
+
 if __name__ == "__main__":
-    for step in (ledgerline, carrier, store):
+    steps = (ledgerline_build3, servicenow_build3) if sys.argv[1:] == ["build3"] \
+        else (ledgerline, carrier, store)
+    for step in steps:
         try:
             step()
         except Exception as error:  # noqa: BLE001 - one system down must not hide the others

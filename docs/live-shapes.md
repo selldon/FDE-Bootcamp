@@ -45,3 +45,37 @@ Connects; no tables yet.
    before Phase 7.
 4. **Header order and encoding vary** (see above): Phase 3 reads by header name and decodes cp1252.
 5. The carrier's status words are the carrier's own; they are not mapped to the order status (the order status comes from Ledgerline).
+
+## Build 3: what a return needs (found by `python probe_live.py build3`, read-only, 2026-10-23)
+
+Names, types and counts only; no rows, no emails.
+
+### Ledgerline (reader account)
+
+| Need | Where | Note |
+|---|---|---|
+| Price per unit | `LL_ORD_LN.UNIT_PRC` NUMBER(10,2) | |
+| Tax of the line | `LL_ORD_LN.TAX_AMT` NUMBER(10,2) | Looks like the tax of the whole line (all units), to confirm against `ORD_TOT`. |
+| Quantity | `LL_ORD_LN.QTY` NUMBER(5,0) | "Split by item" (IT17) means by unit. |
+| Currency | `LL_ORD_HDR.CURR_CD`: EUR 18, USD 8, GBP 7 | On the order, not the line. |
+| Order total | `LL_ORD_HDR.ORD_TOT` NUMBER(12,2) | The sum the refunds must add up to (B14). |
+| Market | `LL_CUST.MKT_CD`: US 8, UK 7, DE 7, IT 6, FR 5 | All five are in the borderline cases. |
+| Customer type | `LL_CUST.CUST_TYP_CD`: `C` 32, `B` 1 | `B` is presumably DemoStore Business; one customer only. |
+| Product kind | **no column** | Only `SKU_CD` (for example `AER-14-LAP`, `WEB-W1`) and the free text `ITEM_DESC`. The rule needs "earbuds" and "software" (IT15). |
+| Delivery date of a line | `LL_SHPMT.LN_NO` links a parcel to a line; the date is the carrier's news date in our store | Ledgerline has `SHIP_DT` (shipped), not delivered. |
+| Holding table `LL_RTN_REQ_STG` | **not visible to the reader** | Listed once through `LL_WRITER` on 2026-10-23, with a query that returns no rows (nothing inserted): `REQ_ID` NUMBER(10) not null, `ORD_NO` VARCHAR2(12) not null, `LN_NO` NUMBER(3) not null, `RFND_AMT` NUMBER(10,2) not null, `REQ_KEY` VARCHAR2(64) null, `STG_STAT_CD` CHAR(1) not null, `CRT_TS` TIMESTAMP(6) not null. Unique key, `REQ_ID` source and the status letters unknown (OQ-S3-3). |
+
+### ServiceNow (`SERVICENOW_URL` in `.env`, account `fde_tasks`)
+
+- Reachable. `GET /api/now/table/sc_task` answers 200 with an empty `result` (0 rows), so the probe sees no field names.
+- `GET /api/now/table/interaction` answers **401 `User Not Authenticated`** with the same account that reads `sc_task`.
+- `sys_dictionary`, `incident` and the table list answer 404: this is not a full ServiceNow, only some tables are served.
+- The URL in `.env` has port 8021; `.env.example` says 8020. The code reads `.env`, so nothing to change; noted in case the example is wrong.
+- No count header (`X-Total-Count`) is sent.
+
+### Differences from what Phases 2-8 assume
+
+1. **Product kind is not in Ledgerline.** Decided (D1 in `docs/spec-3.md`): a mapping of `SKU_CD` in code; an unknown SKU goes to a person.
+2. **Columns of `LL_RTN_REQ_STG`:** found (above). There is no customer, currency or reason column.
+3. **`interaction`:** `fde_tasks` may create rows (`short_description`, `u_conversation`) but not read them; the 401 was the read (D3).
+4. **`sc_task`:** `fde_tasks` creates and reads it with `short_description` and `u_draft` (D3).

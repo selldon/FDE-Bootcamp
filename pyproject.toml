@@ -1,5 +1,8 @@
 [tool.pytest.ini_options]
-markers = ["live: calls Claude for real, so it is not in the pre-commit hook"]
+markers = [
+  "live: reads a real system (Claude, Ledgerline, SFTP, PostgreSQL, ServiceNow), so it is not in the pre-commit hook",
+  "writes: a live test that writes (one draft into LL_RTN_REQ_STG and one ServiceNow task); run only on request",
+]
 
 [tool.mypy]
 python_version = "3.12"

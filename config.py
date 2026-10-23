@@ -21,6 +21,20 @@ def ledgerline():
             "password": setting("LEDGERLINE_PASSWORD")}
 
 
+def ledgerline_writer():
+    """The writer account: its one use is a return draft into LL_RTN_REQ_STG (Build 3)."""
+    return {"dsn": setting("LEDGERLINE_DSN"),
+            "user": setting("LEDGERLINE_WRITER_USER"),
+            "password": setting("LEDGERLINE_WRITER_PASSWORD")}
+
+
+def servicenow():
+    """ServiceNow: approval tasks and hand-off cases."""
+    return {"url": setting("SERVICENOW_URL").rstrip("/"),
+            "user": setting("SERVICENOW_USER"),
+            "password": setting("SERVICENOW_PASSWORD")}
+
+
 def carrier():
     """The carrier's SFTP server."""
     return {"host": setting("CARRIER_HOST"),
