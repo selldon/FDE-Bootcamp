@@ -62,7 +62,7 @@ until the last phase, once.
 - [x] Check: replay shows at least 36 of 40, and zero conversations that need a person staying with the assistant. If it does not, we stop and look at the misses before changing anything else.
 
 ## Phase 8 - close Build 1
-- [ ] `docs/quick-fixes.md` filled in (candidates: in-memory sessions, relative `data/` paths, one `classify` call per message that `/chat` does not need for its decision, fake email/ServiceNow files).
+- [x] `docs/quick-fixes.md` filled in (candidates: in-memory sessions, relative `data/` paths, one `classify` call per message that `/chat` does not need for its decision, fake email/ServiceNow files).
 - [ ] Ask before the one run on `held_out.json`; record the score.
 - [ ] Check: fast tests, ruff, mypy, tsc all green; final replay score written down.
 
