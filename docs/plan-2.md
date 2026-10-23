@@ -129,10 +129,12 @@ or the file's own time) - decide before this phase. Parcels: `LL_SHPMT` has dupl
       (expected give_status, asked for the order number), C26 (expected ask_order_number, handed off).
 
 ## Phase 9 - close Build 2
-- [ ] `docs/quick-fixes.md`: add what was quick (candidates: fixed row-count band, one file per run, pipeline without a
+- [x] `docs/quick-fixes.md`: add what was quick (candidates: fixed row-count band, one file per run, pipeline without a
       lock against two runs at once, relative paths).
-- [ ] README: how to run the pipeline, how to run it again after a failure, which command is the live check.
-- [ ] Check: fast tests, ruff, mypy, tsc green; final replay score written below.
+- [x] README: how to run the pipeline, how to run it again after a failure, which command is the live check.
+- [x] Check: fast tests, ruff, mypy, tsc green; final replay score written below.
+      Fast tests 103 passed, ruff, mypy, tsc clean (2026-10-23). Final replay on the copy (Phase 8, no change since):
+      38 of 40; needed a person but stayed: 0. Misses: C17, C26.
 
 ## Decisions to confirm
 1. Fast tests for the store use a `FakeStore` (a dict), and the upsert itself is proved by the live check on the real
