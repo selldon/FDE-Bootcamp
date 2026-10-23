@@ -219,15 +219,25 @@ Found in Phase 1 and D3: `interaction` is create-only for `fde_tasks` (fields `s
       Result 2026-10-23: new `handoff.py` (`open_case`, summary check, template, `FAILED_LIMIT`); `tools.open_case` and `data/cases.jsonl` are gone. The `hand_off` tool now also takes a `reason` (`needs_human` / `not_covered` / `no_answer`); the classifier gives one flag for "person or angry", so they are one reason. Session keeps `failed` and `handed_off`. Failed tries: a tool error (not "customer not verified"), a draft/task failure, or any non-yes message while an offer is pending. 624 fast tests passed (`test_handoff.py`, 12 new tests, old case tests moved), ruff and mypy clean; `grep -n "cases.jsonl" *.py` finds only the replay's note.
 
 ## Phase 9 - the replay (G3)
-- [ ] `replay.py`: `start_return` is a score of its own, no longer `hand_off`; hand-offs and drafts go to fakes, never to the
+- [x] `replay.py`: `start_return` is a score of its own, no longer `hand_off`; hand-offs and drafts go to fakes, never to the
       real ServiceNow or Ledgerline writer (the replay never confirms, so it never writes); money lines are read from the
       copy (read-only).
-- [ ] Check first whether Marco has confirmed the SKU kinds (OQ-S3-2); if not, the replay runs on the `UNCONFIRMED` mapping and says so in its note.
-- [ ] Run the replay on the copy; the 4 `start_return` conversations (C02, C09, C24, C28) must start a return; the other
+- [x] Check first whether Marco has confirmed the SKU kinds (OQ-S3-2); if not, the replay runs on the `UNCONFIRMED` mapping and says so in its note.
+- [x] Run the replay on the copy; the 4 `start_return` conversations (C02, C09, C24, C28) must start a return; the other
       return conversations (C14 policy, C25 crack, C26 swap, C27 missing refund) must not draft.
+      Done (box 1): `start_return` is its own score (taken when the turn ends with a pending offer); `refunds.set_systems` puts
+      `FakeDrafts` and `FakeServiceNow` under the replay, Ledgerline stays the real read-only copy; the replay prints the drafts
+      written (0) and a note when `kinds.UNCONFIRMED`. `test_replay.py` follows.
+      Done (box 2): Marco has not answered OQ-S3-2 (spec-3 still lists it open): the replay runs on the `UNCONFIRMED` mapping (D5) and prints that.
+      Done (box 3): all 4 `start_return` (C02, C09, C24, C28) start a return in both runs; C14, C26, C27 draft nothing (0 drafts, replay never confirms).
 - [ ] Check: at least 36 of 40; zero conversations that need a person stayed with the assistant; the 30 borderline cases
       still green. If not, stop and look at the misses before changing anything: one change at a time, replay after each,
       scores noted here. The score varies between runs (Build 2): run twice.
+      Result: NOT MET - stopped, nothing changed after the runs. Score 37 of 40 in both runs (fast suite 624 passed, ruff, mypy clean).
+      Misses, same in both runs: C14 (expected hand_off from `answer_policy`, taken `ask_order_number`), C26 (expected `ask_order_number`,
+      taken `hand_off`), C25 (expected `hand_off`, taken `start_return`: the model offered a 394.80 EUR refund for a monitor
+      "arrived with a crack"). C25 means one conversation that needs a person stayed with the assistant (the check wants zero).
+      Next, for the author: decide the fix for C25 (damage on arrival is a person's case; the prompt or an `intent` rule), one change, replay after it.
 
 ## Phase 10 - the live check and close Build 3
 - [ ] `test_returns_live.py` (marked `live` and `writes`, run on request only, and `ask` rule from Phase 1 prompts first):
