@@ -57,9 +57,9 @@ until the last phase, once.
 - [x] Check: `python replay.py` runs end to end and prints the baseline.
 
 ## Phase 7 - prompt and tool descriptions until G1 holds (B2, B3, B5)
-- [ ] System prompt: ask for the order number when there is none (B3); anything this build does not cover -> `hand_off`, no answer attempted (B5); an angry or asking customer -> `hand_off`; dates and statuses only from tools; no promises about money.
-- [ ] One change at a time, replay after each, note the score here.
-- [ ] Check: replay shows at least 36 of 40, and zero conversations that need a person staying with the assistant. If it does not, we stop and look at the misses before changing anything else.
+- [x] System prompt: ask for the order number when there is none (B3); anything this build does not cover -> `hand_off`, no answer attempted (B5); an angry or asking customer -> `hand_off`; dates and statuses only from tools; no promises about money.
+- [x] One change at a time, replay after each, note the score here.
+- [x] Check: replay shows at least 36 of 40, and zero conversations that need a person staying with the assistant. If it does not, we stop and look at the misses before changing anything else.
 
 ## Phase 8 - close Build 1
 - [ ] `docs/quick-fixes.md` filled in (candidates: in-memory sessions, relative `data/` paths, one `classify` call per message that `/chat` does not need for its decision, fake email/ServiceNow files).
@@ -77,3 +77,10 @@ Misses:
 - C17: expected `give_status`, the assistant only asked a question (counted as `ask_order_number`).
 - C26: expected `ask_order_number`, the assistant handed off.
 One run only; the model is not deterministic, so the score can move by a point or two between runs.
+
+## Phase 7 scores (one replay per change, same single-run caveat)
+1. Ask for the order number when there is none (B3): 38 of 40; C38 (address change on a delivered order) stayed with the assistant.
+2. Anything not covered, an angry customer or a request for a person -> `hand_off` (B5): 39 of 40, 0 stayed with the assistant.
+3. Dates and statuses only from tools; no promises about money: 39 of 40, 0 stayed.
+Remaining miss: C26 (expected `ask_order_number`, handed off: an exchange is out of scope for this build, so the hand-off is arguably right and the label is the odd one).
+Check met: 39 of 40 (needs 36), 0 conversations that need a person stayed with the assistant.
