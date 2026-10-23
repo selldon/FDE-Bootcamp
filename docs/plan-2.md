@@ -83,12 +83,12 @@ Found in Phase 1: files are `upload/carrier-YYYY-MM-DD.csv`, cp1252, and the col
       rows and compare - the same both times.
 
 ## Phase 5 - the four checks (B7, B8, IT13)
-- [ ] `checks.py`: pure functions, each returns a list of problems: (1) the number of rows is close to a normal run
+- [x] `checks.py`: pure functions, each returns a list of problems: (1) the number of rows is close to a normal run
       (within a band around the recent runs; the first run has no history and only needs more than zero); (2) every
       parcel belongs to an order we know (in the batch or already in the store); (3) every status is one of ours;
       (4) the newest carrier news is recent enough.
-- [ ] Fast tests: for each check one batch that passes and one that fails, and the edge value of the band and of the age.
-- [ ] Check: fast tests green.
+- [x] Fast tests: for each check one batch that passes and one that fails, and the edge value of the band and of the age.
+- [x] Check: fast tests green.
 
 ## Phase 6 - the hourly pipeline (B11, IT11, IT12, IT13)
 - [ ] `pipeline.py`: reads the watermark, fetches orders and shipments changed since it through `ledgerline.py`, reads the
