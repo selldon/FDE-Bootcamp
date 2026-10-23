@@ -44,11 +44,11 @@ until the last phase, once.
 - [x] Check: fast tests pass; `cd widget && npx tsc -b` clean; one manual run (start API and widget, read the code from `data/outbox.jsonl`).
 
 ## Phase 5 - hand-off to a person (B4, B5, IT5, IT6)
-- [ ] `hand_off(summary)` tool: appends a case to `data/cases.jsonl` with the summary and the chat so far (the history comes from the session, not from the model); the reply says a person will take over.
-- [ ] Loop stops after ten rounds and opens a case the same way.
-- [ ] `answer()` returns reply + action (`hand_off`, `give_status`, or plain reply) + rounds, so the replay can score it; `app.py` and `try_agent.py` updated.
-- [ ] Fast tests with the fake model: hand_off writes the case with the full history; the tenth round opens a case; the reply tells the customer.
-- [ ] Check: fast tests pass.
+- [x] `hand_off(summary)` tool: appends a case to `data/cases.jsonl` with the summary and the chat so far (the history comes from the session, not from the model); the reply says a person will take over.
+- [x] Loop stops after ten rounds and opens a case the same way.
+- [x] `answer()` returns reply + action (`hand_off`, `give_status`, or plain reply) + rounds, so the replay can score it; `app.py` and `try_agent.py` updated.
+- [x] Fast tests with the fake model: hand_off writes the case with the full history; the tenth round opens a case; the reply tells the customer.
+- [x] Check: fast tests pass.
 
 ## Phase 6 - the replay (IT8, G1)
 - [ ] `score()` as a pure function: maps labels of later intents (`answer_policy`, `answer_product`, `start_return`, `check_buyer_role`) to `hand_off`; fast test on it.

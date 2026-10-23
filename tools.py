@@ -1,6 +1,7 @@
 """Tools the agent may ask for: an order and its delivery."""
 import csv
 import json
+from datetime import UTC, datetime
 
 with open("data/orders.json") as f:
     ORDERS = json.load(f)
@@ -31,6 +32,19 @@ def delivery_status(tracking, customer):
     return {"error": "no such parcel"}
 
 
+CASES = "data/cases.jsonl"
+
+
+def open_case(summary, history, customer):
+    """Open a case for a person: the summary and the chat so far."""
+    case = {"opened": datetime.now(UTC).isoformat(),
+            "customer": customer, "summary": summary,
+            "history": list(history)}
+    with open(CASES, "a") as f:
+        f.write(json.dumps(case) + "\n")
+    return case
+
+
 TOOLS = [
     {
         "name": "find_order",
@@ -50,6 +64,19 @@ TOOLS = [
             "type": "object",
             "properties": {"tracking": {"type": "string"}},
             "required": ["tracking"],
+        },
+    },
+    {
+        "name": "hand_off",
+        "description": "Pass the chat to a person. Use it when the "
+        "customer asks for a person, is angry, or asks about "
+        "anything the order tools do not cover.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"summary": {"type": "string",
+                                       "description": "One or two "
+                                       "sentences for the person."}},
+            "required": ["summary"],
         },
     },
 ]

@@ -1,7 +1,10 @@
 """Fast tests of the agent loop with a scripted fake model."""
 import json
 
-from agent import answer
+import pytest
+
+import tools
+from agent import HAND_OFF_REPLY, MAX_ROUNDS, answer
 from conftest import reply, text, tool_use
 
 MAYA = "maya.ross@example.com"
@@ -16,7 +19,9 @@ def test_tool_use_then_final_text(fake_model):
     model = fake_model(
         reply(tool_use("find_order", {"number": "DS-20417"})),
         reply(text("Your order has shipped.")))
-    assert answer("Where is DS-20417?", MAYA) == "Your order has shipped."
+    result = answer("Where is DS-20417?", MAYA)
+    assert result.reply == "Your order has shipped."
+    assert (result.action, result.rounds) == ("give_status", 2)
     assert len(model.calls) == 2
     assert tool_result(model, 1)["status"] == "shipped"
 
@@ -35,3 +40,40 @@ def test_unverified_chat_gets_no_order_data(fake_model):
     answer("Where is DS-20417?", None)
     assert "error" in tool_result(model, 1)
     assert list(tool_result(model, 1)) == ["error"]
+
+
+@pytest.fixture
+def cases(tmp_path, monkeypatch):
+    path = tmp_path / "cases.jsonl"
+    monkeypatch.setattr(tools, "CASES", str(path))
+    return lambda: [json.loads(x) for x in path.read_text().splitlines()]
+
+
+def test_hand_off_writes_case_with_full_history(fake_model, cases):
+    model = fake_model(reply(tool_use("hand_off", {"summary": "Wants a person."})))
+    history = [{"role": "user", "content": "Hi"},
+               {"role": "assistant", "content": "Hello!"}]
+    result = answer("Let me talk to a human", MAYA, history=history)
+    assert (result.action, result.reply) == ("hand_off", HAND_OFF_REPLY)
+    assert len(model.calls) == 1
+    [case] = cases()
+    assert case["summary"] == "Wants a person."
+    assert case["customer"] == MAYA
+    assert case["history"] == history + [
+        {"role": "user", "content": "Let me talk to a human"}]
+
+
+def test_tenth_round_opens_a_case(fake_model, cases):
+    model = fake_model(*[reply(tool_use("find_order", {"number": "DS-20417"}))
+                         for _ in range(MAX_ROUNDS + 1)])
+    result = answer("Where is DS-20417?", MAYA)
+    assert (result.action, result.rounds) == ("hand_off", MAX_ROUNDS)
+    assert result.reply == HAND_OFF_REPLY
+    assert len(model.calls) == MAX_ROUNDS
+    [case] = cases()
+    assert case["history"] == [{"role": "user", "content": "Where is DS-20417?"}]
+
+
+def test_plain_reply_has_no_case(fake_model, cases):
+    fake_model(reply(text("Hi.")))
+    assert answer("Hello", MAYA).action == "reply"

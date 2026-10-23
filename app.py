@@ -74,8 +74,9 @@ def chat(body: ChatIn) -> ChatOut:
     """One message in, one reply out."""
     session_id, session = get_session(body.session_id)
     intent = classify(body.message)
-    reply = answer(body.message, session["customer"],
-                   history=session["history"])
+    result = answer(body.message, session["customer"],
+                    history=session["history"])
+    reply = result.reply
     if not session["history"]:
         reply = GREETING + "\n\n" + reply
     session["history"] += [
