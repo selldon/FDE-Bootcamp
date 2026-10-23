@@ -18,9 +18,10 @@ def run_tool(name, args, customer):
     return delivery_status(args["tracking"])
 
 
-def answer(message, customer, usage=None):
+def answer(message, customer, usage=None, history=()):
     """Loop until Claude stops asking for tools."""
-    messages = [{"role": "user", "content": message}]
+    messages = list(history)
+    messages.append({"role": "user", "content": message})
     while True:
         response = client.messages.create(
             model=MODEL,
