@@ -202,20 +202,21 @@ Found in Phase 1 and D3: `fde_tasks` creates and reads `sc_task` with the fields
 
 ## Phase 8 - the hand-off becomes a ServiceNow case (B17, IT20)
 Found in Phase 1 and D3: `interaction` is create-only for `fde_tasks` (fields `short_description`, `u_conversation`); the 401 was the read. A case cannot be looked up, so a re-sent hand-off could open a second one: the session remembers that it has handed off (one case per session) and the code does not rely on ServiceNow for it.
-- [ ] The hand-off writes an `interaction` through `servicenow.py` (`short_description` = the checked summary, `u_conversation` = the chat so far); `data/cases.jsonl` is no longer written by the chat. The
+- [x] The hand-off writes an `interaction` through `servicenow.py` (`short_description` = the checked summary, `u_conversation` = the chat so far); `data/cases.jsonl` is no longer written by the chat. The
       reply to the customer is unchanged.
-- [ ] Triggers in code: a request for a person and anger (`intent["needs_human"]`, already decided in `app.py`), and two failed
+- [x] Triggers in code: a request for a person and anger (`intent["needs_human"]`, already decided in `app.py`), and two failed
       tries - a counter in the session (decision 6: a failed try is a tool error or a declined/unclear reply to an offer) -
       the second one hands off without waiting for the model.
-- [ ] The summary: written by the model from the chat, then checked in code - it must name the order number and the reason,
+- [x] The summary: written by the model from the chat, then checked in code - it must name the order number and the reason,
       and every order number, amount, date and email in it must appear in the customer's own messages. A summary that
       fails the check is replaced by a template summary made in code (order number, reason, trigger).
-- [ ] The case carries the chat so far, as `open_case` does now. The session sets a `handed_off` flag after a case is created; a second trigger in the same session opens no second case.
-- [ ] Fast tests: each of the three triggers opens one case; the second failed try opens it, the first does not; a
+- [x] The case carries the chat so far, as `open_case` does now. The session sets a `handed_off` flag after a case is created; a second trigger in the same session opens no second case.
+- [x] Fast tests: each of the three triggers opens one case; the second failed try opens it, the first does not; a
       summary with an invented amount or order number is replaced; a summary with the right number and reason is kept; the
       chat history is in the case; ServiceNow down -> the customer is told a person will be reached another way, not
       "passed on" (decision 7); a second trigger in the same session opens no second case; the old tests of `open_case` move to the new function.
-- [ ] Check: fast tests green; no code path writes `data/cases.jsonl` (`grep -n "cases.jsonl" *.py` finds only the replay's note).
+- [x] Check: fast tests green; no code path writes `data/cases.jsonl` (`grep -n "cases.jsonl" *.py` finds only the replay's note).
+      Result 2026-10-23: new `handoff.py` (`open_case`, summary check, template, `FAILED_LIMIT`); `tools.open_case` and `data/cases.jsonl` are gone. The `hand_off` tool now also takes a `reason` (`needs_human` / `not_covered` / `no_answer`); the classifier gives one flag for "person or angry", so they are one reason. Session keeps `failed` and `handed_off`. Failed tries: a tool error (not "customer not verified"), a draft/task failure, or any non-yes message while an offer is pending. 624 fast tests passed (`test_handoff.py`, 12 new tests, old case tests moved), ruff and mypy clean; `grep -n "cases.jsonl" *.py` finds only the replay's note.
 
 ## Phase 9 - the replay (G3)
 - [ ] `replay.py`: `start_return` is a score of its own, no longer `hand_off`; hand-offs and drafts go to fakes, never to the

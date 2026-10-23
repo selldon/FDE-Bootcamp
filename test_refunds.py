@@ -24,7 +24,6 @@ client = TestClient(app_module.app)
 @pytest.fixture(autouse=True)
 def sessions(monkeypatch):
     monkeypatch.setattr(app_module, "SESSIONS", {"s": {"customer": TOM, "history": [], "offer": None}})
-    monkeypatch.setattr(tools, "CASES", "/dev/null")
 
 
 def send(message, sid="s"):

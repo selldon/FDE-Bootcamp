@@ -61,6 +61,8 @@ class Context:
     customer: str | None
     session_id: str = ""
     offer: dict | None = None  # {"order", "line", "amount", "key", "order_lines"}
+    failed: int = 0  # failed tries so far in this session (decision 6)
+    handed_off: bool = False  # a case was opened: no second one
 
 
 def is_yes(message):
@@ -130,6 +132,7 @@ def confirm(ctx):
             raise ValueError("the draft is not the offer that was shown")
         get_servicenow().create_approval_task(draft)
     except (servicenow.ServiceNowError, oracledb.Error):
+        ctx.failed += 1
         return FAILED_REPLY
     ctx.offer = None
     return CONFIRMED_REPLY

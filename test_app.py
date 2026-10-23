@@ -1,13 +1,11 @@
 """Rules of the chat service, checked with real calls."""
-import json
 
 import pytest
 from fastapi.testclient import TestClient
 
 import app as chat_app
-import tools
-from agent import HAND_OFF_REPLY
 from app import GREETING, app
+from handoff import HAND_OFF_REPLY
 
 MAYA = "maya.ross@example.com"
 
@@ -41,11 +39,8 @@ def test_reply_carries_the_intent():
 
 
 @pytest.fixture
-def cases(tmp_path, monkeypatch):
-    path = tmp_path / "cases.jsonl"
-    monkeypatch.setattr(tools, "CASES", str(path))
-    return lambda: ([json.loads(x) for x in path.read_text().splitlines()]
-                    if path.exists() else [])
+def cases(fake_systems):
+    return lambda: fake_systems.snow.cases
 
 
 def test_uncovered_question_goes_to_a_person_even_if_told_not_to(cases):

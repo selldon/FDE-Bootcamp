@@ -2,9 +2,11 @@
 import json
 from dataclasses import dataclass
 
+import handoff
 import refunds
+from handoff import FAILED_LIMIT
 from llm import chat
-from tools import TOOLS, delivery_status, find_order, open_case
+from tools import TOOLS, delivery_status, find_order
 
 SYSTEM = """You are the DemoStore support assistant.
 Answer questions about orders with the tools, in two or three
@@ -35,8 +37,6 @@ the chat to a person.
 Never promise money: no refunds, credits or compensation."""
 
 MAX_ROUNDS = 10
-HAND_OFF_REPLY = ("I have passed this to a person on our team. "
-                  "They can see our chat and will take over.")
 
 
 @dataclass
@@ -74,15 +74,20 @@ def answer(message, ctx, usage=None, history=()):
             if block.type != "tool_use":
                 continue
             if block.name == "hand_off":
-                open_case(block.input["summary"], chat_so_far, ctx.customer)
-                return Result(HAND_OFF_REPLY, "hand_off", rounds)
+                reply = handoff.open_case(ctx, block.input.get("summary"), chat_so_far,
+                                          block.input.get("reason"), "the model handed off")
+                return Result(reply, "hand_off", rounds)
             result = run_tool(block.name, block.input, ctx)
+            if "error" in result and result["error"] != "customer not verified yet":
+                ctx.failed += 1
             if block.name != "prepare_return":
                 gave_status = gave_status or "error" not in result
             results.append({"type": "tool_result",
                             "tool_use_id": block.id,
                             "content": json.dumps(result)})
         messages.append({"role": "user", "content": results})
-    open_case(f"Stopped after {MAX_ROUNDS} rounds without an answer.",
-              chat_so_far, ctx.customer)
-    return Result(HAND_OFF_REPLY, "hand_off", MAX_ROUNDS)
+        if ctx.failed >= FAILED_LIMIT:  # the second failed try hands off without waiting for the model
+            reply = handoff.open_case(ctx, None, chat_so_far, "failed_tries", "two failed tries")
+            return Result(reply, "hand_off", rounds)
+    reply = handoff.open_case(ctx, None, chat_so_far, "no_answer", f"no answer after {MAX_ROUNDS} rounds")
+    return Result(reply, "hand_off", MAX_ROUNDS)

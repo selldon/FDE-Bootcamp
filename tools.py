@@ -1,5 +1,4 @@
 """Tools the agent may ask for: an order and its delivery. They read only the order store."""
-import json
 from datetime import UTC, date, datetime
 
 import checks
@@ -66,19 +65,6 @@ def delivery_status(tracking, customer):
     return result
 
 
-CASES = "data/cases.jsonl"
-
-
-def open_case(summary, history, customer):
-    """Open a case for a person: the summary and the chat so far."""
-    case = {"opened": datetime.now(UTC).isoformat(),
-            "customer": customer, "summary": summary,
-            "history": list(history)}
-    with open(CASES, "a") as f:
-        f.write(json.dumps(case) + "\n")
-    return case
-
-
 TOOLS = [
     {
         "name": "find_order",
@@ -123,9 +109,11 @@ TOOLS = [
         "input_schema": {
             "type": "object",
             "properties": {"summary": {"type": "string",
-                                       "description": "One or two "
-                                       "sentences for the person."}},
-            "required": ["summary"],
+                                       "description": "One or two sentences for the person: the order "
+                                       "number if there is one, and why. Only facts the customer wrote."},
+                           "reason": {"type": "string",
+                                      "enum": ["needs_human", "not_covered", "no_answer"]}},
+            "required": ["summary", "reason"],
         },
     },
 ]

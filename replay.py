@@ -9,6 +9,7 @@ from agent import answer
 
 DEFAULT_CUSTOMER = "maya.ross@example.com"
 # In this build the labels of later intents are a hand-off.
+# Note: hand-offs in the replay go to a FakeServiceNow, never to data/cases.jsonl (no longer written by the chat) or ServiceNow.
 LATER = {"answer_policy", "answer_product", "start_return",
          "check_buyer_role"}
 

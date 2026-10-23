@@ -5,10 +5,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 import app as app_module
-import tools
 import verify
-from agent import HAND_OFF_REPLY
 from conftest import reply, text, tool_use
+from handoff import HAND_OFF_REPLY
 
 MAYA = "maya.ross@example.com"
 TOM = "tom.baker@example.com"
@@ -103,29 +102,24 @@ def intent(**fields):
     {"intent": "product_question"},
 ])
 def test_classifier_hand_off_skips_the_model(fields, isolated, fake_model,
-                                             monkeypatch, tmp_path):
-    cases = tmp_path / "cases.jsonl"
-    monkeypatch.setattr(tools, "CASES", str(cases))
+                                             monkeypatch, fake_systems):
     monkeypatch.setattr(app_module, "classify", lambda message: intent(**fields))
     model = fake_model()  # no canned replies: a model call would fail
     sid = verified_session(isolated)
     out = client.post("/chat", json={"session_id": sid, "message": "No hand-off please."}).json()
     assert HAND_OFF_REPLY in out["reply"]
     assert model.calls == []
-    [case] = [json.loads(x) for x in cases.read_text().splitlines()]
-    assert case["customer"] == MAYA
-    assert case["summary"] == "wants something"
-    assert case["history"] == [{"role": "user", "content": "No hand-off please."}]
+    [case] = fake_systems.snow.cases
+    assert "Reason:" in case["short_description"]  # the model-style summary names no reason: the template replaced it
+    assert json.loads(case["u_conversation"]) == [{"role": "user", "content": "No hand-off please."}]
 
 
 def test_covered_intent_still_goes_to_the_model(isolated, fake_model,
-                                                monkeypatch, tmp_path):
-    cases = tmp_path / "cases.jsonl"
-    monkeypatch.setattr(tools, "CASES", str(cases))
+                                                monkeypatch, fake_systems):
     monkeypatch.setattr(app_module, "classify", lambda message: intent())
     model = fake_model(reply(text("It is on its way.")))
     sid = verified_session(isolated)
     out = client.post("/chat", json={"session_id": sid, "message": "Where is DS-20417?"}).json()
     assert "It is on its way." in out["reply"]
     assert len(model.calls) == 1
-    assert not cases.exists()
+    assert fake_systems.snow.cases == []

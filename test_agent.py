@@ -4,9 +4,9 @@ import json
 import pytest
 
 import refunds
-import tools
-from agent import HAND_OFF_REPLY, MAX_ROUNDS, answer
+from agent import MAX_ROUNDS, answer
 from conftest import reply, text, tool_use
+from handoff import HAND_OFF_REPLY
 
 MAYA = "maya.ross@example.com"
 
@@ -44,14 +44,13 @@ def test_unverified_chat_gets_no_order_data(fake_model):
 
 
 @pytest.fixture
-def cases(tmp_path, monkeypatch):
-    path = tmp_path / "cases.jsonl"
-    monkeypatch.setattr(tools, "CASES", str(path))
-    return lambda: [json.loads(x) for x in path.read_text().splitlines()]
+def cases(fake_systems):
+    return lambda: [{"summary": c["short_description"], "history": json.loads(c["u_conversation"])}
+                    for c in fake_systems.snow.cases]
 
 
 def test_hand_off_writes_case_with_full_history(fake_model, cases):
-    model = fake_model(reply(tool_use("hand_off", {"summary": "Wants a person."})))
+    model = fake_model(reply(tool_use("hand_off", {"summary": "Wants a person.", "reason": "needs_human"})))
     history = [{"role": "user", "content": "Hi"},
                {"role": "assistant", "content": "Hello!"}]
     result = answer("Let me talk to a human", refunds.Context(MAYA), history=history)
@@ -59,7 +58,6 @@ def test_hand_off_writes_case_with_full_history(fake_model, cases):
     assert len(model.calls) == 1
     [case] = cases()
     assert case["summary"] == "Wants a person."
-    assert case["customer"] == MAYA
     assert case["history"] == history + [
         {"role": "user", "content": "Let me talk to a human"}]
 
