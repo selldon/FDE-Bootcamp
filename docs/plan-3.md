@@ -165,15 +165,16 @@ Found in Phase 1 and D2: `LL_RTN_REQ_STG(REQ_ID, ORD_NO, LN_NO, RFND_AMT, REQ_KE
 
 ## Phase 6 - the approval task in ServiceNow (B15, B16, IT18, IT19)
 Found in Phase 1 and D3: `fde_tasks` creates and reads `sc_task` with the fields `short_description` and `u_draft`. `u_draft` carries the draft's key (the same hash as `REQ_KEY`), so "look for a task with that key" is `GET sc_task?sysparm_query=u_draft=<key>`. The order, item and amount have no field of their own: they go into `short_description`. `interaction` can be created but not read.
-- [ ] `servicenow.py`: the only code that talks to ServiceNow, over HTTP with the account from `config.py`.
+- [x] `servicenow.py`: the only code that talks to ServiceNow, over HTTP with the account from `config.py`.
       `create_approval_task(draft)` -> `sc_task`; `create_case(summary, history, customer)` -> `interaction` with `short_description` (the summary) and `u_conversation` (the chat) (used in Phase 8); it only creates, it never reads.
       The draft's key goes in `u_draft`: before creating, look for a task with that `u_draft` and return it - a retry never
       makes a second task, even if the first attempt wrote the draft and died before the task.
-- [ ] `FakeServiceNow` with the same interface (records calls; can be told to fail).
-- [ ] Fast tests: one task per key; a retry after "draft written, task failed" creates exactly one task; a failure raises
+- [x] `FakeServiceNow` with the same interface (records calls; can be told to fail).
+- [x] Fast tests: one task per key; a retry after "draft written, task failed" creates exactly one task; a failure raises
       a clear error and the caller sees "not created"; `short_description` has the order, item and amount and no more personal data
       than needed; `create_case` sends only `short_description` and `u_conversation` and never does a GET; no call other than the two above.
-- [ ] Check: fast tests green; `python probe_live.py build3` still reaches ServiceNow.
+- [x] Check: fast tests green; `python probe_live.py build3` still reaches ServiceNow.
+      Result 2026-10-23: `servicenow.py` + `test_servicenow.py` (9 tests); whole fast suite 580 passed, ruff and mypy clean; the probe still reaches ServiceNow (`sc_task` 0 rows, `interaction` 401 on read as in D3). Nothing was created in ServiceNow.
 
 ## Phase 7 - the two steps in the chat (B13, B15, B16, IT16)
 - [ ] `prepare_return(number, line, opened)` is a new tool: it reads the lines (Phase 4), runs `returns.decide` (Phase 2) and
