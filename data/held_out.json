@@ -1,0 +1,207 @@
+[
+  {
+    "id": "H01",
+    "market": "US",
+    "message": "Where is my order DS-20544?",
+    "intent": "order_status",
+    "order_number": "DS-20544",
+    "needs_human": false,
+    "action": "give_status",
+    "level": "easy"
+  },
+  {
+    "id": "H02",
+    "market": "UK",
+    "message": "I ordered last week and have heard nothing. Can you check?",
+    "intent": "order_status",
+    "order_number": null,
+    "needs_human": false,
+    "action": "ask_order_number",
+    "level": "medium"
+  },
+  {
+    "id": "H03",
+    "market": "DE",
+    "message": "Has DS-20549 left the warehouse?",
+    "intent": "order_status",
+    "order_number": "DS-20549",
+    "needs_human": false,
+    "action": "give_status",
+    "level": "easy"
+  },
+  {
+    "id": "H04",
+    "market": "FR",
+    "message": "DS-20553 says delivered to a pick-up point I never chose, 40 km away. I cannot get there.",
+    "intent": "order_status",
+    "order_number": "DS-20553",
+    "needs_human": true,
+    "action": "hand_off",
+    "level": "hard",
+    "note": "Delivery problem only a person can fix with the carrier."
+  },
+  {
+    "id": "H05",
+    "market": "IT",
+    "message": "order DS 20557 - when?",
+    "intent": "order_status",
+    "order_number": "DS-20557",
+    "needs_human": false,
+    "action": "give_status",
+    "level": "medium",
+    "note": "Number with a space instead of a dash."
+  },
+  {
+    "id": "H06",
+    "market": "US",
+    "message": "My graphics card and power supply were in one order, DS-20561. Tracking shows two parcels. Is that right?",
+    "intent": "order_status",
+    "order_number": "DS-20561",
+    "needs_human": false,
+    "action": "give_status",
+    "level": "medium"
+  },
+  {
+    "id": "H07",
+    "market": "UK",
+    "message": "When will DS-20566 be delivered?",
+    "intent": "order_status",
+    "order_number": "DS-20566",
+    "needs_human": false,
+    "action": "give_status",
+    "level": "easy"
+  },
+  {
+    "id": "H08",
+    "market": "DE",
+    "message": "Where can I see the status of DS-20570?",
+    "intent": "order_status",
+    "order_number": "DS-20570",
+    "needs_human": false,
+    "action": "give_status",
+    "level": "easy"
+  },
+  {
+    "id": "H09",
+    "market": "UK",
+    "message": "I want to send back the headset from DS-20531.",
+    "intent": "return_request",
+    "order_number": "DS-20531",
+    "needs_human": false,
+    "action": "start_return",
+    "level": "easy"
+  },
+  {
+    "id": "H10",
+    "market": "US",
+    "message": "The laptop I got is fine, but I found it cheaper elsewhere. Can I return it?",
+    "intent": "return_request",
+    "order_number": null,
+    "needs_human": false,
+    "action": "ask_order_number",
+    "level": "medium"
+  },
+  {
+    "id": "H11",
+    "market": "IT",
+    "message": "The printer from DS-20536 smells of burning when I switch it on.",
+    "intent": "return_request",
+    "order_number": "DS-20536",
+    "needs_human": true,
+    "action": "hand_off",
+    "level": "hard",
+    "note": "Safety problem: a person, and tell the customer to unplug it."
+  },
+  {
+    "id": "H12",
+    "market": "FR",
+    "message": "How do I return DS-20540?",
+    "intent": "return_request",
+    "order_number": "DS-20540",
+    "needs_human": false,
+    "action": "start_return",
+    "level": "easy"
+  },
+  {
+    "id": "H13",
+    "market": "DE",
+    "message": "How long does delivery take to Germany?",
+    "intent": "policy_question",
+    "order_number": null,
+    "needs_human": false,
+    "action": "answer_policy",
+    "level": "easy"
+  },
+  {
+    "id": "H14",
+    "market": "UK",
+    "message": "Do I need the original box to return a monitor?",
+    "intent": "policy_question",
+    "order_number": null,
+    "needs_human": false,
+    "action": "answer_policy",
+    "level": "medium"
+  },
+  {
+    "id": "H15",
+    "market": "US",
+    "message": "I live in New York but bought from your UK website. Which return rules apply?",
+    "intent": "policy_question",
+    "order_number": null,
+    "needs_human": false,
+    "action": "answer_policy",
+    "level": "hard",
+    "note": "The market of the order decides, not where the customer lives."
+  },
+  {
+    "id": "H16",
+    "market": "IT",
+    "message": "Does the Nova 27 monitor have speakers?",
+    "intent": "product_question",
+    "order_number": null,
+    "needs_human": false,
+    "action": "answer_product",
+    "level": "easy"
+  },
+  {
+    "id": "H17",
+    "market": "US",
+    "message": "Can I add more RAM to the Aero 14 later?",
+    "intent": "product_question",
+    "order_number": null,
+    "needs_human": false,
+    "action": "answer_product",
+    "level": "medium"
+  },
+  {
+    "id": "H18",
+    "market": "UK",
+    "message": "We are BIZ-UK-00902. Can you quote 5 docking stations at our contract price?",
+    "intent": "contract_price",
+    "order_number": null,
+    "needs_human": false,
+    "action": "check_buyer_role",
+    "level": "medium"
+  },
+  {
+    "id": "H19",
+    "market": "DE",
+    "message": "Two weeks waiting for DS-20575. Worst shop ever. Cancel it now.",
+    "intent": "other",
+    "order_number": "DS-20575",
+    "needs_human": true,
+    "action": "hand_off",
+    "level": "medium",
+    "note": "Angry, and cancelling is a task for a person."
+  },
+  {
+    "id": "H20",
+    "market": "FR",
+    "message": "Can I speak to someone in sales about a big order?",
+    "intent": "other",
+    "order_number": null,
+    "needs_human": true,
+    "action": "hand_off",
+    "level": "easy"
+  }
+]
