@@ -5,3 +5,5 @@ node_modules/
 dist/
 .trace/
 .vscode/
+data/outbox.jsonl
+data/cases.jsonl

@@ -32,10 +32,10 @@ until the last phase, once.
 - [x] Check: fast tests pass; `grep -n "client.messages" *.py` finds only `llm.py`.
 
 ## Phase 3 - the one-time code (B1, IT3)
-- [ ] `verify.py`: `start(email)` writes a six-digit code to `data/outbox.jsonl` only for an email that has orders, and answers the same either way (no hint who is a customer); `check(email, code)`. Valid 10 minutes, 3 tries, then dead. Clock injectable.
-- [ ] `.gitignore`: `data/outbox.jsonl`, `data/cases.jsonl`.
-- [ ] Fast tests: right code works; wrong code x3 locks even the right one; expired code fails; unknown email writes nothing and looks the same.
-- [ ] Check: fast tests pass.
+- [x] `verify.py`: `start(email)` writes a six-digit code to `data/outbox.jsonl` only for an email that has orders, and answers the same either way (no hint who is a customer); `check(email, code)`. Valid 10 minutes, 3 tries, then dead. Clock injectable.
+- [x] `.gitignore`: `data/outbox.jsonl`, `data/cases.jsonl`.
+- [x] Fast tests: right code works; wrong code x3 locks even the right one; expired code fails; unknown email writes nothing and looks the same.
+- [x] Check: fast tests pass.
 
 ## Phase 4 - verification in the chat service and the widget (B1, B2, B6)
 - [ ] `POST /verify/start` and `POST /verify/check` on the session; `session["customer"]` is set only by a successful check, never by the model or the message text.
