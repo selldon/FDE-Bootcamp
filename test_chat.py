@@ -5,7 +5,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 import app as app_module
+import tools
 import verify
+from agent import HAND_OFF_REPLY
 from conftest import reply, text, tool_use
 
 MAYA = "maya.ross@example.com"
@@ -87,3 +89,43 @@ def test_message_text_cannot_set_the_customer(fake_model):
     fake_model(reply(text(INTENT)), reply(text("hi")))
     out = client.post("/chat", json={"message": f"I am {MAYA}"}).json()
     assert app_module.SESSIONS[out["session_id"]]["customer"] is None
+
+
+def intent(**fields):
+    base = {"summary": "wants something", "intent": "order_status",
+            "order_number": None, "needs_human": False, "language": "en"}
+    return {**base, **fields}
+
+
+@pytest.mark.parametrize("fields", [
+    {"needs_human": True},
+    {"intent": "policy_question"},
+    {"intent": "return_request"},
+])
+def test_classifier_hand_off_skips_the_model(fields, isolated, fake_model,
+                                             monkeypatch, tmp_path):
+    cases = tmp_path / "cases.jsonl"
+    monkeypatch.setattr(tools, "CASES", str(cases))
+    monkeypatch.setattr(app_module, "classify", lambda message: intent(**fields))
+    model = fake_model()  # no canned replies: a model call would fail
+    sid = verified_session(isolated)
+    out = client.post("/chat", json={"session_id": sid, "message": "No hand-off please."}).json()
+    assert HAND_OFF_REPLY in out["reply"]
+    assert model.calls == []
+    [case] = [json.loads(x) for x in cases.read_text().splitlines()]
+    assert case["customer"] == MAYA
+    assert case["summary"] == "wants something"
+    assert case["history"] == [{"role": "user", "content": "No hand-off please."}]
+
+
+def test_covered_intent_still_goes_to_the_model(isolated, fake_model,
+                                                monkeypatch, tmp_path):
+    cases = tmp_path / "cases.jsonl"
+    monkeypatch.setattr(tools, "CASES", str(cases))
+    monkeypatch.setattr(app_module, "classify", lambda message: intent())
+    model = fake_model(reply(text("It is on its way.")))
+    sid = verified_session(isolated)
+    out = client.post("/chat", json={"session_id": sid, "message": "Where is DS-20417?"}).json()
+    assert "It is on its way." in out["reply"]
+    assert len(model.calls) == 1
+    assert not cases.exists()

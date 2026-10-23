@@ -7,5 +7,6 @@ At the end of the prototype, each one is written again, with a test.
 |---|---|---|
 | Sessions and pending codes live in memory | `app.py` (`SESSIONS`), `verify.py` (`Verifier.pending`) | A dict was the fastest thing; a restart logs everyone out and it cannot run on more than one process. |
 | Relative `data/` paths | `tools.py` (orders, carrier, `CASES`), `verify.py` (outbox) | Works only when started from the repo root; no config for the data location. |
-| One `classify` call per message that `/chat` does not need for its decision | `app.py` (`chat`) | The widget wanted an `intent` field; the reply is decided by `answer`, so it costs an extra model call and delay on every message. |
+| `classify` is a second model call before `answer`, on every message | `app.py` (`chat`) | It now decides hand-offs, but it still runs for covered messages too, so each reply costs two model calls and extra delay. |
 | Fake email and ServiceNow: codes go to `data/outbox.jsonl`, cases to `data/cases.jsonl` | `verify.py`, `tools.py` (`open_case`) | No real mail or ServiceNow in the prototype; the files stand in for them. |
+| The intent `other` counts as covered and goes to the model | `app.py` (`COVERED`) | Greetings and follow-ups ("Which order did I ask about?") are labelled `other`; handing them off would break the chat. An uncovered question the classifier labels `other` is protected only by the system prompt (B5). |

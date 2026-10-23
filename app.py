@@ -6,11 +6,16 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 import verify
-from agent import answer
+from agent import HAND_OFF_REPLY, answer
 from intent import Intent, classify
+from tools import open_case
 
 GREETING = ("Hi, I am DemoStore's AI assistant. "
             "You can ask for a person at any time.")
+
+# The only intent this build answers; "other" (greetings, follow-ups) still
+# goes to the model, which hands off by itself when it must.
+COVERED = {"order_status", "other"}
 
 app = FastAPI(title="DemoStore chat")
 SESSIONS: dict[str, dict] = {}
@@ -74,9 +79,16 @@ def chat(body: ChatIn) -> ChatOut:
     """One message in, one reply out."""
     session_id, session = get_session(body.session_id)
     intent = classify(body.message)
-    result = answer(body.message, session["customer"],
-                    history=session["history"])
-    reply = result.reply
+    if intent["needs_human"] or intent["intent"] not in COVERED:
+        # B4, B5: decided here, so no wording of the message can talk the
+        # model out of it.
+        chat_so_far = session["history"] + [
+            {"role": "user", "content": body.message}]
+        open_case(intent["summary"], chat_so_far, session["customer"])
+        reply = HAND_OFF_REPLY
+    else:
+        reply = answer(body.message, session["customer"],
+                       history=session["history"]).reply
     if not session["history"]:
         reply = GREETING + "\n\n" + reply
     session["history"] += [
