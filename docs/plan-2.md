@@ -91,17 +91,17 @@ Found in Phase 1: files are `upload/carrier-YYYY-MM-DD.csv`, cp1252, and the col
 - [x] Check: fast tests green.
 
 ## Phase 6 - the hourly pipeline (B11, IT11, IT12, IT13)
-- [ ] `pipeline.py`: reads the watermark, fetches orders and shipments changed since it through `ledgerline.py`, reads the
+- [x] `pipeline.py`: reads the watermark, fetches orders and shipments changed since it through `ledgerline.py`, reads the
       newest carrier file through `carrier.py`, builds our rows, runs the four checks, then upserts in one transaction.
       The watermark moves forward only after the checks passed and the transaction committed.
-- [ ] A failed check stops the load: nothing is written, the watermark stays, the exit code is not zero and the message
+- [x] A failed check stops the load: nothing is written, the watermark stays, the exit code is not zero and the message
       names the check. The store keeps the last good data.
-- [ ] A command line entry (`python pipeline.py`) for the hourly run. The scheduler itself (cron line in the README) is
+- [x] A command line entry (`python pipeline.py`) for the hourly run. The scheduler itself (cron line in the README) is
       Ravi's team's to install; we do not install one.
-- [ ] Fast tests with the fakes: a normal run fills the store; a second run with nothing new changes nothing; the same
+- [x] Fast tests with the fakes: a normal run fills the store; a second run with nothing new changes nothing; the same
       run twice leaves the store identical (B11); a failed check leaves the store and the watermark as they were; a crash
       in the middle of the upserts leaves no half load.
-- [ ] Check: fast tests green; live check runs the pipeline once on the real copy and the real SFTP server, then again,
+- [ ] Check: fast tests green (done); live check (not run yet, on request, `pytest -m live test_pipeline_live.py`) runs the pipeline once on the real copy and the real SFTP server, then again,
       and the store is the same after the second run.
 
 ## Phase 7 - the chat tools read the order store (B7-B10, IT10, IT14)

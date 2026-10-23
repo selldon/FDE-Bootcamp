@@ -177,11 +177,16 @@ class FakeStore:
         order_rows = [order_row(o) for o in orders]
         parcel_rows = [parcel_row(p) for p in parcels]
         finished_at = finished_at or datetime.now(UTC)
-        for row in order_rows:
-            self.orders[row["number"]] = row
-        for row in parcel_rows:
-            self.parcels[row["tracking"]] = row
-        self.runs[finished_at] = (len(order_rows), len(parcel_rows))
+        before = (self.orders.copy(), self.parcels.copy(), self.runs.copy())
+        try:
+            for row in order_rows:
+                self.orders[row["number"]] = row
+            for row in parcel_rows:
+                self.parcels[row["tracking"]] = row
+            self.runs[finished_at] = (len(order_rows), len(parcel_rows))
+        except BaseException:  # a crash in the middle: roll back, like the real transaction
+            self.orders, self.parcels, self.runs = before
+            raise
 
     def _parcels_of(self, number):
         return [dict(p) for _, p in sorted(self.parcels.items()) if p["order_no"] == number]
