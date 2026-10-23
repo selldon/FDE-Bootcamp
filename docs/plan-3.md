@@ -119,14 +119,14 @@ and the last day counts - read off the 30 cases (R02 UK 14 days: eligible; R03 U
 
 ## Phase 3 - the refund amount (B14, IT17)
 Found in Phase 1: tax is `TAX_AMT` per line (all units, to confirm against `ORD_TOT`), price is `UNIT_PRC`, quantity `QTY`; both are NUMBER with two decimals, currency on the order.
-- [ ] `money.py`: pure functions on `Decimal`. A line's price and tax, split by item (units), the cent left over goes to the
+- [x] `money.py`: pure functions on `Decimal`. A line's price and tax, split by item (units), the cent left over goes to the
       first item; a refund for one item is its price share plus its tax share, to the cent. Rounding mode written down.
       A `float` argument raises. (Shape of a line adjusted to the Phase 1 findings.)
-- [ ] Fast tests: the refunds of all items of an order add up to what the customer paid (property test over many random
+- [x] Fast tests: the refunds of all items of an order add up to what the customer paid (property test over many random
       lines, cent for cent); the leftover cent goes to the first item; one item, many items, zero tax, 3-way split of
       a cent-odd tax; `float` raises; the result is `Decimal` with two places; no tool or function in `money.py` moves money
       (no I/O).
-- [ ] Check: fast tests green.
+- [x] Check: fast tests green.
 
 ## Phase 4 - the facts a return needs, from Ledgerline (B12, B14, IT15, IT17)
 Found in Phase 1: price, tax, quantity, market (`MKT_CD`) and customer type (`CUST_TYP_CD`: C, B) exist. No product-kind column; decided in D1: a mapping of `SKU_CD` in code, unknown SKU -> a person. Delivery date still comes from the carrier news in the store.
