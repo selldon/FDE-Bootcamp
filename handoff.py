@@ -24,12 +24,26 @@ REASONS = {
     "not_covered": ("the question is outside what the assistant covers", ("polic", "exchange", "product", "address",
                                                                           "change", "not cover", "outside")),
     "no_answer": ("the assistant could not answer", ("could not", "no answer", "unable", "stopped")),
+    "damaged": ("the item arrived damaged", ("damage", "crack", "broken", "smash", "shatter", "dent")),
 }
 
 ORDER = re.compile(r"\bDS-\d+\b", re.IGNORECASE)
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
 AMOUNT = re.compile(r"[€$£]\s?\d[\d.,]*\d|\d[\d.,]*\d?\s?(?:EUR|USD|GBP|€|\$|£)", re.IGNORECASE)
+
+
+DAMAGE = re.compile(r"\b(crack\w*|broke\w*|broken|damag\w*|smash\w*|shatter\w*|dent\w*|scratch\w*)", re.IGNORECASE)
+ARRIVAL = re.compile(r"\b(arriv\w*|deliver\w*|came|unbox\w*|out of the box|opened the (?:box|package|parcel))", re.IGNORECASE)
+
+
+def damaged_on_arrival(history):
+    """True when the customer's own words say the item came damaged: a person's case, never a refund offer (replay C25).
+
+    Quick keyword rule (docs/quick-fixes.md): a damage word and an arrival word anywhere in what the customer wrote.
+    """
+    said = customer_text(history)
+    return bool(DAMAGE.search(said) and ARRIVAL.search(said))
 
 
 def _norm(value):

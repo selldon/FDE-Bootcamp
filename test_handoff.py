@@ -13,15 +13,15 @@ from conftest import reply, text, tool_use
 
 TOM = "tom.baker@example.com"
 OTHER = json.dumps({"summary": "chat", "intent": "other", "order_number": None,
-                    "needs_human": False, "language": "en"})
+                    "needs_human": False, "damaged": False, "language": "en"})
 PERSON = json.dumps({"summary": "wants a person", "intent": "other", "order_number": None,
-                     "needs_human": True, "language": "en"})
+                     "needs_human": True, "damaged": False, "language": "en"})
 POLICY = json.dumps({"summary": "policy", "intent": "policy_question", "order_number": None,
-                     "needs_human": False, "language": "en"})
+                     "needs_human": False, "damaged": False, "language": "en"})
 STATUS = json.dumps({"summary": "status", "intent": "order_status", "order_number": "DS-20388",
-                     "needs_human": False, "language": "en"})
+                     "needs_human": False, "damaged": False, "language": "en"})
 RETURN = json.dumps({"summary": "return", "intent": "return_request", "order_number": "DS-20388",
-                     "needs_human": False, "language": "en"})
+                     "needs_human": False, "damaged": False, "language": "en"})
 
 client = TestClient(app_module.app)
 

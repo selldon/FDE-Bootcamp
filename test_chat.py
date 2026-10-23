@@ -12,7 +12,7 @@ from handoff import HAND_OFF_REPLY
 MAYA = "maya.ross@example.com"
 TOM = "tom.baker@example.com"
 INTENT = json.dumps({"summary": "order", "intent": "order_status",
-                     "order_number": None, "needs_human": False,
+                     "order_number": None, "needs_human": False, "damaged": False,
                      "language": "en"})
 
 client = TestClient(app_module.app)
@@ -92,7 +92,7 @@ def test_message_text_cannot_set_the_customer(fake_model):
 
 def intent(**fields):
     base = {"summary": "wants something", "intent": "order_status",
-            "order_number": None, "needs_human": False, "language": "en"}
+            "order_number": None, "needs_human": False, "damaged": False, "language": "en"}
     return {**base, **fields}
 
 
@@ -123,3 +123,20 @@ def test_covered_intent_still_goes_to_the_model(isolated, fake_model,
     assert "It is on its way." in out["reply"]
     assert len(model.calls) == 1
     assert fake_systems.snow.cases == []
+
+
+SMASHED = "The screen was smashed when I got it. Order DS-20419."
+
+
+def test_damage_flag_from_the_classifier_hands_off_without_the_model(isolated, fake_model, monkeypatch, fake_systems):
+    """Damage on arrival in words the keyword rule misses (replay C25): the classifier's flag decides, in code."""
+    monkeypatch.setattr(app_module, "classify",
+                        lambda message: intent(intent="return_request", order_number="DS-20419", damaged=True))
+    model = fake_model()  # no canned replies: a model call would fail
+    sid = verified_session(isolated, "jack.wilson@example.com")
+    out = client.post("/chat", json={"session_id": sid, "message": SMASHED}).json()
+    assert HAND_OFF_REPLY in out["reply"]
+    assert model.calls == []
+    [case] = fake_systems.snow.cases
+    assert "damage" in case["short_description"].lower()
+    assert not fake_systems.drafts.rows

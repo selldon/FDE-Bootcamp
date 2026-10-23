@@ -14,9 +14,9 @@ from conftest import reply, text, tool_use
 
 TOM = "tom.baker@example.com"  # DS-20388: UK, one delivered line, delivered 2026-10-14, today is 2026-10-22
 RETURN = json.dumps({"summary": "return", "intent": "return_request", "order_number": "DS-20388",
-                     "needs_human": False, "language": "en"})
+                     "needs_human": False, "damaged": False, "language": "en"})
 OTHER = json.dumps({"summary": "chat", "intent": "other", "order_number": None,
-                    "needs_human": False, "language": "en"})
+                    "needs_human": False, "damaged": False, "language": "en"})
 
 client = TestClient(app_module.app)
 

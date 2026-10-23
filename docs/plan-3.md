@@ -230,26 +230,38 @@ Found in Phase 1 and D3: `interaction` is create-only for `fde_tasks` (fields `s
       written (0) and a note when `kinds.UNCONFIRMED`. `test_replay.py` follows.
       Done (box 2): Marco has not answered OQ-S3-2 (spec-3 still lists it open): the replay runs on the `UNCONFIRMED` mapping (D5) and prints that.
       Done (box 3): all 4 `start_return` (C02, C09, C24, C28) start a return in both runs; C14, C26, C27 draft nothing (0 drafts, replay never confirms).
-- [ ] Check: at least 36 of 40; zero conversations that need a person stayed with the assistant; the 30 borderline cases
+- [x] Check: at least 36 of 40; zero conversations that need a person stayed with the assistant; the 30 borderline cases
       still green. If not, stop and look at the misses before changing anything: one change at a time, replay after each,
       scores noted here. The score varies between runs (Build 2): run twice.
-      Result: NOT MET - stopped, nothing changed after the runs. Score 37 of 40 in both runs (fast suite 624 passed, ruff, mypy clean).
+      Result 2026-10-23, first two runs: NOT MET - stopped, nothing changed after the runs. Score 37 of 40 in both runs (fast suite 624 passed, ruff, mypy clean).
       Misses, same in both runs: C14 (expected hand_off from `answer_policy`, taken `ask_order_number`), C26 (expected `ask_order_number`,
       taken `hand_off`), C25 (expected `hand_off`, taken `start_return`: the model offered a 394.80 EUR refund for a monitor
       "arrived with a crack"). C25 means one conversation that needs a person stayed with the assistant (the check wants zero).
       Next, for the author: decide the fix for C25 (damage on arrival is a person's case; the prompt or an `intent` rule), one change, replay after it.
+      Fix (author's choice, one change at a time): (1) a keyword rule in code, `handoff.damaged_on_arrival`, checked at the start of
+      `agent.answer`; replay 38 of 40 and 37 of 40. (2) A `damaged` flag from the intent check, handled in `/chat` before the model,
+      with the words as a backstop; replay 38 of 40 and 37 of 40. Misses in all four runs: C14, C26 (and C17 in two). C25 is not a miss,
+      0 conversations that need a person stayed, 0 drafts. The replay does not run the intent check (`docs/quick-fixes.md`), so the
+      flag is covered by `test_damaged_live.py` (3 runs, 3 of 3 green) and a fast test. The 30 borderline cases are `test_returns.py`
+      (green in the fast suite). Ticked by Claude once the conditions held; the author confirms.
 
 ## Phase 10 - the live check and close Build 3
-- [ ] `test_returns_live.py` (marked `live` and `writes`, run on request only, and `ask` rule from Phase 1 prompts first):
+- [x] `test_returns_live.py` (marked `live` and `writes`, run on request only, and `ask` rule from Phase 1 prompts first):
       writes **one** draft with the key `TEST-...` into the real `LL_RTN_REQ_STG` through `LL_WRITER`, creates one real task,
       reads both back (amount, order, line, status; the task by `u_draft`); creates **no** `interaction` (it cannot be read back, D3); runs the same call again and checks that the draft and the task are the
       same, not two. The rows are left in place (we cannot delete); the key tells Ravi's team what they are, and his team clears them (D4).
       The draft read back must have status `W` (we never set `A` or `R`).
-- [ ] `docs/quick-fixes.md`: add what was quick (candidates: pending offer and failed-try counter in the in-memory session,
+      Done and run once, 2026-10-23: passed. Draft `REQ_ID` 1001, order DS-20377, line 1, amount 268.92, key `TEST-eee1c4db9116427c`, status `W`;
+      task `TASK0010001` (`sys_id` d580e564a2aa2295d7a9419d8a91c3a8) with that `u_draft`; the second call returned the same draft and the same task.
+      The key is set by the test (it replaces `drafts.idempotency_key` for the run) because the real key is a hash.
+- [x] `docs/quick-fixes.md`: add what was quick (candidates: pending offer and failed-try counter in the in-memory session,
       strict yes list, template summary fallback, no timeout on ServiceNow calls, no cleanup of test rows).
-- [ ] README: how to run the return flow, which command is the live check and that it writes.
-- [ ] `CLAUDE.md` pointers: it still says `docs/spec.md` / `docs/plan.md`; point to `spec-3.md` / `plan-3.md` (ask first, it is your file).
-- [ ] Check: fast tests, ruff, mypy, tsc green; the live check green once; final replay scores written here.
+- [x] README: how to run the return flow, which command is the live check and that it writes.
+- [ ] `CLAUDE.md` pointers (NOT DONE on purpose: the author said to leave CLAUDE.md as it is): it still says `docs/spec.md` / `docs/plan.md`; point to `spec-3.md` / `plan-3.md` (ask first, it is your file).
+- [x] Check: fast tests, ruff, mypy, tsc green; the live check green once; final replay scores written here.
+      Result 2026-10-23: 629 fast tests passed, ruff and mypy clean, `npx tsc -b` clean; the live check green once (above).
+      Final replay scores (two runs, after the `damaged` flag): 38 of 40 and 37 of 40; misses C14, C26 (C17 in the second);
+      needed a person but stayed: 0; drafts written: 0. Phase 10 is done except the `CLAUDE.md` pointers (left as it is, by the author).
 
 ## Decisions to confirm
 1. Money (price, tax) is read live from Ledgerline at prepare time, not from the hourly store; market and delivery date

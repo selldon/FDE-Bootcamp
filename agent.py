@@ -62,6 +62,10 @@ def answer(message, ctx, usage=None, history=()):
     # The case holds the chat as the customer saw it, not tool traffic.
     chat_so_far = [m for m in messages if isinstance(m["content"], str)]
     gave_status = False
+    if handoff.damaged_on_arrival(chat_so_far):  # decided here, before the model: it must never offer money for damage
+        ctx.offer = None
+        reply = handoff.open_case(ctx, None, chat_so_far, "damaged", "damage on arrival")
+        return Result(reply, "hand_off", 0)
     for rounds in range(1, MAX_ROUNDS + 1):
         response = chat(SYSTEM, TOOLS, messages, usage)
         if response.stop_reason != "tool_use":

@@ -14,6 +14,7 @@ class Intent(BaseModel):
                     "contract_price", "other"]
     order_number: str | None
     needs_human: bool
+    damaged: bool
     language: str
 
 
@@ -23,6 +24,7 @@ PROMPT = """You read one message from a DemoStore customer.
 First explain in one sentence what the customer wants.
 Then choose the intent. Copy the order number if there is one.
 Set needs_human if the customer asks for a person or is angry.
+Set damaged if the customer says an item came damaged or broken, in any words.
 Give the language of the message as a two-letter code, like en.
 
 Message: """

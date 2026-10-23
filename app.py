@@ -86,7 +86,7 @@ def chat(body: ChatIn) -> ChatOut:
     if ctx.offer is not None and ctx.customer is not None and refunds.is_yes(body.message):
         # B15, B16: only the customer's own yes, checked here, writes a draft - the model never runs.
         intent = Intent(summary="The customer confirmed the refund request.", intent="return_request",
-                        order_number=ctx.offer["order"], needs_human=False, language="en")
+                        order_number=ctx.offer["order"], needs_human=False, damaged=False, language="en")
         reply = refunds.confirm(ctx)
     else:
         declined = ctx.offer is not None
@@ -94,10 +94,12 @@ def chat(body: ChatIn) -> ChatOut:
         if declined:
             ctx.failed += 1  # decision 6: a declined or unclear reply to an offer is a failed try
         intent = classify(body.message)
-        if intent["needs_human"] or intent["intent"] not in COVERED:
+        damaged = intent["damaged"]
+        if intent["needs_human"] or damaged or intent["intent"] not in COVERED:
             # B4, B5: decided here, so no wording of the message can talk the
-            # model out of it.
-            reason = "needs_human" if intent["needs_human"] else "not_covered"
+            # model out of it. Damage on arrival is a person's case (replay C25); agent.answer keeps a
+            # keyword rule as a backstop for the turns that get past the flag.
+            reason = "needs_human" if intent["needs_human"] else "damaged" if damaged else "not_covered"
             reply = handoff.open_case(ctx, intent["summary"], chat_so_far, reason, reason.replace("_", " "))
         elif ctx.failed >= handoff.FAILED_LIMIT:
             reply = handoff.open_case(ctx, None, chat_so_far, "failed_tries", "two failed tries")
