@@ -119,11 +119,14 @@ or the file's own time) - decide before this phase. Parcels: `LL_SHPMT` has dupl
 - [x] Check: fast tests green; `grep -n "orders.json\|carrier.csv" *.py` finds only the seeding helper in `conftest.py`.
 
 ## Phase 8 - the replay on the copy (G2)
-- [ ] Run the pipeline so the store holds the copy's data; `replay.py` runs the 40 conversations against it.
-- [ ] If the copy's customers or order numbers differ from the labeled conversations, say so first and adjust the mapping
+- [x] Run the pipeline so the store holds the copy's data; `replay.py` runs the 40 conversations against it.
+      Done 2026-10-23: `python pipeline.py` loaded 33 orders, 33 parcels.
+- [x] If the copy's customers or order numbers differ from the labeled conversations, say so first and adjust the mapping
       of the conversations to the copy (a note in `docs/live-shapes.md`), not the prompt.
-- [ ] Check: at least 36 of 40, and zero conversations that need a person stayed with the assistant. If not, stop and
+- [x] Check: at least 36 of 40, and zero conversations that need a person stayed with the assistant. If not, stop and
       look at the misses before changing anything. One change at a time, replay after each, scores noted here.
+      Result (no change made): replay on the copy scored 38 of 40; needed a person but stayed: 0. Misses: C17
+      (expected give_status, asked for the order number), C26 (expected ask_order_number, handed off).
 
 ## Phase 9 - close Build 2
 - [ ] `docs/quick-fixes.md`: add what was quick (candidates: fixed row-count band, one file per run, pipeline without a
