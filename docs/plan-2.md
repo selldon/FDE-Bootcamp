@@ -49,15 +49,15 @@ Rules for the whole build:
 Found in Phase 1 (`docs/live-shapes.md`): tables `LL_CUST`, `LL_ORD_HDR`, `LL_ORD_LN`, `LL_SHPMT`; the status column is
 `ORD_STAT_CD`; **no table has a change time**, so "changed since" cannot be a timestamp query - decide (a) read all orders
 every run, or (b) compare row hashes with the store, before this phase starts.
-- [ ] `ledgerline.py`: the only module that imports `oracledb`. The connection comes from `config.py`; the session is
+- [x] `ledgerline.py`: the only module that imports `oracledb`. The connection comes from `config.py`; the session is
       read-only. One function per question, each with one fixed SQL text: an order by number for a customer (owner check
-      inside the query), the orders changed since a time, the shipments changed since a time. Order number and customer
+      inside the query), all orders with their items and parcels, in one read-only transaction (no "changed since": spec-2 decided on 2026-10-23 that each run reads everything). Order number and customer
       are bind parameters, never pasted into the text.
-- [ ] One mapping table from Ledgerline's letter codes to our words (N new, S part shipped, F shipped, D delivered,
+- [x] One mapping table from Ledgerline's letter codes to our words (N new, S part shipped, F shipped, D delivered,
       X cancelled). A code outside the table raises an error that names the code; it is never guessed.
-- [ ] Fast tests with a fake connection: the SQL has binds and no `INSERT`, `UPDATE`, `DELETE`, `MERGE`, `DROP`; another
+- [x] Fast tests with a fake connection: the SQL has binds and no `INSERT`, `UPDATE`, `DELETE`, `MERGE`, `DROP`; another
       customer's order returns nothing; every code maps; an unknown code is an error.
-- [ ] Check: fast tests green; live check `pytest -m live test_ledgerline_live.py` reads one known order from the copy and
+- [ ] Check: fast tests, ruff, mypy green (done); live check (not run yet, on request) `pytest -m live test_ledgerline_live.py` reads one known order from the copy and
       the result has our status word, the promised date and the parcels.
 
 ## Phase 3 - the carrier's nightly file (B8, IT11)
