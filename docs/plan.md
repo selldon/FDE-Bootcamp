@@ -63,8 +63,8 @@ until the last phase, once.
 
 ## Phase 8 - close Build 1
 - [x] `docs/quick-fixes.md` filled in (candidates: in-memory sessions, relative `data/` paths, one `classify` call per message that `/chat` does not need for its decision, fake email/ServiceNow files).
-- [ ] Ask before the one run on `held_out.json`; record the score.
-- [ ] Check: fast tests, ruff, mypy, tsc all green; final replay score written down.
+- [x] Ask before the one run on `held_out.json`; record the score.
+- [x] Check: fast tests, ruff, mypy, tsc all green; final replay score written down.
 
 ## Decisions to confirm
 1. The spec does not say how a customer names herself. Plan: she types her email in the widget; the code goes to that address (only if it has orders); verified means that email is the session's customer.
@@ -84,3 +84,10 @@ One run only; the model is not deterministic, so the score can move by a point o
 3. Dates and statuses only from tools; no promises about money: 39 of 40, 0 stayed.
 Remaining miss: C26 (expected `ask_order_number`, handed off: an exchange is out of scope for this build, so the hand-off is arguably right and the label is the odd one).
 Check met: 39 of 40 (needs 36), 0 conversations that need a person stayed with the assistant.
+
+## Held-out run (Phase 8, once, 2026-10-23)
+`data/held_out.json`, 20 conversations, same scoring as `replay.py`: **18 of 20**. Conversations that needed a person and stayed with the assistant: 0.
+Misses:
+- H05: expected `give_status`, the assistant asked for the order number (the message was `DS 20557 - when?`, a number written with a space instead of `DS-20557`).
+- H10: expected `ask_order_number`, the assistant handed off (a return request; returns are out of scope for this build, same pattern as C26).
+Replay on the tuning set at the end of Phase 7: 39 of 40. Not tuned after this run. Fast tests, ruff, mypy, tsc: green.
