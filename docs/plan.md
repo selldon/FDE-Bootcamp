@@ -38,10 +38,10 @@ until the last phase, once.
 - [x] Check: fast tests pass.
 
 ## Phase 4 - verification in the chat service and the widget (B1, B2, B6)
-- [ ] `POST /verify/start` and `POST /verify/check` on the session; `session["customer"]` is set only by a successful check, never by the model or the message text.
-- [ ] Widget: a "verify" step (email, then code) before order questions; `tsc` clean.
-- [ ] Fast tests of `/chat` with the fake model: unverified -> no order data in the reply path; verified owner -> status and promised date; asking for another customer's order -> nothing (B6). Keep the existing live tests in `test_app.py`.
-- [ ] Check: fast tests pass; `cd widget && npx tsc -b` clean; one manual run (start API and widget, read the code from `data/outbox.jsonl`).
+- [x] `POST /verify/start` and `POST /verify/check` on the session; `session["customer"]` is set only by a successful check, never by the model or the message text.
+- [x] Widget: a "verify" step (email, then code) before order questions; `tsc` clean.
+- [x] Fast tests of `/chat` with the fake model: unverified -> no order data in the reply path; verified owner -> status and promised date; asking for another customer's order -> nothing (B6). Keep the existing live tests in `test_app.py`.
+- [x] Check: fast tests pass; `cd widget && npx tsc -b` clean; one manual run (start API and widget, read the code from `data/outbox.jsonl`).
 
 ## Phase 5 - hand-off to a person (B4, B5, IT5, IT6)
 - [ ] `hand_off(summary)` tool: appends a case to `data/cases.jsonl` with the summary and the chat so far (the history comes from the session, not from the model); the reply says a person will take over.

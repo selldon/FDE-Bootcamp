@@ -5,6 +5,7 @@ import uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+import verify
 from agent import answer
 from intent import Intent, classify
 
@@ -26,14 +27,52 @@ class ChatOut(BaseModel):
     intent: Intent
 
 
+class VerifyStartIn(BaseModel):
+    session_id: str | None = None
+    email: str
+
+
+class VerifyCheckIn(BaseModel):
+    session_id: str | None = None
+    email: str
+    code: str
+
+
+class VerifyOut(BaseModel):
+    session_id: str
+    verified: bool
+
+
+def get_session(session_id: str | None) -> tuple[str, dict]:
+    """The session with this id, or a new one."""
+    if not session_id or session_id not in SESSIONS:
+        session_id = str(uuid.uuid4())
+        SESSIONS[session_id] = {"customer": None, "history": []}
+    return session_id, SESSIONS[session_id]
+
+
+@app.post("/verify/start")
+def verify_start(body: VerifyStartIn) -> VerifyOut:
+    """Send the code. The answer is the same for every email."""
+    session_id, _ = get_session(body.session_id)
+    verify.start(body.email)
+    return VerifyOut(session_id=session_id, verified=False)
+
+
+@app.post("/verify/check")
+def verify_check(body: VerifyCheckIn) -> VerifyOut:
+    """The only place that sets the session's customer."""
+    session_id, session = get_session(body.session_id)
+    if verify.check(body.email, body.code):
+        session["customer"] = body.email.strip().lower()
+    return VerifyOut(session_id=session_id,
+                     verified=session["customer"] is not None)
+
+
 @app.post("/chat")
 def chat(body: ChatIn) -> ChatOut:
     """One message in, one reply out."""
-    session_id = body.session_id or ""
-    if session_id not in SESSIONS:
-        session_id = str(uuid.uuid4())
-        SESSIONS[session_id] = {"customer": None, "history": []}
-    session = SESSIONS[session_id]
+    session_id, session = get_session(body.session_id)
     intent = classify(body.message)
     reply = answer(body.message, session["customer"],
                    history=session["history"])

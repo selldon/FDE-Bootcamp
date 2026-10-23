@@ -10,11 +10,46 @@ interface ChatReply {
   reply: string;
 }
 
+interface VerifyReply {
+  session_id: string;
+  verified: boolean;
+}
+
+type Step = "email" | "code" | "done";
+
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [typing, setTyping] = useState(false);
+  const [step, setStep] = useState<Step>("email");
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [verifyNote, setVerifyNote] = useState("");
+
+  async function verify(path: "start" | "check") {
+    const body = { session_id: sessionId, email, code };
+    const response = await fetch(`/verify/${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      setVerifyNote("Something went wrong. Please try again.");
+      return;
+    }
+    const data: VerifyReply = await response.json();
+    setSessionId(data.session_id);
+    if (path === "start") {
+      setStep("code");
+      setVerifyNote("If this email has orders, we sent it a six-digit code.");
+    } else if (data.verified) {
+      setStep("done");
+      setVerifyNote("");
+    } else {
+      setVerifyNote("That code did not work. Check it, or ask for a new one.");
+    }
+  }
 
   async function send(message: string) {
     setMessages((old) => [...old, { from: "customer", text: message }]);
@@ -44,6 +79,31 @@ export default function App() {
           Talk to a person
         </button>
       </header>
+      {step !== "done" && (
+        <form className="verify" onSubmit={(e) => {
+          e.preventDefault();
+          verify(step === "email" ? "start" : "check");
+        }}>
+          <span>To ask about an order, verify your email first.</span>
+          {step === "email" ? (
+            <input type="email" value={email} placeholder="Your email"
+                   onChange={(e) => setEmail(e.target.value)} />
+          ) : (
+            <input value={code} placeholder="Six-digit code"
+                   inputMode="numeric" maxLength={6}
+                   onChange={(e) => setCode(e.target.value)} />
+          )}
+          <button type="submit">
+            {step === "email" ? "Send code" : "Verify"}
+          </button>
+          {step === "code" && (
+            <button type="button" onClick={() => setStep("email")}>
+              New code
+            </button>
+          )}
+          {verifyNote && <small>{verifyNote}</small>}
+        </form>
+      )}
       <div className="messages"><div>
         {messages.map((m, i) => (
           <p key={i} className={m.from}>{m.text}</p>

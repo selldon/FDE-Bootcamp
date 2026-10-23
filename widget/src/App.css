@@ -97,3 +97,31 @@ input {
   font-size: 15px;
   outline: none;
 }
+
+.verify {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #f6f8fb;
+  border-bottom: 1px solid #dde3ec;
+  font-size: 14px;
+}
+
+.verify span,
+.verify small {
+  flex-basis: 100%;
+}
+
+.verify input {
+  flex: 1;
+}
+
+.verify button {
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  background: #1f3a5f;
+  color: white;
+  cursor: pointer;
+}
