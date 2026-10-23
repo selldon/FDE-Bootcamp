@@ -16,8 +16,14 @@ def find_order(number, customer):
     return {"error": "no such order for this customer"}
 
 
-def delivery_status(tracking):
-    """The carrier's last status for one parcel."""
+def delivery_status(tracking, customer):
+    """The carrier's last status for one parcel of this customer."""
+    if customer is None:
+        return {"error": "customer not verified yet"}
+    owned = any(order["customer"] == customer
+                and tracking in order["tracking"] for order in ORDERS)
+    if not owned:
+        return {"error": "no such parcel"}
     with open("data/carrier.csv") as f:
         for row in csv.DictReader(f):
             if row["tracking"] == tracking:

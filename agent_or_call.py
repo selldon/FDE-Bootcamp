@@ -25,7 +25,7 @@ def one_call(message, customer, usage):
         return order["error"]
     reply = "Order " + order["number"] + ": " + order["status"]
     for tracking in order["tracking"]:
-        parcel = delivery_status(tracking)
+        parcel = delivery_status(tracking, customer)
         reply += "; " + parcel["status"] + ", " + parcel["place"]
     return reply
 

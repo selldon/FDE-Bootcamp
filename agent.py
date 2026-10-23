@@ -15,7 +15,7 @@ def run_tool(name, args, customer):
     """Run the tool Claude asked for, for our customer."""
     if name == "find_order":
         return find_order(args["number"], customer)
-    return delivery_status(args["tracking"])
+    return delivery_status(args["tracking"], customer)
 
 
 def answer(message, customer, usage=None, history=()):
