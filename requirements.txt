@@ -7,3 +7,6 @@ pytest
 ruff
 mypy
 pre-commit
+oracledb
+psycopg[binary]
+paramiko

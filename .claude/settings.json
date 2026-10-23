@@ -20,7 +20,9 @@
       "Read(./.env)",
       "Bash(git * --no-verify*)",
       "Bash(git commit -n *)",
-      "Bash(git push --force*)"
+      "Bash(git push --force*)",
+      "Bash(docker *)",
+      "Bash(sqlplus *)"
     ]
   }
 }
