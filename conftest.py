@@ -6,7 +6,11 @@ from types import SimpleNamespace
 
 import pytest
 
+import drafts
+import ledgerline
 import llm
+import refunds
+import servicenow
 import store
 import tools
 
@@ -102,3 +106,14 @@ def seed_ledgerline(fake):
                                     "currency": "EUR", "customer_type": "consumer", "lines": lines}
     assert isinstance(fake, ledgerline.FakeLedgerline)
     return fake
+
+
+@pytest.fixture(autouse=True)
+def fake_systems(monkeypatch):
+    """Every test reads Ledgerline, writes drafts and creates tasks in fakes: no real system is ever reached."""
+    ledger = seed_ledgerline(ledgerline.FakeLedgerline())
+    systems = SimpleNamespace(ledger=ledger, drafts=drafts.FakeDrafts(), snow=servicenow.FakeServiceNow())
+    monkeypatch.setattr(refunds, "_ledgerline", ledger)
+    monkeypatch.setattr(refunds, "_drafts", systems.drafts)
+    monkeypatch.setattr(refunds, "_servicenow", systems.snow)
+    return systems

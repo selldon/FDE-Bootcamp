@@ -100,7 +100,7 @@ def intent(**fields):
 @pytest.mark.parametrize("fields", [
     {"needs_human": True},
     {"intent": "policy_question"},
-    {"intent": "return_request"},
+    {"intent": "product_question"},
 ])
 def test_classifier_hand_off_skips_the_model(fields, isolated, fake_model,
                                              monkeypatch, tmp_path):

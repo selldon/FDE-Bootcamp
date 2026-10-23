@@ -3,6 +3,7 @@ import json
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
 
+import refunds
 import tools
 from agent import answer
 
@@ -30,7 +31,7 @@ def owner(number):
 
 def play(chat):
     """One conversation as a verified session of the order's owner."""
-    result = answer(chat["message"], owner(chat["order_number"]))
+    result = answer(chat["message"], refunds.Context(owner(chat["order_number"]), "replay"))
     return {**chat, "expected": score(chat["action"]),
             "taken": taken(result.action), "reply": result.reply}
 

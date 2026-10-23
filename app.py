@@ -5,6 +5,7 @@ import uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+import refunds
 import verify
 from agent import HAND_OFF_REPLY, answer
 from intent import Intent, classify
@@ -15,7 +16,7 @@ GREETING = ("Hi, I am DemoStore's AI assistant. "
 
 # The only intent this build answers; "other" (greetings, follow-ups) still
 # goes to the model, which hands off by itself when it must.
-COVERED = {"order_status", "other"}
+COVERED = {"order_status", "return_request", "other"}
 
 app = FastAPI(title="DemoStore chat")
 SESSIONS: dict[str, dict] = {}
@@ -52,7 +53,7 @@ def get_session(session_id: str | None) -> tuple[str, dict]:
     """The session with this id, or a new one."""
     if not session_id or session_id not in SESSIONS:
         session_id = str(uuid.uuid4())
-        SESSIONS[session_id] = {"customer": None, "history": []}
+        SESSIONS[session_id] = {"customer": None, "history": [], "offer": None}
     return session_id, SESSIONS[session_id]
 
 
@@ -78,17 +79,25 @@ def verify_check(body: VerifyCheckIn) -> VerifyOut:
 def chat(body: ChatIn) -> ChatOut:
     """One message in, one reply out."""
     session_id, session = get_session(body.session_id)
-    intent = classify(body.message)
-    if intent["needs_human"] or intent["intent"] not in COVERED:
-        # B4, B5: decided here, so no wording of the message can talk the
-        # model out of it.
-        chat_so_far = session["history"] + [
-            {"role": "user", "content": body.message}]
-        open_case(intent["summary"], chat_so_far, session["customer"])
-        reply = HAND_OFF_REPLY
+    ctx = refunds.Context(session["customer"], session_id, session.get("offer"))
+    if ctx.offer is not None and ctx.customer is not None and refunds.is_yes(body.message):
+        # B15, B16: only the customer's own yes, checked here, writes a draft - the model never runs.
+        intent = Intent(summary="The customer confirmed the refund request.", intent="return_request",
+                        order_number=ctx.offer["order"], needs_human=False, language="en")
+        reply = refunds.confirm(ctx)
     else:
-        reply = answer(body.message, session["customer"],
-                       history=session["history"]).reply
+        ctx.offer = None  # any other message drops the offer
+        intent = classify(body.message)
+        if intent["needs_human"] or intent["intent"] not in COVERED:
+            # B4, B5: decided here, so no wording of the message can talk the
+            # model out of it.
+            chat_so_far = session["history"] + [
+                {"role": "user", "content": body.message}]
+            open_case(intent["summary"], chat_so_far, session["customer"])
+            reply = HAND_OFF_REPLY
+        else:
+            reply = answer(body.message, ctx, history=session["history"]).reply
+    session["offer"] = ctx.offer
     if not session["history"]:
         reply = GREETING + "\n\n" + reply
     session["history"] += [

@@ -101,6 +101,21 @@ TOOLS = [
         },
     },
     {
+        "name": "prepare_return",
+        "description": "Check whether one item of an order can be returned, and what the refund would be. "
+        "Give the order number, the line number and, only if the customer said so, whether the item was opened. "
+        "The decision, the reason and the amount come from our systems; this does not start a refund.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"number": {"type": "string"},
+                           "line": {"type": "integer", "description": "The line number of the item in the order."},
+                           "opened": {"type": ["boolean", "null"],
+                                      "description": "Whether the customer said the item was opened; "
+                                      "leave out if they did not say."}},
+            "required": ["number", "line"],
+        },
+    },
+    {
         "name": "hand_off",
         "description": "Pass the chat to a person. Use it when the "
         "customer asks for a person, is angry, or asks about "

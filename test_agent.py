@@ -3,6 +3,7 @@ import json
 
 import pytest
 
+import refunds
 import tools
 from agent import HAND_OFF_REPLY, MAX_ROUNDS, answer
 from conftest import reply, text, tool_use
@@ -19,7 +20,7 @@ def test_tool_use_then_final_text(fake_model):
     model = fake_model(
         reply(tool_use("find_order", {"number": "DS-20417"})),
         reply(text("Your order has shipped.")))
-    result = answer("Where is DS-20417?", MAYA)
+    result = answer("Where is DS-20417?", refunds.Context(MAYA))
     assert result.reply == "Your order has shipped."
     assert (result.action, result.rounds) == ("give_status", 2)
     assert len(model.calls) == 2
@@ -29,7 +30,7 @@ def test_tool_use_then_final_text(fake_model):
 def test_usage_is_collected_per_call(fake_model):
     fake_model(reply(text("Hi.")))
     usage = []
-    answer("Hello", MAYA, usage)
+    answer("Hello", refunds.Context(MAYA), usage)
     assert len(usage) == 1
 
 
@@ -37,7 +38,7 @@ def test_unverified_chat_gets_no_order_data(fake_model):
     model = fake_model(
         reply(tool_use("find_order", {"number": "DS-20417"})),
         reply(text("Please enter your one-time code first.")))
-    answer("Where is DS-20417?", None)
+    answer("Where is DS-20417?", refunds.Context(None))
     assert "error" in tool_result(model, 1)
     assert list(tool_result(model, 1)) == ["error"]
 
@@ -53,7 +54,7 @@ def test_hand_off_writes_case_with_full_history(fake_model, cases):
     model = fake_model(reply(tool_use("hand_off", {"summary": "Wants a person."})))
     history = [{"role": "user", "content": "Hi"},
                {"role": "assistant", "content": "Hello!"}]
-    result = answer("Let me talk to a human", MAYA, history=history)
+    result = answer("Let me talk to a human", refunds.Context(MAYA), history=history)
     assert (result.action, result.reply) == ("hand_off", HAND_OFF_REPLY)
     assert len(model.calls) == 1
     [case] = cases()
@@ -66,7 +67,7 @@ def test_hand_off_writes_case_with_full_history(fake_model, cases):
 def test_tenth_round_opens_a_case(fake_model, cases):
     model = fake_model(*[reply(tool_use("find_order", {"number": "DS-20417"}))
                          for _ in range(MAX_ROUNDS + 1)])
-    result = answer("Where is DS-20417?", MAYA)
+    result = answer("Where is DS-20417?", refunds.Context(MAYA))
     assert (result.action, result.rounds) == ("hand_off", MAX_ROUNDS)
     assert result.reply == HAND_OFF_REPLY
     assert len(model.calls) == MAX_ROUNDS
@@ -76,4 +77,4 @@ def test_tenth_round_opens_a_case(fake_model, cases):
 
 def test_plain_reply_has_no_case(fake_model, cases):
     fake_model(reply(text("Hi.")))
-    assert answer("Hello", MAYA).action == "reply"
+    assert answer("Hello", refunds.Context(MAYA)).action == "reply"

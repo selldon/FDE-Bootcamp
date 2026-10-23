@@ -177,25 +177,28 @@ Found in Phase 1 and D3: `fde_tasks` creates and reads `sc_task` with the fields
       Result 2026-10-23: `servicenow.py` + `test_servicenow.py` (9 tests); whole fast suite 580 passed, ruff and mypy clean; the probe still reaches ServiceNow (`sc_task` 0 rows, `interaction` 401 on read as in D3). Nothing was created in ServiceNow.
 
 ## Phase 7 - the two steps in the chat (B13, B15, B16, IT16)
-- [ ] `prepare_return(number, line, opened)` is a new tool: it reads the lines (Phase 4), runs `returns.decide` (Phase 2) and
+- [x] `prepare_return(number, line, opened)` is a new tool: it reads the lines (Phase 4), runs `returns.decide` (Phase 2) and
       `money` (Phase 3), and returns the decision, the reason code and, if eligible, the item and the amount. The model
       supplies only the order, the line and what the customer said about "opened"; the market, type, dates and money
       come from code. If eligible it stores the offer (order, line, amount, key) in the session.
-- [ ] **No model tool creates a draft** (decision 2). In `app.py`, before the model runs: if the session has a pending offer and
+      Done: `refunds.prepare_return`; the offer also keeps a copy of the lines read, so the draft is made from what was shown.
+- [x] **No model tool creates a draft** (decision 2). In `app.py`, before the model runs: if the session has a pending offer and
       the customer's own message is an explicit yes (a strict check in code, decision 3), the code writes the draft
       (`drafts.py`), creates the task (`servicenow.py`) and answers with a fixed sentence: the refund is waiting for
       approval, no time promised (OQ-S3-1). Any other message drops the offer.
-- [ ] Tools and `answer()` get a small context (customer, session id, pending offer) instead of the bare customer; the
+- [x] Tools and `answer()` get a small context (customer, session id, pending offer) instead of the bare customer; the
       existing tests are moved to it with no change in behaviour.
-- [ ] System prompt: return requests use `prepare_return`; the model explains the decision, never makes one, never says the
+      Done: `refunds.Context(customer, session_id, offer)`; `answer()` and `run_tool` take it. `find_order` / `delivery_status` still take the customer (they need nothing else; `run_tool` passes `ctx.customer`).
+- [x] System prompt: return requests use `prepare_return`; the model explains the decision, never makes one, never says the
       refund is done, never promises an exception (the code does not rely on the prompt for any of it).
-- [ ] `app.py`: `return_request` goes to the model (joins `COVERED`); the session keeps the pending offer.
-- [ ] Fast tests with the scripted fake model and fakes: no draft without a yes; "yes" with no pending offer does nothing;
+- [x] `app.py`: `return_request` goes to the model (joins `COVERED`); the session keeps the pending offer.
+- [x] Fast tests with the scripted fake model and fakes: no draft without a yes; "yes" with no pending offer does nothing;
       "yes" after a `not eligible` decision does nothing; a yes-like answer inside a longer message ("yes but...") is not a
       yes; the amount in the draft is the amount that was shown, not a number from the message or the model; two "yes"
       in a row -> one draft, one task (B16); a message re-sent after a timeout -> same draft, no second task; business
       customer -> a person; unverified customer gets nothing; the reply never says "refunded" or "done".
-- [ ] Check: fast tests green.
+- [x] Check: fast tests green.
+      Result 2026-10-23: 606 passed, ruff and mypy clean (`test_refunds.py`, 22 tests; `conftest.py` now puts fakes of Ledgerline, the holding table and ServiceNow under every test). `test_chat.py`: the hand-off-without-model case used `return_request`, which is now covered, so it uses `product_question`. `replay.py` only got the context; mapping `start_return` is Phase 9.
 
 ## Phase 8 - the hand-off becomes a ServiceNow case (B17, IT20)
 Found in Phase 1 and D3: `interaction` is create-only for `fde_tasks` (fields `short_description`, `u_conversation`); the 401 was the read. A case cannot be looked up, so a re-sent hand-off could open a second one: the session remembers that it has handed off (one case per session) and the code does not rely on ServiceNow for it.
