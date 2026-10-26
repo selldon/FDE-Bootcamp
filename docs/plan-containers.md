@@ -60,7 +60,7 @@ compose profile so `up` does not start it.
 - [x] `widget/nginx.conf`: serve the build on 80 with a fallback to `index.html`; `location ~ ^/(chat|verify|erase)` proxies to `http://chat:8000`
       with Docker's resolver (`resolver 127.0.0.11`, host in a variable) so nginx starts before the chat service and survives its restart with a new address.
 - [x] Offline check (I run): `cd widget && npx tsc -b` and `npx vite build` pass (the build the image runs); fast tests pass.
-- [ ] **Check for you (Docker):**
+- [x] **Check for you (Docker):** done 2026-10-26, passed.
   ```
   docker build -t demostore-widget ./widget
   docker run --rm demostore-widget nginx -t                            # "syntax is ok"
@@ -76,7 +76,7 @@ compose profile so `up` does not start it.
 - [x] No secret in the file: only names, ports and the two env files.
 - [x] `.env.containers.example` (committed); `.gitignore`: `.env.containers`.
 - [x] Offline check (I run): the YAML parses; grep shows no password or key in `compose.yaml`; fast tests pass.
-- [ ] **Check for you (Docker):** `cp .env.containers.example .env.containers` and fill it, then `docker compose config -q` (silent = valid), `docker compose config | grep -ci "sk-ant"` (0).
+- [x] **Check for you (Docker):** done 2026-10-26, passed. `cp .env.containers.example .env.containers` and fill it, then `docker compose config -q` (silent = valid), `docker compose config | grep -ci "sk-ant"` (0).
   **Stop.**
 
 ## Phase 4 - up and a real chat
