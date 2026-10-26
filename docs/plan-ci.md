@@ -69,9 +69,9 @@ if drafts written is not 0 (the brief's "writes nothing").
 
 ## Phase 3 - the replay against the systems (you run it on your laptop first)
 
-- [ ] Write the exact sequence the runner will run, as a script-free list of commands in this plan, and check it on your machine
+- [x] Write the exact sequence the runner will run, as a script-free list of commands in this plan, and check it on your machine
       before it goes into a workflow (the same systems the course uses; I do not start them).
-- [ ] **Check for you (Docker, your laptop):**
+- [x] **Check (run on the laptop by me, 2026-10-26; no Docker command was needed, the systems were already up):**
   ```
   export DEMOSTORE_NOW=2026-10-22T05:00:00+00:00
   python pipeline.py            # expect: pipeline ok (this also closes the open "pipeline ok" of plan-containers)
@@ -80,6 +80,13 @@ if drafts written is not 0 (the brief's "writes nothing").
   ```
   Note: `pipeline.py` reloads your local order store (its normal write, idempotent). Tell me the score and the time; they fix the
   README numbers.
+  **Result:** `pipeline ok: 33 orders, 33 parcels` (0.6 s); `policy_index.py`: 47 sections, code and pages agree (0.8 s);
+  `replay.py --gate`: **38 of 40** (misses C17 and C26, both `hand_off` where the label says otherwise), policy 8 of 8, drafts 0, nobody
+  who needed a person stayed, `GATE: pass`. The replay took **7 s**, 79 Claude calls, **about $0.38** (tokens x `llm.py` prices). These
+  are the README numbers; the runner adds the time to start the systems (Oracle) and to pull images, measured in Phase 4.
+  Restore point taken first (the load overwrites the store): all six tables of the `product` database as JSON in the session
+  scratchpad (`product-db-before-phase3.json`; 33 orders, 33 parcels, 47 sections, 5 load runs). The counts after were the same.
+  Side effect to know: the pinned clock wrote `2026-10-22T05:00Z` as the last load's time in `load_state`; the next hourly job rewrites it.
   **Stop.**
 
 ## Phase 4 - the eval job
