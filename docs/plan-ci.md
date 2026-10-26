@@ -120,7 +120,7 @@ if drafts written is not 0 (the brief's "writes nothing").
 - [x] `.github/workflows/nightly.yml`: `schedule: cron "17 2 * * *"` (UTC, off the hour) and `workflow_dispatch`; job 1 calls `eval.yml`;
       job 2 `hard-messages`: no Docker, `pip install -r requirements.txt`, `python -m pytest -m live test_hard_messages_live.py` with the
       key on that step only. Both jobs `permissions: contents: read`.
-- [ ] Note for you: a schedule and a manual run work only once the file is on `main`, so this is checked after the first merge:
+- [x] (done 2026-10-26, run 40406779680, `workflow_dispatch` from `main`: success, 4 m 4 s; `eval / replay` 38 of 40, `GATE: pass`; `hard-messages` 60 passed in 205.67 s; no `sk-ant` in the log) Note for you: a schedule and a manual run work only once the file is on `main`, so this is checked after the first merge:
   ```
   gh workflow run nightly.yml --ref main
   gh run watch
