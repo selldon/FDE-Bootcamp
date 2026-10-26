@@ -56,10 +56,10 @@ compose profile so `up` does not start it.
   **Stop.**
 
 ## Phase 2 - the widget image
-- [ ] `widget/Dockerfile`: stage 1 `node:22-alpine`, `npm ci`, `npm run build`; stage 2 `nginx:alpine` with `dist` and our config. `widget/.dockerignore` (`node_modules`, `dist`).
-- [ ] `widget/nginx.conf`: serve the build on 80 with a fallback to `index.html`; `location ~ ^/(chat|verify|erase)` proxies to `http://chat:8000`
+- [x] `widget/Dockerfile`: stage 1 `node:22-alpine`, `npm ci`, `npm run build`; stage 2 `nginx:alpine` with `dist` and our config. `widget/.dockerignore` (`node_modules`, `dist`).
+- [x] `widget/nginx.conf`: serve the build on 80 with a fallback to `index.html`; `location ~ ^/(chat|verify|erase)` proxies to `http://chat:8000`
       with Docker's resolver (`resolver 127.0.0.11`, host in a variable) so nginx starts before the chat service and survives its restart with a new address.
-- [ ] Offline check (I run): `cd widget && npx tsc -b` and `npx vite build` pass (the build the image runs); fast tests pass.
+- [x] Offline check (I run): `cd widget && npx tsc -b` and `npx vite build` pass (the build the image runs); fast tests pass.
 - [ ] **Check for you (Docker):**
   ```
   docker build -t demostore-widget ./widget
