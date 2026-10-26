@@ -117,7 +117,7 @@ if drafts written is not 0 (the brief's "writes nothing").
 
 ## Phase 5 - the nightly run
 
-- [ ] `.github/workflows/nightly.yml`: `schedule: cron "17 2 * * *"` (UTC, off the hour) and `workflow_dispatch`; job 1 calls `eval.yml`;
+- [x] `.github/workflows/nightly.yml`: `schedule: cron "17 2 * * *"` (UTC, off the hour) and `workflow_dispatch`; job 1 calls `eval.yml`;
       job 2 `hard-messages`: no Docker, `pip install -r requirements.txt`, `python -m pytest -m live test_hard_messages_live.py` with the
       key on that step only. Both jobs `permissions: contents: read`.
 - [ ] Note for you: a schedule and a manual run work only once the file is on `main`, so this is checked after the first merge:
@@ -129,7 +129,7 @@ if drafts written is not 0 (the brief's "writes nothing").
 
 ## Phase 6 - the README section and the check of the check
 
-- [ ] README section "Checks on every pull request": what runs when (PR: `python`, `widget`, then `eval`; nightly: replay + hard
+- [x] README section "Checks on every pull request" (written 2026-10-26; the hard messages' time and cost say "not measured yet" until the first nightly run, then fill them in): what runs when (PR: `python`, `widget`, then `eval`; nightly: replay + hard
       messages), how long each takes, what one run costs, what to do when it is red (read the `MISS` ids, run `python replay.py` locally,
       do not retry until the cause is known; a fork PR needs a maintainer). Times and cost are **measured** from the first real runs, not
       guessed (the cost: the replay's token usage x the prices in `llm.py`).

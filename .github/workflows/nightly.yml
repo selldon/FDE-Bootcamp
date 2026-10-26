@@ -1,0 +1,36 @@
+# The nightly run (docs/brief-ci.md): the replay of the 40 conversations and the 10 hard messages, so a change in the model or
+# in a policy page shows up even on a day nobody pushes. GitHub starts a schedule only from the default branch, and the manual
+# trigger exists only once this file is on main. A red run is reported by GitHub's default email; see the README.
+name: nightly
+
+on:
+  schedule:
+    - cron: "17 2 * * *"  # 02:17 UTC, off the full hour when GitHub's queues are long
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    uses: ./.github/workflows/eval.yml
+    secrets:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+  hard-messages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - run: pip install -r requirements.txt
+      # real Claude, fakes under every system (conftest.py): no containers; 10 messages, 3 runs each, all 3 of 3 must pass.
+      # The key is given to this step only.
+      - name: The 10 hard messages
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python -m pytest -m live test_hard_messages_live.py

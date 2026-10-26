@@ -116,6 +116,41 @@ Not in the image: `.env`, the tests, the labs (`sandbox/`), `data/*.jsonl`, the 
 so no start downloads it. A second `up` after a change rebuilds only what changed. The one-time codes of `/verify` and `/erase`
 are written to a file inside the chat container (see `docs/quick-fixes.md`).
 
+## Checks on every pull request
+
+Every change reaches `main` through a pull request, and GitHub runs the checks itself (`.github/workflows/`). A hook skipped on
+a laptop does not skip them.
+
+| When | Check | What it does | Time | Cost |
+|---|---|---|---|---|
+| every pull request | `python` | ruff, mypy and the fast tests (`-m "not live"`); no key, no network | about 1 min | none |
+| every pull request | `widget` | `npm ci` and `tsc` in `widget/` | about 15 s | none |
+| every pull request, after the two above are green | `eval / replay` | starts DemoStore's systems on the runner, loads the order store and the policy index, replays the 40 conversations with real Claude (`python replay.py --gate`) | about 1.5 min | about 0.40 USD |
+| every night, 02:17 UTC | `nightly` | the same replay, and the 10 hard messages (3 runs each, all 3 of 3 must pass) | replay 1.5 min; hard messages not measured yet | replay about 0.40 USD; hard messages not measured yet |
+
+The times are from the first run on GitHub; the replay's cost is its tokens times the prices in `llm.py` (79 calls, 0.38 USD). The
+hard messages' time and cost are filled in from the first nightly run. A new push to a pull request replaces the run still going;
+a branch with no pull request runs nothing.
+
+**The eval passes only at our goal:** at least 36 of the 40 right actions, no conversation that needs a person staying with the
+assistant, and no draft written (the replay writes nothing: drafts, tasks and traces go to fakes). On a runner the clock is pinned
+to `2026-10-22T05:00Z` (`DEMOSTORE_NOW`), because the sandbox's carrier files are from that week; with it unset the code reads the
+wall clock. The key `ANTHROPIC_API_KEY` is a repository secret handed to the one step that calls Claude, so it is never in a log,
+and a pull request from a fork gets none: its eval fails at once and a maintainer runs it from a branch in this repository.
+
+**When a check is red:**
+
+1. Open the failed check on the pull request. For `eval / replay` the run's summary page lists the replay: every `MISS` with the
+   conversation id, what was expected and what was taken, then `GATE: fail` and the reasons.
+2. Run the same conversations on your machine: `python replay.py --gate` (needs the systems up; it costs about 0.40 USD). One or two
+   misses either way is normal for the model; fewer than 36 is a real change. Read the missed conversations before touching a rule.
+3. If the cause is your change, fix it on the branch and push; the run starts again. Do not re-run a red eval to get a green one
+   until you know why it failed.
+4. A red `python` or `widget` is the same command as on your laptop: `ruff check .`, `python -m pytest -q -m "not live"`,
+   `cd widget && npx tsc -b`.
+5. A red `nightly` with no push that day means the model or a policy page changed: run the same replay, compare with the last green
+   night, and read the policy pages (`python policy_index.py --check`). GitHub emails the person who last changed the schedule.
+
 ## For learners
 
 This repository has two parts. The root is the product: the support chat for DemoStore that Claude Code builds in the
