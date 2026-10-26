@@ -1,13 +1,6 @@
-anthropic>=1.12
-python-dotenv
-fastapi
-uvicorn
+-r requirements-runtime.txt
 httpx
 pytest
 ruff
 mypy
 pre-commit
-oracledb
-psycopg[binary]
-paramiko
-fastembed

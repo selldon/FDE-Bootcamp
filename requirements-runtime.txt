@@ -1,0 +1,8 @@
+anthropic>=1.12
+python-dotenv
+fastapi
+uvicorn
+oracledb
+psycopg[binary]
+paramiko
+fastembed

@@ -1,0 +1,25 @@
+# Keeps secrets, data, the labs and the dev tools out of the build.
+.env
+.env.*
+data/*.jsonl
+sandbox/
+widget/node_modules
+widget/dist
+.git
+.gitignore
+.venv
+__pycache__
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.trace
+.vscode
+.claude
+.devcontainer
+builds
+docs
+# tests and one-off scripts are not part of the image
+test_*.py
+conftest.py
+try_*.py
+probe_live.py
