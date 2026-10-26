@@ -1,5 +1,5 @@
 # The checks on every pull request to main (docs/brief-ci.md). The same rules as the pre-commit hook, run by GitHub,
-# so a hook skipped on a laptop does not skip them. No secret and no key in this file; the eval job comes in a later phase.
+# so a hook skipped on a laptop does not skip them. The only secret is handed to the eval job (eval.yml), nowhere else.
 name: checks
 
 on:
@@ -46,3 +46,10 @@ jobs:
           cache-dependency-path: widget/package-lock.json
       - run: npm ci
       - run: npx tsc -b
+
+  # the replay of the 40 conversations with real Claude: only after the cheap checks are green, so a red pull request costs nothing
+  eval:
+    needs: [python, widget]
+    uses: ./.github/workflows/eval.yml
+    secrets:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
