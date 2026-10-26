@@ -120,14 +120,17 @@ valid dates are in `metadata`; the link is `_links.webui`; there is no version h
       Result 2026-10-26: 683 fast tests, ruff, mypy green. The live part (list the real `POL` pages, 16 pages and 4+3+2 sections per type) is left for you, so this box stays open.
 
 ## Phase 6 - the index in PostgreSQL with embeddings (IT21, IT22)
-- [ ] `embedder.py`: `embed(texts)` with fastembed `BAAI/bge-small-en-v1.5` (lazy load, so tests and the app start without the model); `FakeEmbedder` (deterministic, small).
-- [ ] `CREATE EXTENSION vector` in our PostgreSQL (the author said yes; `fastembed` is installed). Two rules for one thing are two pages (1003, 1016): the key of a section is (page id, version, heading).
-- [ ] `policy_index.py`: table `policy_sections` (page id, version, heading, text, market, valid dates, link, embedding, `tsvector`); `rebuild()` upserts by (page id, version, heading), removes the sections of pages and
+- [x] `embedder.py`: `embed(texts)` with fastembed `BAAI/bge-small-en-v1.5` (lazy load, so tests and the app start without the model); `FakeEmbedder` (deterministic, small).
+- [x] `CREATE EXTENSION vector` in our PostgreSQL (the author said yes; `fastembed` is installed). Two rules for one thing are two pages (1003, 1016): the key of a section is (page id, version, heading).
+- [x] `policy_index.py`: table `policy_sections` (page id, version, heading, text, market, valid dates, link, embedding, `tsvector`); `rebuild()` upserts by (page id, version, heading), removes the sections of pages and
       versions no longer returned, in one transaction; the version and dates decide what is stored. Command: `python policy_index.py` (hourly, like `pipeline.py`; no lock yet, same quick-fix). Uses `vector` if Phase 1 found it.
-- [ ] Fast tests (FakeConfluence, FakeEmbedder, an in-memory index with the same interface): rebuild twice -> same index; a changed page replaces its sections; a removed page leaves no sections; a failure in the middle leaves the old index;
+- [x] Fast tests (FakeConfluence, FakeEmbedder, an in-memory index with the same interface): rebuild twice -> same index; a changed page replaces its sections; a removed page leaves no sections; a failure in the middle leaves the old index;
       a new version with a later valid-from is stored next to the old (both are kept, "valid today" decides).
 - [ ] Live check (on request): index the real `POL`, print counts per market, run it again and compare. Restore point first: `pg_dump -t policy_sections` if the table already holds rows.
 - [ ] Check: fast tests green; the live index green once.
+      Fast result 2026-10-26: 694 fast tests, ruff, mypy green. Nothing was run against the real PostgreSQL, Confluence or the model download. The `CREATE EXTENSION IF NOT EXISTS vector`
+      is written into `policy_index.tables()` and runs on the first `python policy_index.py` (your live check), not before; the same run prints counts per market before and after, so run it twice
+      and compare. `pg_dump -t policy_sections` first if the table already holds rows. The live check box and this Check box stay open for you.
 
 ## Phase 7 - the `policy_answer` tool and the chat (B18, IT21)
 - [ ] `policy_answer(question, market)`: searches by meaning (embedding) and by words (full text), **only** in sections of that market valid today (the injectable clock), returns the top sections with text and link, or `no_page`.
