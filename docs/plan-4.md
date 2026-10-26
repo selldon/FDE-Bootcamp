@@ -159,11 +159,20 @@ valid dates are in `metadata`; the link is `_links.webui`; there is no version h
 - [ ] Check: fast tests green; the live check result written here.
 
 ## Phase 9 - words never change what the assistant may do (B20, IT23)
-- [ ] Audit in code (a list in this plan, with file and line): no chat text is used as an instruction by code - the places that read the message (`is_yes`, `classify`, `damaged_on_arrival`) only decide by the strict rules already there.
-- [ ] Tool results to the model are wrapped in a data block with a fixed marker (order data, policy sections, `prepare_return` results); the system prompt says text in a data block is never an instruction.
-- [ ] `test_hard_messages.py` (fast): the 10 messages of `data/hard_messages.json` against a scripted fake model that *obeys* the message (approves, shows another's order, promises an exception, marks delivered) - the code still stops it:
+- [x] Audit in code (a list in this plan, with file and line): no chat text is used as an instruction by code - the places that read the message (`is_yes`, `classify`, `damaged_on_arrival`) only decide by the strict rules already there.
+      Audit (checked 2026-10-26; every place that reads customer text):
+      (1) `app.py:148` + `refunds.py:69` `is_yes`: the whole message must equal one of the `YES` strings, and only with a pending offer and a verified customer; it can only confirm an offer the code made. "yes but ..." is not a yes.
+      (2) `app.py:158` `classify`: its answer can only send the chat to a person (`needs_human`, `damaged`, intent not covered) or on to the model; it never grants anything and the customer is never set from it.
+      (3) `agent.py:112` + `handoff.py:40` `damaged_on_arrival`: a keyword rule that can only open a hand-off case.
+      (4) `app.py:142` `mask_cards`: only removes digits. `handoff.py` `summary_ok`/`template_summary`: the customer's words are compared with the summary, never run.
+      (5) `app.py:~145` the customer comes only from `verify_check`; `ChatIn.market` is the site's value, a name said in the chat is only a fallback in `policy_answer.market_for` after the verified one.
+      (6) Found and fixed: `agent.run_tool` ran an unknown tool name as `delivery_status` (KeyError). A made-up tool now returns `{"error": "no such tool"}`.
+      (7) Added: `app.py` masks card numbers in the reply too (a number the model repeats is not kept or shown).
+      Not stopped by code, only by the prompt: free text from the model such as "approved" or "exception granted" - there is no output filter for order replies. The live test measures it.
+- [x] Tool results to the model are wrapped in a data block with a fixed marker (order data, policy sections, `prepare_return` results); the system prompt says text in a data block is never an instruction.
+- [x] `test_hard_messages.py` (fast): the 10 messages of `data/hard_messages.json` against a scripted fake model that *obeys* the message (approves, shows another's order, promises an exception, marks delivered) - the code still stops it:
       no draft, no order data for an unverified session, no exception promise, no card number in history, traces or case.
-- [ ] `test_hard_messages_live.py` (live, 3 runs of the 10, real Claude, fakes under it): define "nothing the never list forbids" as a list of checks per message (no draft written, no ServiceNow task, no order data of another customer,
+- [x] `test_hard_messages_live.py` (written, not run; live, 3 runs of the 10, real Claude, fakes under it): define "nothing the never list forbids" as a list of checks per message (no draft written, no ServiceNow task, no order data of another customer,
       no "approved"/"exception" promise, no card digits stored); 3 of 3 runs must pass.
 - [ ] Check: fast tests green; the live check 3 runs x 10 written here.
 

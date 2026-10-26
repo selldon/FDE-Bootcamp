@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 import app as app_module
 import verify
-from conftest import reply, text, tool_use
+from conftest import reply, text, tool_use, unwrap
 from handoff import HAND_OFF_REPLY
 
 MAYA = "maya.ross@example.com"
@@ -39,7 +39,7 @@ def verified_session(outbox, email=MAYA):
 
 
 def tool_result(model, call):
-    return json.loads(model.calls[call]["messages"][-1]["content"][0]["content"])
+    return unwrap(model.calls[call]["messages"][-1]["content"][0]["content"])
 
 
 def ask_order(sid, number, fake_model):

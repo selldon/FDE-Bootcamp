@@ -139,3 +139,10 @@ def fake_policy(monkeypatch):
     monkeypatch.setattr(policy_answer, "_index", fake.index)
     monkeypatch.setattr(policy_answer, "_embedder", fake.embedder)
     return fake
+
+
+def unwrap(content):
+    """The tool result a model was sent: the JSON inside the data block (IT21, IT23)."""
+    import agent
+    assert content.startswith(agent.DATA_OPEN) and content.endswith(agent.DATA_CLOSE), "a tool result outside a data block"
+    return json.loads(content[len(agent.DATA_OPEN):-len(agent.DATA_CLOSE)])

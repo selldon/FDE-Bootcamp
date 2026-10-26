@@ -5,7 +5,7 @@ import pytest
 
 import refunds
 from agent import MAX_ROUNDS, answer
-from conftest import reply, text, tool_use
+from conftest import reply, text, tool_use, unwrap
 from handoff import HAND_OFF_REPLY
 
 MAYA = "maya.ross@example.com"
@@ -13,7 +13,7 @@ MAYA = "maya.ross@example.com"
 
 def tool_result(model, call):
     """The tool result the loop sent back to the model on a given call."""
-    return json.loads(model.calls[call]["messages"][-1]["content"][0]["content"])
+    return unwrap(model.calls[call]["messages"][-1]["content"][0]["content"])
 
 
 def test_tool_use_then_final_text(fake_model):

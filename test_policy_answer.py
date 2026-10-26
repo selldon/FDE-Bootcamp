@@ -11,7 +11,7 @@ import policy_answer
 import policy_index
 import refunds
 from confluence import FakeConfluence
-from conftest import reply, text, tool_use
+from conftest import reply, text, tool_use, unwrap
 from embedder import FakeEmbedder
 from test_policy import BASE, page
 
@@ -135,7 +135,7 @@ def test_an_unverified_customer_gets_policy_but_no_order_data(fake_policy, fake_
     _, model, _ = run(fake_model, ask_tool(), reply(tool_use("find_order", {"number": "DS-20417"}, id="t2")),
                       reply(text(f"{UK_LINK}")), market="UK", message="Policy? And where is DS-20417?")
     assert result_of(model)["sections"]
-    assert json.loads(model.calls[2]["messages"][-1]["content"][0]["content"]) == {"error": "customer not verified yet"}
+    assert unwrap(model.calls[2]["messages"][-1]["content"][0]["content"]) == {"error": "customer not verified yet"}
 
 
 def test_the_prompt_and_tool_say_what_the_rules_need():
@@ -167,7 +167,7 @@ def test_chat_without_a_market_asks(fake_policy, fake_model, fresh):
     model = fake_model(reply(text(POLICY_INTENT)), ask_tool(), reply(text("Which country are you in?")))
     out = client.post("/chat", json={"message": QUESTION}).json()
     assert "Which country" in out["reply"]
-    assert json.loads(model.calls[2]["messages"][-1]["content"][0]["content"].split("\n")[1]) == policy_answer.ASK_MARKET
+    assert unwrap(model.calls[2]["messages"][-1]["content"][0]["content"]) == policy_answer.ASK_MARKET
 
 
 def test_chat_policy_reply_that_skipped_the_tool_is_replaced(fake_policy, fake_model, fresh):

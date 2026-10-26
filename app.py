@@ -172,6 +172,7 @@ def _chat(body: ChatIn, session_id: str, session: dict) -> ChatOut:
                 reply = OFFER_REPLY  # B18: a policy reply that did not come from the tool is never sent
     session["offer"], session["failed"], session["handed_off"] = ctx.offer, ctx.failed, ctx.handed_off
     session["market"] = None if verified else ctx.market  # a verified customer's market is read again each turn
+    reply = mask_cards(reply)  # B21: a number the model repeats is never kept or shown either
     if not session["history"]:
         reply = GREETING + "\n\n" + reply
     session["history"] += [

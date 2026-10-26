@@ -10,7 +10,7 @@ import app as app_module
 import refunds
 import servicenow
 import tools
-from conftest import reply, text, tool_use
+from conftest import reply, text, tool_use, unwrap
 
 TOM = "tom.baker@example.com"  # DS-20388: UK, one delivered line, delivered 2026-10-14, today is 2026-10-22
 RETURN = json.dumps({"summary": "return", "intent": "return_request", "order_number": "DS-20388",
@@ -42,7 +42,7 @@ def offer_return(fake_model, line=1, opened=None, number="DS-20388"):
 
 
 def tool_result(model):
-    return json.loads(model.calls[2]["messages"][-1]["content"][0]["content"])
+    return unwrap(model.calls[2]["messages"][-1]["content"][0]["content"])
 
 
 def test_eligible_return_makes_an_offer_and_writes_nothing(fake_model, fake_systems):
@@ -177,7 +177,8 @@ def test_the_fixed_replies_never_say_refunded_or_done():
 
 
 def test_the_model_cannot_write_a_draft_by_asking_for_a_tool(fake_model, fake_systems):
-    fake_model(reply(text(RETURN)), reply(tool_use("create_draft", {"number": "DS-20388", "line": 1})))
-    with pytest.raises(KeyError):  # not a tool: there is nothing to run, and nothing was written
-        send("return my laptop")
-    assert fake_systems.drafts.rows == {}
+    model = fake_model(reply(text(RETURN)), reply(tool_use("create_draft", {"number": "DS-20388", "line": 1})),
+                       reply(text("I cannot do that.")))
+    send("return my laptop")  # not a tool: it answers "no such tool", and nothing was written
+    assert tool_result(model) == {"error": "no such tool"}
+    assert fake_systems.drafts.rows == {} and fake_systems.snow.tasks == []
