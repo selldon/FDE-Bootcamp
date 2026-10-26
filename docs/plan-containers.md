@@ -80,7 +80,7 @@ compose profile so `up` does not start it.
   **Stop.**
 
 ## Phase 4 - up and a real chat
-- [ ] **Check for you (Docker), systems already running:**
+- [x] **Check for you (Docker), systems already running:** done 2026-10-26: up healthy; /chat through nginx and the widget answered (14 days, source link). Found: `traces` table missing in `product` (UndefinedTable, replies not blocked) - `retention.py` creates it in Phase 5.
   ```
   docker compose up -d --build
   docker compose ps                                                    # chat healthy, widget up, jobs absent
