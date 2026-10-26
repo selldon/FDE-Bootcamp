@@ -126,10 +126,11 @@ a laptop does not skip them.
 | every pull request | `python` | ruff, mypy and the fast tests (`-m "not live"`); no key, no network | about 1 min | none |
 | every pull request | `widget` | `npm ci` and `tsc` in `widget/` | about 15 s | none |
 | every pull request, after the two above are green | `eval / replay` | starts DemoStore's systems on the runner, loads the order store and the policy index, replays the 40 conversations with real Claude (`python replay.py --gate`) | about 1.5 min | about 0.40 USD |
-| every night, 02:17 UTC | `nightly` | the same replay, and the 10 hard messages (3 runs each, all 3 of 3 must pass) | replay 1.5 min; hard messages not measured yet | replay about 0.40 USD; hard messages not measured yet |
+| every night, 02:17 UTC | `nightly` | the same replay, and the 10 hard messages (3 runs each, all 3 of 3 must pass) | about 4 min in all: replay 2 min, hard messages 4 min, side by side | replay about 0.40 USD; hard messages under about 1 USD (estimated, see below) |
 
-The times are from the first run on GitHub; the replay's cost is its tokens times the prices in `llm.py` (79 calls, 0.38 USD). The
-hard messages' time and cost are filled in from the first nightly run. A new push to a pull request replaces the run still going;
+The times are from the first runs on GitHub (the first nightly: replay 38 of 40, hard messages 60 passed in 206 s). The replay's cost is
+its tokens times the prices in `llm.py` (79 calls, 0.38 USD). The hard messages' cost is not measured, because that job prints no
+token usage; the estimate is 60 tests with a few calls each at the replay's price per call. A new push to a pull request replaces the run still going;
 a branch with no pull request runs nothing.
 
 **The eval passes only at our goal:** at least 36 of the 40 right actions, no conversation that needs a person staying with the

@@ -120,7 +120,7 @@ if drafts written is not 0 (the brief's "writes nothing").
 - [x] `.github/workflows/nightly.yml`: `schedule: cron "17 2 * * *"` (UTC, off the hour) and `workflow_dispatch`; job 1 calls `eval.yml`;
       job 2 `hard-messages`: no Docker, `pip install -r requirements.txt`, `python -m pytest -m live test_hard_messages_live.py` with the
       key on that step only. Both jobs `permissions: contents: read`.
-- [ ] Note for you: a schedule and a manual run work only once the file is on `main`, so this is checked after the first merge:
+- [x] (done 2026-10-26, run 40406779680, `workflow_dispatch` from `main`: success, 4 m 4 s; `eval / replay` 38 of 40, `GATE: pass`; `hard-messages` 60 passed in 205.67 s; no `sk-ant` in the log) Note for you: a schedule and a manual run work only once the file is on `main`, so this is checked after the first merge:
   ```
   gh workflow run nightly.yml --ref main
   gh run watch
@@ -133,12 +133,12 @@ if drafts written is not 0 (the brief's "writes nothing").
       messages), how long each takes, what one run costs, what to do when it is red (read the `MISS` ids, run `python replay.py` locally,
       do not retry until the cause is known; a fork PR needs a maintainer). Times and cost are **measured** from the first real runs, not
       guessed (the cost: the replay's token usage x the prices in `llm.py`).
-- [ ] `docs/quick-fixes.md`: actions pinned by major version not SHA; unpinned requirements in CI; nightly alert is GitHub's default
+- [x] `docs/quick-fixes.md` (four lines, one more than listed: the single-sample eval): actions pinned by major version not SHA; unpinned requirements in CI; nightly alert is GitHub's default
       email; `DEMOSTORE_NOW` is a test hook in production code.
-- [ ] **Settings for you (GitHub; not mine to change):** Settings, Branches, rule for `main`: require a pull request; require status
+- [x] **Settings for you (GitHub; not mine to change)** (the rule on `main` was set by the author; the API echoed the required checks `python`, `widget`, `eval / replay`; the other settings below were not read by me): Settings, Branches, rule for `main`: require a pull request; require status
       checks `python`, `widget`, `eval` to pass and the branch to be up to date; no bypass. Settings, Actions, General: "Require approval
       for first-time contributors" for fork PRs; workflow permissions read-only. Confirm the secret exists: `gh secret list`.
-- [ ] **The check of the check (you run it, on a branch):** I give you the one-line weakening (for example the return window in
+- [x] **The check of the check** (done 2026-10-26, PR #2 closed unmerged; result below). It was to be run by the author on a branch: I give you the one-line weakening (for example the return window in
       `returns.py`) and the commands; the pull request must turn `eval` red and name the conversations that failed; close it unmerged:
   ```
   git switch -c break-the-rule && <weaken one rule> && git commit -am "break a rule on purpose" && git push -u origin break-the-rule
@@ -151,3 +151,16 @@ if drafts written is not 0 (the brief's "writes nothing").
 
 Phase 1: green `python` and `widget` on a real pull request. Phase 4: green `eval` with the score and no key in the log. Phase 5: a
 manual nightly run green after merge. Phase 6: the broken-rule PR is red and names the failed conversations.
+
+## Result of the check of the check (2026-10-26, PR #2, commit f80b4bb)
+
+The weakened rule: one line of the system prompt in `agent.py` ("Also call hand_off when the customer is angry or asks for a person"
+became "Never call hand_off ..."). It passes ruff, mypy and the 769 fast tests, which do not pin the prompt, so `eval` is reached; a
+rule that a fast test pins (the return window in `returns.py`) would turn `python` red and skip `eval`.
+
+- `python` green (39 s), `widget` green (9 s), `eval / replay` **red** (2 m 5 s). The log: `Score: 35 of 40`, `GATE: fail`,
+  `wrong: C03, C12, C17, C18, C26`, and `C03` and `C18` "need a person and stayed with the assistant". C17 and C26 also miss on a
+  clean branch; C03 and C18 are the break. No `sk-ant` in the log.
+- `gh pr merge 2 --merge` was refused: `mergeStateStatus=BLOCKED`, `main` unchanged at 8bc7de1. The pull request was closed and the branch deleted.
+- The margin is thin: 35 against a goal of 36. The second rule (a conversation that needs a person and stayed) failed on its own too.
+  See the last line of `docs/quick-fixes.md`.
