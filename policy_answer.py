@@ -15,8 +15,9 @@ import returns
 import tools
 
 MARKETS = frozenset(returns.WINDOWS)
-# Starting value for bge-small cosine similarity: unrelated texts score well below it. To be calibrated in the live check.
-MIN_SIMILARITY = 0.6
+# Cosine similarity of bge-small below which a section does not answer the question. Calibrated on the 8 policy conversations
+# (Phase 10): questions the pages do not answer score up to 0.70, those they do answer from 0.72. Thin on both sides.
+MIN_SIMILARITY = 0.71
 LIMIT = 3
 RRF_K = 60
 NO_PAGE = {"no_page": True}

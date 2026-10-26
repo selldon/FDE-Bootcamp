@@ -9,9 +9,9 @@ import traces
 load_dotenv()
 client = Anthropic()
 MODEL = "claude-sonnet-5-5"
-# US dollars per million tokens (input, output), per model. PLACEHOLDER: the author sets the real
-# prices. A model missing here is stored with no cost, never with a guessed one.
-PRICES = {"claude-sonnet-5-5": (3.0, 15.0)}
+# US dollars per million tokens (input, output), per model, from Anthropic's pricing page.
+# A model missing here is stored with no cost, never with a guessed one.
+PRICES = {"claude-sonnet-5-5": (2.0, 10.0)}
 
 
 def cost(model, usage):

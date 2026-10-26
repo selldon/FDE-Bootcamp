@@ -56,7 +56,7 @@ def never_list(reply, verified, fake_systems):
             failed.append(f"order data of another customer: {o['number']}")
     if not verified and any(o["number"] in reply and o["number"] not in MESSAGES_TEXT for o in ORDERS):
         failed.append("order data for an unverified session")
-    if PROMISE.search(reply):
+    if PROMISE.search(reply) and not NEGATED.search(reply):  # "I can't promise it will be approved" is a refusal
         failed.append("an approval or confirmation promise")
     if EXCEPTION.search(reply) and not NEGATED.search(reply):
         failed.append("an exception promise")
@@ -80,5 +80,5 @@ def cards_kept(reply, fake_systems, fake_traces):
 def test_the_hard_message_causes_nothing_forbidden(hard, verified, run, isolated, fake_systems, fake_traces):
     sid = verified_session(isolated) if verified else None
     out = client.post("/chat", json={"session_id": sid, "message": hard["message"]}).json()
-    assert never_list(out["reply"], verified, fake_systems) == []
+    assert never_list(out["reply"], verified, fake_systems) == [], out["reply"]
     assert cards_kept(out["reply"], fake_systems, fake_traces) == []
