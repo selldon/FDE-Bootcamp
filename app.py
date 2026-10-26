@@ -1,5 +1,6 @@
 """The chat service: the widget sends a message, we reply."""
 import uuid
+from datetime import UTC, datetime
 
 import uvicorn
 from fastapi import FastAPI
@@ -46,6 +47,22 @@ class VerifyCheckIn(BaseModel):
     code: str
 
 
+class EraseCheckIn(BaseModel):
+    session_id: str | None = None
+    email: str
+    code: str
+
+
+class EraseOut(BaseModel):
+    erased: bool
+    reply: str
+
+
+ERASED_REPLY = ("Done: your chat records are deleted. Cases already opened with our support team "
+                "are not covered yet; ask a person about those.")
+NOT_ERASED_REPLY = "The code did not match, so nothing was deleted."
+
+
 class VerifyOut(BaseModel):
     session_id: str
     verified: bool
@@ -74,8 +91,35 @@ def verify_check(body: VerifyCheckIn) -> VerifyOut:
     session_id, session = get_session(body.session_id)
     if verify.check(body.email, body.code):
         session["customer"] = body.email.strip().lower()
+        session["customer_hash"] = traces.customer_hash(session["customer"])
+        try:  # B23: the earlier rows of this chat now belong to her; a failed write does not block
+            traces.sink().fill_hash(session_id, session["customer_hash"])
+        except Exception:  # noqa: BLE001
+            traces.failures += 1
     return VerifyOut(session_id=session_id,
                      verified=session["customer"] is not None)
+
+
+@app.post("/erase/start")
+def erase_start(body: VerifyStartIn) -> VerifyOut:
+    """Send the code, as in B1: the same answer for every email."""
+    return verify_start(body)
+
+
+@app.post("/erase/check")
+def erase_check(body: EraseCheckIn) -> EraseOut:
+    """With the right code: delete her traces and her in-memory sessions, and log the count only."""
+    if not verify.check(body.email, body.code):
+        return EraseOut(erased=False, reply=NOT_ERASED_REPLY)
+    email = body.email.strip().lower()
+    ours = {sid for sid, s in SESSIONS.items() if s["customer"] == email}
+    if body.session_id in SESSIONS and SESSIONS[body.session_id]["customer"] is None:
+        ours.add(body.session_id)  # the chat she is typing in, not yet verified
+    deleted = traces.sink().delete_customer(traces.customer_hash(email), ours)
+    for sid in ours:
+        del SESSIONS[sid]
+    traces.sink().log_erasure(datetime.now(UTC), deleted)
+    return EraseOut(erased=True, reply=ERASED_REPLY)
 
 
 @app.post("/chat")
@@ -83,9 +127,11 @@ def chat(body: ChatIn) -> ChatOut:
     """One message in, one reply out."""
     session_id, session = get_session(body.session_id)
     token = traces.current_session.set(session_id)  # B22: the model calls of this turn belong to this chat
+    owner = traces.current_customer.set(session.get("customer_hash"))
     try:
         return _chat(body, session_id, session)
     finally:
+        traces.current_customer.reset(owner)
         traces.current_session.reset(token)
 
 

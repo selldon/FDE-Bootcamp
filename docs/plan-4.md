@@ -97,14 +97,17 @@ Answered 2026-10-26:
       Result 2026-10-26: 658 fast tests, ruff, mypy green. Nothing was run against the real PostgreSQL or Claude. Decision 1 (trace failure does not block) is implemented as written; `llm.PRICES` holds a placeholder price for the author to set.
 
 ## Phase 4 - retention and erasure (B23, IT26)
-- [ ] `traces.customer_hash`: HMAC-SHA256 of the lower-cased email with `config.trace_key()`; set on `/verify/check` success, and the earlier rows of that session are filled then.
-- [ ] `retention.py`: `purge(older_than_days=90, now)` deletes traces older than 90 days (injectable clock); a daily command `python retention.py`.
-- [ ] Erasure: `/erase/start` and `/erase/check` reuse `verify` (the code is sent to the email and checked as in B1); on success delete her traces (by hash and by her session ids), drop her in-memory
+- [x] `traces.customer_hash`: HMAC-SHA256 of the lower-cased email with `config.trace_key()`; set on `/verify/check` success, and the earlier rows of that session are filled then.
+- [x] `retention.py`: `purge(older_than_days=90, now)` deletes traces older than 90 days (injectable clock); a daily command `python retention.py`.
+- [x] Erasure: `/erase/start` and `/erase/check` reuse `verify` (the code is sent to the email and checked as in B1); on success delete her traces (by hash and by her session ids), drop her in-memory
       sessions, and write a row in `erasures` (time, number of rows deleted - no email, no hash). The reply says what was done and that ServiceNow cases are not covered yet (OQ-S4-1).
-- [ ] Fast tests: 89 days kept, 91 days deleted, exactly 90 by a written rule; erasure by a verified email deletes only her rows; an unverified or wrong code deletes nothing; the log row holds no personal data;
+- [x] Fast tests: 89 days kept, 91 days deleted, exactly 90 by a written rule; erasure by a verified email deletes only her rows; an unverified or wrong code deletes nothing; the log row holds no personal data;
       the hash is HMAC (a different key gives a different hash; the plain sha256 of the email never appears); erasure twice is safe; a restart (empty `SESSIONS`) still finds her rows by hash.
 - [ ] Live check (on request, our PostgreSQL only, own table names): write traces, purge, erase, read back; row counts as expected. Restore point first: `pg_dump -t traces` outside git, said in the message.
 - [ ] Check: fast tests green; the live check green once.
+      Written, not run (on request): `test_retention_live.py` uses temporary tables `traces_check` / `erasures_check`, so it needs no `pg_dump`. The first real
+      run of `python retention.py` deletes rows from the real `traces`: `pg_dump -t traces` to a file outside git first.
+      Fast result 2026-10-26: 668 fast tests, ruff, mypy green. Live check and the Check box stay open for the author.
 
 ## Phase 5 - read the policy pages, cut them into sections (IT21, IT22)
 Changed after Phase 1: one list call `GET /rest/api/content?spaceKey=POL&type=page&limit=100` returns all 16 pages; the body is Markdown (`##` headings); market and
