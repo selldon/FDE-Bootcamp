@@ -105,7 +105,7 @@ def systems(s):
         say(BAD, "our PostgreSQL", f"{type(e).__name__}: {str(e).splitlines()[0][:90]}")
     checks = [("Mailpit (one-time codes)", s.get("MAILPIT_URL", "http://127.0.0.1:8025") + "/api/v1/info", None),
               ("ServiceNow stand-in", s.get("SERVICENOW_URL", "http://127.0.0.1:8020") + "/live", None),
-              ("Atlas stand-in", s.get("ATLAS_URL", "http://127.0.0.1:8030") + "/products", None),
+              ("Atlas stand-in", s.get("ATLAS_URL", "http://127.0.0.1:8030") + "/products?name=Aero%2014", None),
               ("Confluence stand-in", s.get("CONFLUENCE_URL", "http://127.0.0.1:8040") + "/rest/api/content?spaceKey=POL", None)]
     for what, url, auth in checks:
         try:
