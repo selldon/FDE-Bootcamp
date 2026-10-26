@@ -49,7 +49,7 @@ if drafts written is not 0 (the brief's "writes nothing").
   - no secrets anywhere in this file; no key in the environment.
 - [x] Check (I run): the same ruff, mypy, pytest and tsc commands pass on the branch; both files parse as YAML (and `actionlint` if
       installed). Fix whatever the full-repo ruff/mypy run finds that pre-commit's per-file run did not.
-- [ ] **Check for you (GitHub):** push the branch and open a pull request; the checks `python` and `widget` appear and go green.
+- [x] **Check for you (GitHub):** done 2026-10-26, PR #1: `python` and `widget` green (the first run failed on `TRACE_HMAC_KEY`; fixed in conftest.py, not in the workflow). Push the branch and open a pull request; the checks `python` and `widget` appear and go green.
   ```
   git push -u origin ci-checks
   gh pr create --base main --head ci-checks --title "CI: checks on every pull request" --body "Phase 1: fast checks"
@@ -59,13 +59,13 @@ if drafts written is not 0 (the brief's "writes nothing").
 
 ## Phase 2 - the gate and the clock, in code (offline)
 
-- [ ] `replay.py`: a pure `gate(runs, drafts)` that returns the failures: score below `GOAL = 36`, any conversation that needed a person
+- [x] `replay.py`: a pure `gate(runs, drafts)` that returns the failures: score below `GOAL = 36`, any conversation that needed a person
       and stayed, any draft written. `python replay.py --gate` prints `GATE: pass` or `GATE: fail` with the `MISS` ids and the stayed
       conversations, and exits 1 on fail. Without `--gate` the laptop behaviour is unchanged (exit 0).
-- [ ] `pipeline.py` `main` and `tools.clock` read `DEMOSTORE_NOW` (one small helper, one place); unset = today's behaviour.
-- [ ] Fast tests in `test_replay.py` (the gate: 36 passes, 35 fails, a stayed conversation fails, a draft fails) and for the clock
+- [x] `pipeline.run` and `tools.clock` read `DEMOSTORE_NOW` through `config.now()` (one helper, one place); unset = today's behaviour.
+- [x] Fast tests in `test_replay.py` (the gate: 36 passes, 35 fails, a stayed conversation fails, a draft fails) and for the clock
       (set = fixed instant, unset = wall clock). Each names the brief line it serves.
-- [ ] Check (I run): fast tests, ruff, mypy green. **Stop.**
+- [x] Check (I run): fast tests (769), ruff, mypy green. **Stop.**
 
 ## Phase 3 - the replay against the systems (you run it on your laptop first)
 

@@ -136,3 +136,15 @@ class _Files:
 
     def __exit__(self, *_):
         return False
+
+
+def test_the_pipeline_uses_the_pinned_clock(monkeypatch):
+    """Brief-ci: on a runner the carrier's files are old; with DEMOSTORE_NOW set the freshness check runs on that instant."""
+    old = "tracking,status,place,date\nEP-1,in transit,Leeds depot,2020-01-01\n"
+    pinned = "2020-01-01T10:00:00+00:00"
+    with pytest.raises(pipeline.PipelineError, match="news fresh"):
+        pipeline.run(store.FakeStore(), orders()[:1], files(old))
+    monkeypatch.setenv("DEMOSTORE_NOW", pinned)
+    db = store.FakeStore()
+    assert pipeline.run(db, orders()[:1], files(old)) == (1, 1)
+    assert db.watermark() == datetime(2020, 1, 1, 10, 0, tzinfo=UTC)

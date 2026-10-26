@@ -1,6 +1,11 @@
-"""Replay the 40 labeled conversations through the agent and score them."""
+"""Replay the 40 labeled conversations through the agent and score them.
+
+    python replay.py           score and list (exit 0)
+    python replay.py --gate    also decide: exit 1 below the goal, with a conversation left with the assistant, or with a draft
+"""
 import json
 import re
+import sys
 from concurrent.futures import ThreadPoolExecutor
 
 import drafts
@@ -19,6 +24,7 @@ DEFAULT_CUSTOMER = "maya.ross@example.com"
 # read-only account. The policy pages are read from the real index.
 LATER = {"answer_product", "check_buyer_role"}
 PAGE = re.compile(r"/pages/(\d+)")
+GOAL = 36  # G1: at least 36 of the 40 labeled conversations end in the right action
 
 
 def score(label):
@@ -78,7 +84,22 @@ def play(chat):
     return {**chat, "expected": expected(chat, key), "taken": action, "reply": result.reply}
 
 
-def main():
+def gate(runs, drafts):
+    """Why the replay is not good enough: an empty list means it passes (G1, and the replay writes nothing)."""
+    failures = []
+    right = sum(r["taken"] == r["expected"] for r in runs)
+    if right < GOAL:
+        missed = ", ".join(r["id"] for r in runs if r["taken"] != r["expected"])
+        failures.append(f"score {right} of {len(runs)}, the goal is {GOAL}; wrong: {missed}")
+    for r in runs:
+        if r["needs_human"] and r["taken"] != "hand_off":
+            failures.append(f"{r['id']} needs a person and stayed with the assistant")
+    if drafts:
+        failures.append(f"{drafts} draft(s) written; the replay must write none")
+    return failures
+
+
+def main(argv=()):
     fake_drafts, snow = drafts.FakeDrafts(), servicenow.FakeServiceNow()
     traces.set_sink(traces.FakeTraces())  # the replay writes no rows into the real table
     refunds.set_systems(None, fake_drafts, snow)  # Ledgerline stays the real, read-only copy
@@ -102,7 +123,14 @@ def main():
     print(f"Needed a person but stayed with the assistant: {len(stayed)}")
     for r in stayed:
         print(f"  {r['id']}: {r['message']}\n    -> {r['reply']}")
+    if "--gate" in argv:
+        failures = gate(runs, len(fake_drafts.rows))
+        print("\nGATE: " + ("pass" if not failures else "fail"))
+        for failure in failures:
+            print(f"  {failure}")
+        return 1 if failures else 0
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main(sys.argv[1:]))
