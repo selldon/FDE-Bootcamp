@@ -8,7 +8,7 @@ A support chat for DemoStore, an online store for IT hardware. Python 3.12 (Fast
 - Every model call goes through `llm.py`. The model name lives in one constant there.
 - Anything quick that is not the right way goes into `docs/quick-fixes.md`.
 - A refund is only ever a draft that a person approves.
-- DemoStore's systems run in containers outside this repo: the Ledgerline copy, the carrier's SFTP server, our
+- DemoStore's systems run in containers from sandbox/systems/: the Ledgerline copy, the carrier's SFTP server, our
   PostgreSQL, ServiceNow and Confluence. Their addresses are in `.env`. Never start, stop or change them.
 - Ledgerline is read through the read-only account. The only write is a return draft into `LL_RTN_REQ_STG` through
   the writer account. Nothing else writes to Ledgerline.

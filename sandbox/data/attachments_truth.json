@@ -1,0 +1,242 @@
+[
+ {
+  "id": "r01",
+  "customer": "emma.clark@example.com",
+  "invoice": "data/attachments/r01_invoice.pdf",
+  "photo": "data/attachments/r01_photo.jpg",
+  "fields": {
+   "order_number": "DS-20489",
+   "invoice_date": "2026-10-17",
+   "item": "Nova 32 monitor",
+   "total": "394.80",
+   "currency": "GBP",
+   "product_type": "monitor",
+   "damage_visible": true
+  },
+  "decision": "ok"
+ },
+ {
+  "id": "r02",
+  "customer": "tom.baker@example.com",
+  "invoice": "data/attachments/r02_invoice.pdf",
+  "photo": "data/attachments/r02_photo.jpg",
+  "fields": {
+   "order_number": "DS-20388",
+   "invoice_date": "2026-10-09",
+   "item": "Aero 14 laptop",
+   "total": "1558.80",
+   "currency": "GBP",
+   "product_type": "laptop",
+   "damage_visible": true
+  },
+  "decision": "ok"
+ },
+ {
+  "id": "r03",
+  "customer": "jack.wilson@example.com",
+  "invoice": "data/attachments/r03_invoice.pdf",
+  "photo": "data/attachments/r03_photo.jpg",
+  "fields": {
+   "order_number": "DS-20419",
+   "invoice_date": "2026-10-09",
+   "item": "Nova 32 monitor",
+   "total": "394.80",
+   "currency": "EUR",
+   "product_type": "monitor",
+   "damage_visible": true
+  },
+  "decision": "ok"
+ },
+ {
+  "id": "r04",
+  "customer": "sam.lee@example.com",
+  "invoice": "data/attachments/r04_invoice.pdf",
+  "photo": "data/attachments/r04_photo.jpg",
+  "fields": {
+   "order_number": "DS-20433",
+   "invoice_date": "2026-10-16",
+   "item": "Aero 14 Pro laptop",
+   "total": "2098.80",
+   "currency": "GBP",
+   "product_type": "laptop",
+   "damage_visible": true
+  },
+  "decision": "ok"
+ },
+ {
+  "id": "r05",
+  "customer": "giulia.romano@example.com",
+  "invoice": "data/attachments/r05_invoice.pdf",
+  "photo": "data/attachments/r05_photo.jpg",
+  "fields": {
+   "order_number": "DS-20391",
+   "invoice_date": "2026-10-09",
+   "item": "Keyboard K2",
+   "total": "96.38",
+   "currency": "EUR",
+   "product_type": "keyboard",
+   "damage_visible": true
+  },
+  "decision": "ok"
+ },
+ {
+  "id": "r06",
+  "customer": "chiara.ricci@example.com",
+  "invoice": "data/attachments/r06_invoice.pdf",
+  "photo": "data/attachments/r06_photo.jpg",
+  "fields": {
+   "order_number": "DS-20553",
+   "invoice_date": "2026-10-09",
+   "item": "Nova 27 monitor",
+   "total": "394.80",
+   "currency": "EUR",
+   "product_type": "monitor",
+   "damage_visible": true
+  },
+  "decision": "ok"
+ },
+ {
+  "id": "r07",
+  "customer": "chloe.moreau@example.com",
+  "invoice": "data/attachments/r07_invoice.pdf",
+  "photo": "data/attachments/r07_photo.jpg",
+  "fields": {
+   "order_number": "DS-20510",
+   "invoice_date": "2026-10-19",
+   "item": "Laser printer P5",
+   "total": "298.80",
+   "currency": "EUR",
+   "product_type": "printer",
+   "damage_visible": true
+  },
+  "decision": "ok"
+ },
+ {
+  "id": "r08",
+  "customer": "elena.greco@example.com",
+  "invoice": "data/attachments/r08_invoice.pdf",
+  "photo": "data/attachments/r08_photo.jpg",
+  "fields": {
+   "order_number": "DS-20512",
+   "invoice_date": "2026-10-09",
+   "item": "Aero 14 laptop",
+   "total": "1558.80",
+   "currency": "GBP",
+   "product_type": "laptop",
+   "damage_visible": true
+  },
+  "decision": "ok"
+ },
+ {
+  "id": "r09",
+  "customer": "marta.costa@example.com",
+  "invoice": "data/attachments/r09_invoice.pdf",
+  "photo": "data/attachments/r09_photo.jpg",
+  "fields": {
+   "order_number": "DS-20599",
+   "invoice_date": "2026-10-09",
+   "item": "Aero 14 laptop",
+   "total": "1545.81",
+   "currency": "EUR",
+   "product_type": "laptop",
+   "damage_visible": true
+  },
+  "decision": "person"
+ },
+ {
+  "id": "r10",
+  "customer": "felix.braun@example.com",
+  "invoice": "data/attachments/r10_invoice.pdf",
+  "photo": "data/attachments/r10_photo.jpg",
+  "fields": {
+   "order_number": "DS-20530",
+   "invoice_date": "2026-10-15",
+   "item": "Nova 27 monitor",
+   "total": "355.32",
+   "currency": "USD",
+   "product_type": "monitor",
+   "damage_visible": true
+  },
+  "decision": "person"
+ },
+ {
+  "id": "r11",
+  "customer": "sofia.marino@example.com",
+  "invoice": "data/attachments/r11_invoice.pdf",
+  "photo": "data/attachments/r11_photo.jpg",
+  "fields": {
+   "order_number": "DS-20575",
+   "invoice_date": "2026-10-02",
+   "item": "Nova 32 monitor",
+   "total": "391.51",
+   "currency": "EUR",
+   "product_type": "monitor",
+   "damage_visible": true
+  },
+  "decision": "person"
+ },
+ {
+  "id": "r12",
+  "customer": "lea.schmidt@example.com",
+  "invoice": "data/attachments/r12_invoice.pdf",
+  "photo": "data/attachments/r12_photo.jpg",
+  "fields": {
+   "order_number": "DS-20502",
+   "invoice_date": "2026-10-19",
+   "item": "Nova 27 monitor",
+   "total": "355.32",
+   "currency": "EUR",
+   "product_type": "monitor",
+   "damage_visible": true
+  },
+  "decision": "person"
+ },
+ {
+  "id": "r13",
+  "customer": "jules.garnier@example.com",
+  "invoice": "data/attachments/r13_invoice.pdf",
+  "photo": "data/attachments/r13_photo.jpg",
+  "fields": {
+   "order_number": "DS-20566",
+   "invoice_date": "2026-10-09",
+   "item": "Aero 14 laptop",
+   "total": "1558.80",
+   "currency": "GBP",
+   "product_type": null,
+   "damage_visible": null
+  },
+  "decision": "person"
+ },
+ {
+  "id": "r14",
+  "customer": "ines.dubois@example.com",
+  "invoice": "data/attachments/r14_invoice.pdf",
+  "photo": "data/attachments/r14_photo.jpg",
+  "fields": {
+   "order_number": "DS-20481",
+   "invoice_date": "2026-10-18",
+   "item": "Nova 24 monitor",
+   "total": "783.02",
+   "currency": "EUR",
+   "product_type": "keyboard",
+   "damage_visible": true
+  },
+  "decision": "person"
+ },
+ {
+  "id": "r15",
+  "customer": "olivia.hall@example.com",
+  "invoice": "data/attachments/r15_invoice.pdf",
+  "photo": "data/attachments/r15_photo.jpg",
+  "fields": {
+   "order_number": "DS-20417",
+   "invoice_date": "2026-10-14",
+   "item": "Aero 14 laptop",
+   "total": "1558.80",
+   "currency": "GBP",
+   "product_type": "laptop",
+   "damage_visible": true
+  },
+  "decision": "person"
+ }
+]

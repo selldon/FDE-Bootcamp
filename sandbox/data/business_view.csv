@@ -1,0 +1,307 @@
+number,opened_at,u_market,opened_for,transcript
+IMS0001005,2026-04-01 18:53:00,IT,anna.weber@example.com,"Anna Weber: I buy for my small office. Do you give a discount if I order 10 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001006,2026-04-01 20:51:00,US,lena.fischer@example.com,"Lena Fischer: We have a company account. What is our price for 10 Mouse M3s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001011,2026-04-02 08:02:00,FR,ben.taylor@example.com,"Ben Taylor: I buy for my small office. Do you give a discount if I order 10 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003041,2026-04-02 12:00:00,DE,jonas.weber@example.com,"Jonas Weber: We need 20 Aero 14 laptops for a new office. Can you hold them for a week?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003042,2026-04-05 01:00:00,US,felix.braun@example.com,"Felix Braun: Please send a copy of the invoice for order DS-19497, our accounts team needs it.
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001065,2026-04-07 02:16:00,DE,oliver.smith@example.com,"Oliver Smith: We have a company account. What is our price for 10 Nova 24 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003043,2026-04-07 12:00:00,DE,ines.dubois@example.com,"Ines Dubois: Please send a copy of the invoice for order DS-19776, our accounts team needs it.
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001079,2026-04-08 07:47:00,DE,paul.martin@example.com,"Paul Martin: We have a company account. What is our price for 5 Wi-Fi router R6s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001090,2026-04-09 06:36:00,US,marco.bianchi@example.com,"Marco Bianchi: I buy for my small office. Do you give a discount if I order 20 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003044,2026-04-09 23:00:00,DE,ines.dubois@example.com,"Ines Dubois: Who approves orders above the limit on our company account?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001113,2026-04-11 07:30:00,IT,sofia.ricci@example.com,"Sofia Ricci: I buy for my small office. Do you give a discount if I order 20 monitors? You can call me on +39 02 0000 0022.
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001115,2026-04-11 11:28:00,UK,tom.baker@example.com,"Tom Baker: We have a company account. What is our price for 10 Keyboard K2s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001118,2026-04-11 18:31:00,DE,chloe.martin@example.com,"Chloe Martin: We have a company account. What is our price for 20 Headset H5s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003045,2026-04-12 07:00:00,US,felix.braun@example.com,"Felix Braun: Please send a copy of the invoice for order DS-20363, our accounts team needs it.
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001129,2026-04-12 17:18:00,DE,ines.dubois@example.com,"Ines Dubois: I buy for my small office. Do you give a discount if I order 10 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001151,2026-04-14 15:59:00,UK,tom.baker@example.com,"Tom Baker: We have a company account. What is our price for 10 SSD 1 TBs?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003046,2026-04-15 00:00:00,DE,ines.dubois@example.com,"Ines Dubois: Please send a copy of the invoice for order DS-20280, our accounts team needs it.
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001172,2026-04-16 12:35:00,US,lena.fischer@example.com,"Lena Fischer: We have a company account. What is our price for 20 Mouse M3s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001174,2026-04-16 17:04:00,UK,maya.ross@example.com,"Maya Ross: I buy for my small office. Do you give a discount if I order 10 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001176,2026-04-16 20:58:00,US,sofia.ricci@example.com,"Sofia Ricci: I buy for my small office. Do you give a discount if I order 10 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003047,2026-04-17 07:00:00,DE,ines.dubois@example.com,"Ines Dubois: Please send a copy of the invoice for order DS-20338, our accounts team needs it.
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001185,2026-04-17 15:30:00,DE,paul.martin@example.com,"Paul Martin: We have a company account. What is our price for 10 Keyboard K2s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003048,2026-04-19 17:00:00,DE,ines.dubois@example.com,"Ines Dubois: We need 5 Mouse M3s for a new office. Can you hold them for a week?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001209,2026-04-19 19:04:00,FR,ben.taylor@example.com,"Ben Taylor: We have a company account. What is our price for 5 Volt 8 graphics cards?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001233,2026-04-21 21:58:00,,lena.fischer@example.com,"Lena Fischer: I buy for my small office. Do you give a discount if I order 10 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003049,2026-04-22 09:00:00,US,felix.braun@example.com,"Felix Braun: Please send a copy of the invoice for order DS-18843, our accounts team needs it.
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001241,2026-04-22 14:48:00,,sam.lee@example.com,"Sam Lee: I buy for my small office. Do you give a discount if I order 20 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001244,2026-04-22 20:49:00,DE,paul.martin@example.com,"Paul Martin: I buy for my small office. Do you give a discount if I order 5 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001251,2026-04-23 12:05:00,FR,sofia.ricci@example.com,"Sofia Ricci: I buy for my small office. Do you give a discount if I order 10 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001253,2026-04-23 15:37:00,DE,paul.martin@example.com,"Paul Martin: I buy for my small office. Do you give a discount if I order 20 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003050,2026-04-24 18:00:00,DE,jonas.weber@example.com,"Jonas Weber: Who approves orders above the limit on our company account?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001279,2026-04-25 23:15:00,FR,sofia.ricci@example.com,"Sofia Ricci: I buy for my small office. Do you give a discount if I order 20 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001286,2026-04-26 13:45:00,IT,giulia.conti@example.com,"Giulia Conti: We have a company account. What is our price for 10 Nova 27 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003051,2026-04-27 05:00:00,DE,ines.dubois@example.com,"Ines Dubois: We need 5 Power supply 850 Ws for a new office. Can you hold them for a week?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001311,2026-04-28 18:50:00,DE,paul.martin@example.com,"Paul Martin: I buy for my small office. Do you give a discount if I order 5 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003052,2026-04-29 16:00:00,US,felix.braun@example.com,"Felix Braun: Who approves orders above the limit on our company account?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001326,2026-04-30 02:46:00,US,marco.bianchi@example.com,"Marco Bianchi: I buy for my small office. Do you give a discount if I order 20 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001328,2026-04-30 06:11:00,UK,sam.lee@example.com,"Sam Lee: We have a company account. What is our price for 10 Aero 14 Pro laptops?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003053,2026-05-02 01:00:00,US,felix.braun@example.com,"Felix Braun: Please send a copy of the invoice for order DS-18483, our accounts team needs it.
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003054,2026-05-04 11:00:00,DE,jonas.weber@example.com,"Jonas Weber: We need 10 Aero 14 laptops for a new office. Can you hold them for a week?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003055,2026-05-07 04:00:00,US,felix.braun@example.com,"Felix Braun: Our contract price for the Wi-Fi router R6 is not applied in the basket. Can you check?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003056,2026-05-09 15:00:00,US,felix.braun@example.com,"Felix Braun: Who approves orders above the limit on our company account?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003057,2026-05-11 23:00:00,US,felix.braun@example.com,"Felix Braun: Please send a copy of the invoice for order DS-18248, our accounts team needs it.
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001469,2026-05-12 17:34:00,US,giulia.conti@example.com,"Giulia Conti: We have a company account. What is our price for 20 Webcam C2s? You can call me on +1 202 555 0916.
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001479,2026-05-13 14:02:00,DE,paul.martin@example.com,"Paul Martin: I buy for my small office. Do you give a discount if I order 10 monitors? My card is 4111 1111 1111 1111 if you need it.
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003058,2026-05-14 11:00:00,US,felix.braun@example.com,"Felix Braun: Who approves orders above the limit on our company account?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003059,2026-05-16 18:00:00,DE,ines.dubois@example.com,"Ines Dubois: Who approves orders above the limit on our company account?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003060,2026-05-19 07:00:00,DE,jonas.weber@example.com,"Jonas Weber: Please send a copy of the invoice for order DS-18893, our accounts team needs it.
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003061,2026-05-21 22:00:00,DE,jonas.weber@example.com,"Jonas Weber: Who approves orders above the limit on our company account?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001598,2026-05-24 01:53:00,UK,maya.ross@example.com,"Maya Ross: I buy for my small office. Do you give a discount if I order 20 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003062,2026-05-24 06:00:00,DE,jonas.weber@example.com,"Jonas Weber: Our contract price for the Mouse M3 is not applied in the basket. Can you check?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001604,2026-05-24 14:21:00,FR,giulia.conti@example.com,"Giulia Conti: We have a company account. What is our price for 20 Webcam C2s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001626,2026-05-26 13:11:00,US,oliver.smith@example.com,"Oliver Smith: We have a company account. What is our price for 20 Nova 24 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001627,2026-05-26 15:03:00,UK,sofia.ricci@example.com,"Sofia Ricci: We have a company account. What is our price for 20 Power supply 850 Ws?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003063,2026-05-26 16:00:00,US,felix.braun@example.com,"Felix Braun: Who approves orders above the limit on our company account?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003064,2026-05-29 03:00:00,DE,ines.dubois@example.com,"Ines Dubois: Please send a copy of the invoice for order DS-18721, our accounts team needs it.
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001675,2026-05-30 20:51:00,FR,oliver.smith@example.com,"Oliver Smith: We have a company account. What is our price for 10 Webcam C2s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003065,2026-05-31 11:00:00,DE,ines.dubois@example.com,"Ines Dubois: Who approves orders above the limit on our company account?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001708,2026-06-02 18:33:00,US,luca.ferri@example.com,"Luca Ferri: We have a company account. What is our price for 5 Wi-Fi router R6s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003066,2026-06-03 03:00:00,DE,ines.dubois@example.com,"Ines Dubois: Who approves orders above the limit on our company account?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001736,2026-06-05 06:03:00,IT,giulia.conti@example.com,"Giulia Conti: We have a company account. What is our price for 20 Headset H5s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003067,2026-06-05 15:00:00,DE,ines.dubois@example.com,"Ines Dubois: Please send a copy of the invoice for order DS-19870, our accounts team needs it.
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001744,2026-06-05 22:41:00,US,marco.bianchi@example.com,"Marco Bianchi: We have a company account. What is our price for 5 Aero 14 laptops?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001752,2026-06-06 15:46:00,UK,sam.lee@example.com,"Sam Lee: We have a company account. What is our price for 20 Volt 8 graphics cards?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003068,2026-06-08 02:00:00,DE,jonas.weber@example.com,"Jonas Weber: Who approves orders above the limit on our company account?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001768,2026-06-08 02:08:00,US,luca.ferri@example.com,"Luca Ferri: I buy for my small office. Do you give a discount if I order 10 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001772,2026-06-08 10:43:00,DE,ines.dubois@example.com,"Ines Dubois: We have a company account. What is our price for 20 Aero 14 laptops?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001791,2026-06-10 02:27:00,UK,sam.lee@example.com,"Sam Lee: We have a company account. What is our price for 20 Headset H5s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003069,2026-06-10 09:00:00,DE,ines.dubois@example.com,"Ines Dubois: We need 5 Keyboard K2s for a new office. Can you hold them for a week?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001815,2026-06-12 05:07:00,US,lea.schmidt@example.com,"Lea Schmidt: I buy for my small office. Do you give a discount if I order 5 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001822,2026-06-12 19:56:00,UK,tom.baker@example.com,"Tom Baker: We have a company account. What is our price for 10 SSD 1 TBs?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003070,2026-06-12 20:00:00,DE,ines.dubois@example.com,"Ines Dubois: Our contract price for the Aero 14 laptop is not applied in the basket. Can you check?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003071,2026-06-15 06:00:00,US,felix.braun@example.com,"Felix Braun: Please send a copy of the invoice for order DS-19489, our accounts team needs it.
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001850,2026-06-15 08:01:00,UK,anna.weber@example.com,"Anna Weber: I buy for my small office. Do you give a discount if I order 5 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001860,2026-06-16 04:41:00,UK,maya.ross@example.com,"Maya Ross: We have a company account. What is our price for 10 Wi-Fi router R6s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001879,2026-06-17 21:00:00,DE,paul.martin@example.com,"Paul Martin: I buy for my small office. Do you give a discount if I order 20 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003072,2026-06-17 21:00:00,DE,ines.dubois@example.com,"Ines Dubois: Who approves orders above the limit on our company account?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003073,2026-06-20 10:00:00,US,felix.braun@example.com,"Felix Braun: Our contract price for the Aero 14 Pro laptop is not applied in the basket. Can you check?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0001916,2026-06-21 02:50:00,UK,giulia.conti@example.com,"Giulia Conti: We have a company account. What is our price for 20 Keyboard K2s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0001918,2026-06-21 06:59:00,UK,maya.ross@example.com,"Maya Ross: We have a company account. What is our price for 20 Webcam C2s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003074,2026-06-22 16:00:00,DE,jonas.weber@example.com,"Jonas Weber: Who approves orders above the limit on our company account?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003075,2026-06-25 03:00:00,DE,ines.dubois@example.com,"Ines Dubois: Our contract price for the Webcam C2 is not applied in the basket. Can you check?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003076,2026-06-27 14:00:00,US,felix.braun@example.com,"Felix Braun: Please send a copy of the invoice for order DS-18840, our accounts team needs it.
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0002009,2026-06-29 08:11:00,IT,oliver.smith@example.com,"Oliver Smith: We have a company account. What is our price for 20 SSD 1 TBs?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003077,2026-06-30 00:00:00,US,felix.braun@example.com,"Felix Braun: Please send a copy of the invoice for order DS-20163, our accounts team needs it.
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0002034,2026-07-01 12:44:00,IT,chloe.martin@example.com,"Chloe Martin: I buy for my small office. Do you give a discount if I order 10 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002040,2026-07-02 01:24:00,DE,paul.martin@example.com,"Paul Martin: We have a company account. What is our price for 20 Nova 24 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003078,2026-07-02 15:00:00,US,felix.braun@example.com,"Felix Braun: Our contract price for the Nova 24 monitor is not applied in the basket. Can you check?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0002063,2026-07-04 02:08:00,US,lea.schmidt@example.com,"Lea Schmidt: We have a company account. What is our price for 20 Nova 24 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003079,2026-07-05 00:00:00,DE,ines.dubois@example.com,"Ines Dubois: Our contract price for the Nova 27 monitor is not applied in the basket. Can you check?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0002090,2026-07-06 11:38:00,DE,paul.martin@example.com,"Paul Martin: We have a company account. What is our price for 5 Webcam C2s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003080,2026-07-07 13:00:00,DE,jonas.weber@example.com,"Jonas Weber: We need 20 Keyboard K2s for a new office. Can you hold them for a week?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003081,2026-07-09 23:00:00,US,felix.braun@example.com,"Felix Braun: Please send a copy of the invoice for order DS-18114, our accounts team needs it.
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0002130,2026-07-09 23:51:00,DE,ines.dubois@example.com,"Ines Dubois: We have a company account. What is our price for 10 Keyboard K2s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002133,2026-07-10 06:13:00,UK,tom.baker@example.com,"Tom Baker: We have a company account. What is our price for 20 Webcam C2s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002157,2026-07-12 09:36:00,DE,anna.weber@example.com,"Anna Weber: I buy for my small office. Do you give a discount if I order 10 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003082,2026-07-12 11:00:00,DE,ines.dubois@example.com,"Ines Dubois: Our contract price for the Wi-Fi router R6 is not applied in the basket. Can you check?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003083,2026-07-14 20:00:00,DE,ines.dubois@example.com,"Ines Dubois: We need 5 Keyboard K2s for a new office. Can you hold them for a week?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003084,2026-07-17 04:00:00,DE,jonas.weber@example.com,"Jonas Weber: We need 20 Power supply 850 Ws for a new office. Can you hold them for a week?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003085,2026-07-19 21:00:00,DE,jonas.weber@example.com,"Jonas Weber: Our contract price for the Aero 14 Pro laptop is not applied in the basket. Can you check?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003086,2026-07-22 07:00:00,US,felix.braun@example.com,"Felix Braun: We need 5 SSD 1 TBs for a new office. Can you hold them for a week?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003087,2026-07-24 14:00:00,DE,ines.dubois@example.com,"Ines Dubois: Who approves orders above the limit on our company account?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0002306,2026-07-25 12:43:00,DE,giulia.conti@example.com,"Giulia Conti: I buy for my small office. Do you give a discount if I order 5 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003088,2026-07-27 02:00:00,US,felix.braun@example.com,"Felix Braun: We need 5 Aero 14 laptops for a new office. Can you hold them for a week?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0002340,2026-07-28 12:24:00,US,lea.schmidt@example.com,"Lea Schmidt: We have a company account. What is our price for 10 Wi-Fi router R6s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003089,2026-07-29 18:00:00,US,felix.braun@example.com,"Felix Braun: Who approves orders above the limit on our company account?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003090,2026-08-01 00:00:00,US,felix.braun@example.com,"Felix Braun: Our contract price for the Mouse M3 is not applied in the basket. Can you check?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0002387,2026-08-01 15:57:00,UK,tom.baker@example.com,"Tom Baker: We have a company account. What is our price for 20 Wi-Fi router R6s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002389,2026-08-01 20:02:00,US,sofia.ricci@example.com,"Sofia Ricci: I buy for my small office. Do you give a discount if I order 20 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002390,2026-08-01 22:11:00,US,lea.schmidt@example.com,"Lea Schmidt: We have a company account. What is our price for 20 Nova 27 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002404,2026-08-03 04:12:00,UK,tom.baker@example.com,"Tom Baker: I buy for my small office. Do you give a discount if I order 20 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003091,2026-08-03 11:00:00,DE,ines.dubois@example.com,"Ines Dubois: Please send a copy of the invoice for order DS-18420, our accounts team needs it.
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003092,2026-08-05 23:00:00,DE,jonas.weber@example.com,"Jonas Weber: We need 5 Volt 8 graphics cards for a new office. Can you hold them for a week?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0002452,2026-08-07 10:15:00,US,lena.fischer@example.com,"Lena Fischer: We have a company account. What is our price for 10 Aero 14 laptops?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002460,2026-08-08 02:48:00,,tom.baker@example.com,"Tom Baker: I buy for my small office. Do you give a discount if I order 5 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002464,2026-08-08 11:09:00,US,marco.bianchi@example.com,"Marco Bianchi: I buy for my small office. Do you give a discount if I order 20 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003093,2026-08-08 13:00:00,DE,jonas.weber@example.com,"Jonas Weber: We need 10 Mouse M3s for a new office. Can you hold them for a week?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0002466,2026-08-08 15:54:00,US,lea.schmidt@example.com,"Lea Schmidt: We have a company account. What is our price for 10 Volt 8 graphics cards?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002479,2026-08-09 18:33:00,US,chloe.martin@example.com,"Chloe Martin: I buy for my small office. Do you give a discount if I order 5 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003094,2026-08-11 00:00:00,DE,ines.dubois@example.com,"Ines Dubois: Please send a copy of the invoice for order DS-19449, our accounts team needs it.
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0002516,2026-08-13 00:46:00,DE,paul.martin@example.com,"Paul Martin: I buy for my small office. Do you give a discount if I order 20 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003095,2026-08-13 05:00:00,US,felix.braun@example.com,"Felix Braun: We need 5 Mouse M3s for a new office. Can you hold them for a week?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003096,2026-08-15 18:00:00,DE,jonas.weber@example.com,"Jonas Weber: We need 5 Nova 24 monitors for a new office. Can you hold them for a week?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0002549,2026-08-15 23:31:00,US,lena.fischer@example.com,"Lena Fischer: We have a company account. What is our price for 10 Webcam C2s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003097,2026-08-18 10:00:00,DE,jonas.weber@example.com,"Jonas Weber: Please send a copy of the invoice for order DS-20279, our accounts team needs it.
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0002592,2026-08-19 17:59:00,DE,paul.martin@example.com,"Paul Martin: I buy for my small office. Do you give a discount if I order 10 monitors? You can call me on 030 23125 994.
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002601,2026-08-20 12:46:00,,tom.baker@example.com,"Tom Baker: I buy for my small office. Do you give a discount if I order 20 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003098,2026-08-20 14:00:00,DE,ines.dubois@example.com,"Ines Dubois: Please send a copy of the invoice for order DS-19017, our accounts team needs it.
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0002622,2026-08-22 10:01:00,US,marco.bianchi@example.com,"Marco Bianchi: We have a company account. What is our price for 5 Nova 24 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003099,2026-08-23 08:00:00,DE,ines.dubois@example.com,"Ines Dubois: Who approves orders above the limit on our company account?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0003100,2026-08-25 19:00:00,DE,jonas.weber@example.com,"Jonas Weber: We need 10 Mouse M3s for a new office. Can you hold them for a week?
+Agent: I have passed this to our business sales team, they will reply today."
+IMS0002670,2026-08-26 15:20:00,UK,sam.lee@example.com,"Sam Lee: I buy for my small office. Do you give a discount if I order 20 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002715,2026-08-30 14:02:00,US,sofia.ricci@example.com,"Sofia Ricci: I buy for my small office. Do you give a discount if I order 20 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002721,2026-08-31 03:09:00,UK,sofia.ricci@example.com,"Sofia Ricci: I buy for my small office. Do you give a discount if I order 20 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002752,2026-09-02 20:51:00,UK,sofia.ricci@example.com,"Sofia Ricci: I buy for my small office. Do you give a discount if I order 10 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002773,2026-09-04 16:46:00,FR,sofia.ricci@example.com,"Sofia Ricci: We have a company account. What is our price for 10 Headset H5s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002788,2026-09-06 00:48:00,FR,chloe.martin@example.com,"Chloe Martin: I buy for my small office. Do you give a discount if I order 10 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002812,2026-09-08 03:20:00,DE,sofia.ricci@example.com,"Sofia Ricci: I buy for my small office. Do you give a discount if I order 5 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002838,2026-09-10 10:58:00,DE,paul.martin@example.com,"Paul Martin: I buy for my small office. Do you give a discount if I order 20 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002858,2026-09-12 05:31:00,US,luca.ferri@example.com,"Luca Ferri: We have a company account. What is our price for 20 Power supply 850 Ws?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002892,2026-09-15 04:37:00,UK,tom.baker@example.com,"Tom Baker: We have a company account. What is our price for 20 Volt 8 graphics cards?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002902,2026-09-16 02:09:00,US,anna.weber@example.com,"Anna Weber: We have a company account. What is our price for 5 SSD 1 TBs?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002915,2026-09-17 06:10:00,US,lena.fischer@example.com,"Lena Fischer: We have a company account. What is our price for 20 Headset H5s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002917,2026-09-17 09:48:00,DE,ines.dubois@example.com,"Ines Dubois: We have a company account. What is our price for 20 Mouse M3s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002933,2026-09-18 20:18:00,UK,sam.lee@example.com,"Sam Lee: We have a company account. What is our price for 5 Keyboard K2s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002957,2026-09-20 22:36:00,US,luca.ferri@example.com,"Luca Ferri: I buy for my small office. Do you give a discount if I order 10 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002971,2026-09-22 04:23:00,UK,tom.baker@example.com,"Tom Baker: We have a company account. What is our price for 5 Keyboard K2s?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002975,2026-09-22 12:22:00,UK,oliver.smith@example.com,"Oliver Smith: I buy for my small office. Do you give a discount if I order 5 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002983,2026-09-23 05:44:00,US,luca.ferri@example.com,"Luca Ferri: I buy for my small office. Do you give a discount if I order 5 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002984,2026-09-23 07:35:00,US,luca.ferri@example.com,"Luca Ferri: We have a company account. What is our price for 5 Volt 8 graphics cards?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0002986,2026-09-23 12:33:00,DE,chloe.martin@example.com,"Chloe Martin: I buy for my small office. Do you give a discount if I order 5 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003024,2026-09-26 20:57:00,US,marco.bianchi@example.com,"Marco Bianchi: I buy for my small office. Do you give a discount if I order 10 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."
+IMS0003034,2026-09-27 17:22:00,US,luca.ferri@example.com,"Luca Ferri: I buy for my small office. Do you give a discount if I order 20 monitors?
+Agent: I have passed this to our business sales team, they will send you an offer."

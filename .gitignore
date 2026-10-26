@@ -7,3 +7,17 @@ dist/
 .vscode/
 data/outbox.jsonl
 data/cases.jsonl
+# for learners: the labs' settings, backups of catch-up, generated lab data, build folders (git worktree)
+sandbox/.env
+sandbox/.backup/
+sandbox/data/chats.json
+sandbox/data/inbox/
+sandbox/data/rejected/
+sandbox/data/chats_clean.csv
+sandbox/data/batch_id.txt
+sandbox/data/intent_sample.csv
+sandbox/data/profiles.json
+sandbox/data/traffic.json
+sandbox/sponsor-report.md
+builds/
+.venv/

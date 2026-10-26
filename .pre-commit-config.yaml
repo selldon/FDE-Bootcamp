@@ -1,5 +1,7 @@
 # Checks that run before every commit, for people and for the agent alike. Only fast ones: the tests here use the
 # fakes and never call Claude (the replay of the 40 conversations runs on pull requests).
+# The labs in sandbox/ and the build folders under builds/ are not part of the product: the checks skip them.
+exclude: ^(sandbox|builds)/
 repos:
   - repo: local
     hooks:

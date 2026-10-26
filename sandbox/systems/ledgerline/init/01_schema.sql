@@ -1,0 +1,52 @@
+-- Ledgerline, DemoStore's ERP: orders, their lines, shipments and invoices (owner LEDGERLINE)
+ALTER SESSION SET CONTAINER = FREEPDB1;
+ALTER SESSION SET CURRENT_SCHEMA = LEDGERLINE;
+
+CREATE TABLE LL_CUST (
+  CUST_ID      NUMBER(10)    PRIMARY KEY,
+  EMAIL_ADDR   VARCHAR2(120) NOT NULL UNIQUE,
+  CUST_NM      VARCHAR2(80)  NOT NULL,
+  MKT_CD       VARCHAR2(2)   NOT NULL,
+  CUST_TYP_CD  CHAR(1)       NOT NULL,          -- C consumer, B DemoStore Business
+  CRT_DT       DATE          NOT NULL
+);
+
+CREATE TABLE LL_ORD_HDR (
+  ORD_NO       VARCHAR2(12)  PRIMARY KEY,
+  CUST_ID      NUMBER(10)    NOT NULL REFERENCES LL_CUST,
+  ORD_DT       DATE          NOT NULL,
+  ORD_STAT_CD  CHAR(1)       NOT NULL,          -- N new, S split (part shipped), F fulfilled, D delivered, X cancelled
+  PROM_DT      DATE,                            -- delivery date promised to the customer
+  CURR_CD      CHAR(3)       NOT NULL,
+  ORD_TOT      NUMBER(12,2)  NOT NULL
+);
+
+CREATE TABLE LL_ORD_LN (
+  ORD_NO       VARCHAR2(12)  NOT NULL REFERENCES LL_ORD_HDR,
+  LN_NO        NUMBER(3)     NOT NULL,
+  SKU_CD       VARCHAR2(20)  NOT NULL,
+  ITEM_DESC    VARCHAR2(100) NOT NULL,
+  QTY          NUMBER(5)     NOT NULL,
+  UNIT_PRC     NUMBER(10,2)  NOT NULL,
+  TAX_AMT      NUMBER(10,2)  NOT NULL,
+  PRIMARY KEY (ORD_NO, LN_NO)
+);
+
+CREATE TABLE LL_SHPMT (
+  SHPMT_ID     NUMBER(10)    PRIMARY KEY,
+  ORD_NO       VARCHAR2(12)  NOT NULL,
+  LN_NO        NUMBER(3)     NOT NULL,
+  CARR_CD      VARCHAR2(10)  NOT NULL,
+  TRK_NO       VARCHAR2(20)  NOT NULL,
+  SHIP_DT      DATE          NOT NULL,
+  FOREIGN KEY (ORD_NO, LN_NO) REFERENCES LL_ORD_LN
+);
+
+CREATE TABLE LL_INV_HDR (
+  INV_NO       VARCHAR2(14)  PRIMARY KEY,
+  ORD_NO       VARCHAR2(12)  NOT NULL REFERENCES LL_ORD_HDR,
+  INV_DT       DATE          NOT NULL,
+  NET_AMT      NUMBER(12,2)  NOT NULL,
+  TAX_AMT      NUMBER(12,2)  NOT NULL,
+  CURR_CD      CHAR(3)       NOT NULL
+);

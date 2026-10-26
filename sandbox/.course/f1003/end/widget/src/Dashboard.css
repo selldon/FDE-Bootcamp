@@ -1,0 +1,36 @@
+/* The team's page: plain tables, colors and sizes only. */
+.dashboard {
+  max-width: 440px;
+  margin: 3vh auto;
+  padding: 18px 22px;
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+  color: #1f2a37;
+}
+
+.dashboard h2 {
+  margin: 0 0 12px;
+  font-size: 19px;
+  color: #1f3a5f;
+}
+
+.dashboard h3 {
+  margin: 18px 0 6px;
+  font-size: 15px;
+}
+
+.dashboard table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dashboard td {
+  padding: 6px 4px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dashboard td:not(:first-child) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

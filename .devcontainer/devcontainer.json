@@ -1,0 +1,41 @@
+{
+  // The course in one click: GitHub Codespaces (or VS Code's Dev Containers locally) builds this environment.
+  // Python 3.12 with the VS Code Python extension and its debugger, Node for the widget and Claude Code, and Docker
+  // inside the container for DemoStore's systems (sandbox/systems/compose.yaml, started on every start).
+  "name": "FDE Bootcamp: DemoStore",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.12-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "22" },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  // Oracle Free, PostgreSQL, the stand-ins, Python and the embedding model fit in 8 GB; 4 cores make the first start
+  // faster. A bigger machine uses your free Codespaces hours faster (see the README).
+  "hostRequirements": { "cpus": 2, "memory": "8gb", "storage": "32gb" },
+  // Your Claude API key, stored by Codespaces as an encrypted secret and given to the container as an environment
+  // variable. It never goes into a file in this repository.
+  "secrets": {
+    "ANTHROPIC_API_KEY": {
+      "description": "Your Claude API key (Claude Console, API keys). Set a monthly spend limit there first.",
+      "documentationUrl": "https://docs.github.com/en/codespaces/managing-your-codespaces/managing-your-account-specific-secrets-for-github-codespaces"
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "bash .devcontainer/post-start.sh",
+  "forwardPorts": [8000, 5173, 8001, 8025, 8020, 8030, 8040],
+  "portsAttributes": {
+    "8000": { "label": "chat service" },
+    "5173": { "label": "widget (Vite)" },
+    "8001": { "label": "middleware" },
+    "8025": { "label": "Mailpit", "onAutoForward": "silent" },
+    "8020": { "label": "ServiceNow stand-in", "onAutoForward": "silent" },
+    "8030": { "label": "Atlas stand-in", "onAutoForward": "silent" },
+    "8040": { "label": "Confluence stand-in", "onAutoForward": "silent" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "ms-python.debugpy"],
+      "settings": { "python.defaultInterpreterPath": "/usr/local/bin/python" }
+    }
+  }
+}

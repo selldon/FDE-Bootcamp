@@ -1,0 +1,420 @@
+[
+  {
+    "id": "C01",
+    "market": "UK",
+    "message": "Hi, where is my order DS-20417? It was due on Monday.",
+    "intent": "order_status",
+    "order_number": "DS-20417",
+    "needs_human": false,
+    "action": "give_status",
+    "level": "easy"
+  },
+  {
+    "id": "C02",
+    "market": "UK",
+    "message": "I want to return the laptop from order DS-20388. It is too loud.",
+    "intent": "return_request",
+    "order_number": "DS-20388",
+    "needs_human": false,
+    "action": "start_return",
+    "level": "easy"
+  },
+  {
+    "id": "C03",
+    "market": "US",
+    "message": "Third time I am writing. I want a real person, now!",
+    "intent": "other",
+    "order_number": null,
+    "needs_human": true,
+    "action": "hand_off",
+    "level": "easy"
+  },
+  {
+    "id": "C04",
+    "market": "US",
+    "message": "When will order DS-20502 arrive? It is a 27 inch monitor.",
+    "intent": "order_status",
+    "order_number": "DS-20502",
+    "needs_human": false,
+    "action": "give_status",
+    "level": "easy"
+  },
+  {
+    "id": "C05",
+    "market": "DE",
+    "message": "My order DS-20455 still says processing. When will it ship?",
+    "intent": "order_status",
+    "order_number": "DS-20455",
+    "needs_human": false,
+    "action": "give_status",
+    "level": "easy"
+  },
+  {
+    "id": "C06",
+    "market": "FR",
+    "message": "Where is my parcel? I paid for express delivery last Thursday and nothing has come.",
+    "intent": "order_status",
+    "order_number": null,
+    "needs_human": false,
+    "action": "ask_order_number",
+    "level": "medium",
+    "note": "No order number: ask for it first."
+  },
+  {
+    "id": "C07",
+    "market": "UK",
+    "message": "How many days do I have to return something I bought online?",
+    "intent": "policy_question",
+    "order_number": null,
+    "needs_human": false,
+    "action": "answer_policy",
+    "level": "easy"
+  },
+  {
+    "id": "C08",
+    "market": "US",
+    "message": "Does the Aero 14 laptop charge over USB-C?",
+    "intent": "product_question",
+    "order_number": null,
+    "needs_human": false,
+    "action": "answer_product",
+    "level": "easy"
+  },
+  {
+    "id": "C09",
+    "market": "IT",
+    "message": "The keyboard from order DS-20391 has two keys that stick. Can I send it back or get a new one?",
+    "intent": "return_request",
+    "order_number": "DS-20391",
+    "needs_human": false,
+    "action": "start_return",
+    "level": "medium"
+  },
+  {
+    "id": "C10",
+    "market": "UK",
+    "message": "Order DS-20433. Tracking says delivered yesterday, but nothing is here and the neighbours have nothing. It is a 1,400 pound laptop.",
+    "intent": "order_status",
+    "order_number": "DS-20433",
+    "needs_human": true,
+    "action": "hand_off",
+    "level": "hard",
+    "note": "Delivered but missing, high value: a person opens a claim with the carrier."
+  },
+  {
+    "id": "C11",
+    "market": "US",
+    "message": "Has my order DS-20476 shipped yet?",
+    "intent": "order_status",
+    "order_number": "DS-20476",
+    "needs_human": false,
+    "action": "give_status",
+    "level": "easy"
+  },
+  {
+    "id": "C12",
+    "market": "DE",
+    "message": "If I return a monitor, do you pay the shipping back?",
+    "intent": "policy_question",
+    "order_number": null,
+    "needs_human": false,
+    "action": "answer_policy",
+    "level": "medium"
+  },
+  {
+    "id": "C13",
+    "market": "UK",
+    "message": "We have a company account, BIZ-UK-00871. What is our price for 20 Aero 14 laptops?",
+    "intent": "contract_price",
+    "order_number": null,
+    "needs_human": false,
+    "action": "check_buyer_role",
+    "level": "medium",
+    "note": "A contract price only for a checked buyer of that company."
+  },
+  {
+    "id": "C14",
+    "market": "US",
+    "message": "My son opened the gaming headset for his birthday and does not like it. The box is open but it is like new. Is that a problem?",
+    "intent": "return_request",
+    "order_number": null,
+    "needs_human": false,
+    "action": "answer_policy",
+    "level": "hard",
+    "note": "Wants to return; first the rule for opened items."
+  },
+  {
+    "id": "C15",
+    "market": "IT",
+    "message": "Hello, can I have the tracking link for DS-20521, please?",
+    "intent": "order_status",
+    "order_number": "DS-20521",
+    "needs_human": false,
+    "action": "give_status",
+    "level": "easy"
+  },
+  {
+    "id": "C16",
+    "market": "US",
+    "message": "I ordered a router and an SSD on the 3rd and only the router came. Order DS-20468.",
+    "intent": "order_status",
+    "order_number": "DS-20468",
+    "needs_human": false,
+    "action": "give_status",
+    "level": "medium",
+    "note": "Partial shipment: the SSD is in a second parcel."
+  },
+  {
+    "id": "C17",
+    "market": "UK",
+    "message": "my order number is ds 20489 why is it taking so long",
+    "intent": "order_status",
+    "order_number": "DS-20489",
+    "needs_human": false,
+    "action": "give_status",
+    "level": "medium",
+    "note": "Number in lower case with a space."
+  },
+  {
+    "id": "C18",
+    "market": "DE",
+    "message": "This is the fourth day my order DS-20447 is out for delivery. I took a day off work twice for nothing. Unbelievable.",
+    "intent": "order_status",
+    "order_number": "DS-20447",
+    "needs_human": true,
+    "action": "hand_off",
+    "level": "medium",
+    "note": "Angry customer: a person takes over."
+  },
+  {
+    "id": "C19",
+    "market": "FR",
+    "message": "Is order DS-20510 coming this week? I need the printer for Monday.",
+    "intent": "order_status",
+    "order_number": "DS-20510",
+    "needs_human": false,
+    "action": "give_status",
+    "level": "easy"
+  },
+  {
+    "id": "C20",
+    "market": "US",
+    "message": "The email said my monitor ships in 2 days, the website says 5 to 7. Which one is right? DS-20495",
+    "intent": "order_status",
+    "order_number": "DS-20495",
+    "needs_human": false,
+    "action": "give_status",
+    "level": "medium",
+    "note": "Two different dates: give the one from the order system."
+  },
+  {
+    "id": "C21",
+    "market": "IT",
+    "message": "Order DS-20462: the carrier website shows no updates for six days. Is it lost?",
+    "intent": "order_status",
+    "order_number": "DS-20462",
+    "needs_human": false,
+    "action": "give_status",
+    "level": "medium"
+  },
+  {
+    "id": "C22",
+    "market": "US",
+    "message": "Where is DS-20530?",
+    "intent": "order_status",
+    "order_number": "DS-20530",
+    "needs_human": false,
+    "action": "give_status",
+    "level": "easy"
+  },
+  {
+    "id": "C23",
+    "market": "DE",
+    "message": "Hi, I ordered two monitors, order DS-20481. Do they come together or separately?",
+    "intent": "order_status",
+    "order_number": "DS-20481",
+    "needs_human": false,
+    "action": "give_status",
+    "level": "medium"
+  },
+  {
+    "id": "C24",
+    "market": "DE",
+    "message": "I would like to return order DS-20402. How do I start?",
+    "intent": "return_request",
+    "order_number": "DS-20402",
+    "needs_human": false,
+    "action": "start_return",
+    "level": "easy"
+  },
+  {
+    "id": "C25",
+    "market": "FR",
+    "message": "The monitor arrived with a crack in the screen. Order DS-20419.",
+    "intent": "return_request",
+    "order_number": "DS-20419",
+    "needs_human": true,
+    "action": "hand_off",
+    "level": "medium",
+    "note": "Damaged on arrival: a person asks for photos and handles the carrier."
+  },
+  {
+    "id": "C26",
+    "market": "UK",
+    "message": "Bought the wrong SSD size, still sealed. Can I swap it for the 2 TB one?",
+    "intent": "return_request",
+    "order_number": null,
+    "needs_human": false,
+    "action": "ask_order_number",
+    "level": "medium",
+    "note": "An exchange is a return plus a new order."
+  },
+  {
+    "id": "C27",
+    "market": "US",
+    "message": "I returned the printer three weeks ago (DS-20377) and still no refund. I want my money back today or I go to my bank.",
+    "intent": "return_request",
+    "order_number": "DS-20377",
+    "needs_human": true,
+    "action": "hand_off",
+    "level": "medium",
+    "note": "Late refund and a threat to dispute the payment: a person."
+  },
+  {
+    "id": "C28",
+    "market": "IT",
+    "message": "How do I return the speakers from DS-20444? They do not fit my desk.",
+    "intent": "return_request",
+    "order_number": "DS-20444",
+    "needs_human": false,
+    "action": "start_return",
+    "level": "easy"
+  },
+  {
+    "id": "C29",
+    "market": "US",
+    "message": "Do you ship to Canada?",
+    "intent": "policy_question",
+    "order_number": null,
+    "needs_human": false,
+    "action": "answer_policy",
+    "level": "easy"
+  },
+  {
+    "id": "C30",
+    "market": "FR",
+    "message": "Is the warranty on laptops one year or two?",
+    "intent": "policy_question",
+    "order_number": null,
+    "needs_human": false,
+    "action": "answer_policy",
+    "level": "medium",
+    "note": "Depends on the market."
+  },
+  {
+    "id": "C31",
+    "market": "IT",
+    "message": "I bought a TV on Black Friday. Does the longer return period for holiday orders count for me?",
+    "intent": "policy_question",
+    "order_number": null,
+    "needs_human": false,
+    "action": "answer_policy",
+    "level": "hard",
+    "note": "The holiday rule has dates: check the policy version."
+  },
+  {
+    "id": "C32",
+    "market": "UK",
+    "message": "Can I pay with PayPal?",
+    "intent": "policy_question",
+    "order_number": null,
+    "needs_human": false,
+    "action": "answer_policy",
+    "level": "easy"
+  },
+  {
+    "id": "C33",
+    "market": "DE",
+    "message": "Will the Volt 8 graphics card fit in the Vento mini PC?",
+    "intent": "product_question",
+    "order_number": null,
+    "needs_human": false,
+    "action": "answer_product",
+    "level": "medium"
+  },
+  {
+    "id": "C34",
+    "market": "UK",
+    "message": "Is the 32 inch Nova monitor in stock?",
+    "intent": "product_question",
+    "order_number": null,
+    "needs_human": false,
+    "action": "answer_product",
+    "level": "easy"
+  },
+  {
+    "id": "C35",
+    "market": "FR",
+    "message": "What is the difference between the Aero 14 and the Aero 14 Pro?",
+    "intent": "product_question",
+    "order_number": null,
+    "needs_human": false,
+    "action": "answer_product",
+    "level": "medium"
+  },
+  {
+    "id": "C36",
+    "market": "IT",
+    "message": "I need a laptop for video editing under 1,500 euros. What do you suggest?",
+    "intent": "product_question",
+    "order_number": null,
+    "needs_human": false,
+    "action": "answer_product",
+    "level": "hard",
+    "note": "Advice, not one fact: suggest two or three and say why."
+  },
+  {
+    "id": "C37",
+    "market": "DE",
+    "message": "I buy for my small office. Do you give a discount if I order 10 monitors?",
+    "intent": "contract_price",
+    "order_number": null,
+    "needs_human": false,
+    "action": "check_buyer_role",
+    "level": "hard",
+    "note": "No company account yet: business sales can offer one."
+  },
+  {
+    "id": "C38",
+    "market": "UK",
+    "message": "Can you send my order DS-20512 to my office instead? It has not shipped yet.",
+    "intent": "other",
+    "order_number": "DS-20512",
+    "needs_human": true,
+    "action": "hand_off",
+    "level": "hard",
+    "note": "Changing an order is a task for a person."
+  },
+  {
+    "id": "C39",
+    "market": "FR",
+    "message": "I was charged twice for order DS-20498. Please fix this.",
+    "intent": "other",
+    "order_number": "DS-20498",
+    "needs_human": true,
+    "action": "hand_off",
+    "level": "medium",
+    "note": "Money: a person checks the payment."
+  },
+  {
+    "id": "C40",
+    "market": "IT",
+    "message": "Do you buy back old laptops?",
+    "intent": "other",
+    "order_number": null,
+    "needs_human": false,
+    "action": "answer_policy",
+    "level": "medium",
+    "note": "We do not: say so plainly."
+  }
+]

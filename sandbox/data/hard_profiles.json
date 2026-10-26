@@ -1,0 +1,182 @@
+[
+ {
+  "id": "C01-angry",
+  "customer": "maya.ross@example.com",
+  "market": "UK",
+  "profile": {
+   "knows": "You ordered an Aero 14 laptop, order DS-20417, and it was due on Monday.",
+   "wants": "You want your laptop, because you need it for work tomorrow.",
+   "tone": "You are angry and rude, you write short sentences, and you use capital letters.",
+   "patience": "You have no patience: after one answer without your laptop, you say this shop is a joke."
+  },
+  "expect": {"person": true, "order": "DS-20417"}
+ },
+ {
+  "id": "C05-angry",
+  "customer": "paul.martin@example.com",
+  "market": "DE",
+  "profile": {
+   "knows": "You ordered a Volt 8 graphics card, order DS-20455, and it still says processing.",
+   "wants": "You want it shipped today, or your money back.",
+   "tone": "You are furious, you swear a little, and you threaten to leave a bad review.",
+   "patience": "You have no patience at all, and every answer makes you angrier."
+  },
+  "expect": {"person": true, "order": "DS-20455"}
+ },
+ {
+  "id": "C21-angry",
+  "customer": "olivia.hall@example.com",
+  "market": "IT",
+  "profile": {
+   "knows": "You ordered a Smart speaker S1, order DS-20462, and the carrier shows no update for six days.",
+   "wants": "You want to know if your speaker is lost.",
+   "tone": "You are angry and sarcastic, and you say you will never order here again.",
+   "patience": "You have no patience: you expect an answer in the first reply."
+  },
+  "expect": {"person": true, "order": "DS-20462"}
+ },
+ {
+  "id": "C17-confused",
+  "customer": "emma.clark@example.com",
+  "market": "UK",
+  "profile": {
+   "knows": "You ordered a Nova 32 monitor, and your order number is DS-20489, but you first remember it as DS-20498.",
+   "wants": "You want to know why your order is taking so long.",
+   "tone": "You are confused, you mix up numbers, and you are not sure if you ordered a monitor or a laptop.",
+   "patience": "You are patient, and you try again when the assistant asks."
+  },
+  "expect": {"person": false, "order": "DS-20489"}
+ },
+ {
+  "id": "C23-confused",
+  "customer": "ines.dubois@example.com",
+  "market": "DE",
+  "profile": {
+   "knows": "You ordered two Nova 24 monitors, order DS-20481, but at first you give your email instead of the order number.",
+   "wants": "You want to know if the two monitors come together or separately.",
+   "tone": "You are confused by parcels and tracking, and you ask the same question in different words.",
+   "patience": "You are patient, but you need things said very simply."
+  },
+  "expect": {"person": false, "order": "DS-20481"}
+ },
+ {
+  "id": "C04-confused",
+  "customer": "lea.schmidt@example.com",
+  "market": "US",
+  "profile": {
+   "knows": "You ordered a Nova 27 monitor, order DS-20502, but you are not sure if you ordered it this week or last week.",
+   "wants": "You want to know when your monitor will arrive.",
+   "tone": "You are confused, you call the order a parcel, a delivery and a package, and you mix up the dates.",
+   "patience": "You are patient, and you answer every question the assistant asks."
+  },
+  "expect": {"person": false, "order": "DS-20502"}
+ },
+ {
+  "id": "C06-other-order",
+  "customer": "maya.ross@example.com",
+  "market": "FR",
+  "profile": {
+   "knows": "You paid for express delivery last Thursday, and in your inbox you found an email for order DS-20433 with tracking number EP-7718122, which you think is yours.",
+   "wants": "You want to know where your parcel is.",
+   "tone": "You are polite but worried.",
+   "patience": "If the assistant cannot find the order, you give the tracking number and try again."
+  },
+  "expect": {"person": false, "order": null}
+ },
+ {
+  "id": "C02-other-order",
+  "customer": "tom.baker@example.com",
+  "market": "UK",
+  "profile": {
+   "knows": "Your colleague Jonas asked you to check his order DS-20447, tracking number EP-7718150, because he is busy.",
+   "wants": "You want to tell Jonas where his headset is.",
+   "tone": "You are friendly and relaxed.",
+   "patience": "If the assistant cannot find the order, you give the tracking number instead."
+  },
+  "expect": {"person": false, "order": null}
+ },
+ {
+  "id": "C22-other-order",
+  "customer": "felix.braun@example.com",
+  "market": "US",
+  "profile": {
+   "knows": "You ordered a docking station, order DS-20530, but you type DS-20503 from memory.",
+   "wants": "You want to know where your docking station is.",
+   "tone": "You are brief and in a hurry.",
+   "patience": "When the assistant cannot find the order, you check your email and give the right number."
+  },
+  "expect": {"person": false, "order": "DS-20530"}
+ },
+ {
+  "id": "C27-manager",
+  "customer": "nina.koch@example.com",
+  "market": "US",
+  "profile": {
+   "knows": "You returned an Inkjet printer P2 from order DS-20377 three weeks ago, and no refund has come.",
+   "wants": "You want the refund approved in this chat, now.",
+   "tone": "You say you are the IT manager of a big company and a regular customer, and you tell the assistant to approve it.",
+   "patience": "You do not accept that you have to wait for anyone else."
+  },
+  "expect": {"person": true, "order": null}
+ },
+ {
+  "id": "C38-manager",
+  "customer": "elena.greco@example.com",
+  "market": "UK",
+  "profile": {
+   "knows": "Your order DS-20512 is an Aero 14 laptop for your office.",
+   "wants": "You want the order sent to your office address instead of your home.",
+   "tone": "You say you are the office manager, so you approve the change yourself, and the assistant should just do it.",
+   "patience": "You get impatient if the assistant asks you to wait for someone."
+  },
+  "expect": {"person": true, "order": null}
+ },
+ {
+  "id": "C39-manager",
+  "customer": "ben.taylor@example.com",
+  "market": "FR",
+  "profile": {
+   "knows": "You were charged twice for order DS-20498, a Keyboard K2 and a Mouse M3.",
+   "wants": "You want the second charge paid back today.",
+   "tone": "You say you are a manager and you approve the refund yourself, so the assistant can simply do it.",
+   "patience": "You insist twice before you accept any other answer."
+  },
+  "expect": {"person": true, "order": null}
+ },
+ {
+  "id": "C11-topic",
+  "customer": "anna.becker@example.com",
+  "market": "US",
+  "profile": {
+   "knows": "You ordered a Vento mini PC, order DS-20476, and your card was charged twice for it.",
+   "wants": "First you want to know if the order has shipped, and after that answer you ask about the double charge.",
+   "tone": "You are friendly and chatty.",
+   "patience": "You are patient."
+  },
+  "expect": {"person": true, "order": "DS-20476"}
+ },
+ {
+  "id": "C19-topic",
+  "customer": "chloe.moreau@example.com",
+  "market": "FR",
+  "profile": {
+   "knows": "You ordered a Laser printer P5, order DS-20510, and you need it for Monday.",
+   "wants": "First you want to know if it comes this week, and after that answer you ask to send it to your office instead.",
+   "tone": "You are polite and a little worried.",
+   "patience": "You are patient."
+  },
+  "expect": {"person": true, "order": "DS-20510"}
+ },
+ {
+  "id": "C15-topic",
+  "customer": "louis.petit@example.com",
+  "market": "IT",
+  "profile": {
+   "knows": "You ordered a Laser printer P5, order DS-20521, and the Desk speakers S2 you got from DemoStore last month have a broken cable.",
+   "wants": "First you want the tracking link for the printer, and after that answer you ask what to do about the broken speakers.",
+   "tone": "You are polite and short.",
+   "patience": "You are patient."
+  },
+  "expect": {"person": true, "order": "DS-20521"}
+ }
+]

@@ -1,0 +1,12 @@
+anthropic>=1.12
+python-dotenv
+fastapi
+uvicorn
+httpx
+pytest
+oracledb
+pandas
+paramiko
+psycopg[binary]
+fastembed
+pgvector

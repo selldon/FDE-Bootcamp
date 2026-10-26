@@ -1,4 +1,6 @@
 [tool.pytest.ini_options]
+# the product's tests only: the labs in sandbox/ and build folders under builds/ have their own
+norecursedirs = [".*", "node_modules", "widget", "sandbox", "builds"]
 markers = [
   "live: reads a real system (Claude, Ledgerline, SFTP, PostgreSQL, ServiceNow), so it is not in the pre-commit hook",
   "writes: a live test that writes (one draft into LL_RTN_REQ_STG and one ServiceNow task); run only on request",

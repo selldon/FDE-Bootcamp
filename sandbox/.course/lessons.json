@@ -1,0 +1,490 @@
+[
+ {
+  "id": "f0303",
+  "course": "1-3-3",
+  "title": "First Call: the Adapter from Scratch",
+  "video": true,
+  "lab": "llm.py",
+  "files": [
+   "llm.py",
+   "try_ask.py"
+  ]
+ },
+ {
+  "id": "f0304",
+  "course": "1-3-4",
+  "title": "Structured Output",
+  "video": true,
+  "lab": "intent.py",
+  "files": [
+   "intent.py",
+   "llm.py",
+   "try_intent.py"
+  ]
+ },
+ {
+  "id": "f0305",
+  "course": "1-3-5",
+  "title": "Exploring the Ground Truth",
+  "video": true,
+  "lab": "explore.py",
+  "files": [
+   "explore.py"
+  ]
+ },
+ {
+  "id": "f0307",
+  "course": "1-3-7",
+  "title": "Haiku vs Sonnet vs Opus",
+  "video": true,
+  "lab": "compare.py",
+  "files": [
+   "compare.py",
+   "intent.py",
+   "llm.py"
+  ]
+ },
+ {
+  "id": "f0310",
+  "course": "1-3-10",
+  "title": "An Agent Loop from Scratch",
+  "video": true,
+  "lab": "agent.py",
+  "files": [
+   "agent.py",
+   "tools.py",
+   "try_agent.py"
+  ]
+ },
+ {
+  "id": "f0311",
+  "course": "1-3-11",
+  "title": "Agent or One Call?",
+  "video": true,
+  "lab": "agent_or_call.py",
+  "files": [
+   "agent.py",
+   "agent_or_call.py",
+   "intent.py",
+   "llm.py",
+   "tools.py"
+  ]
+ },
+ {
+  "id": "f0403",
+  "course": "1-4-3",
+  "title": "The Chat Service with FastAPI",
+  "video": false,
+  "lab": "app.py",
+  "files": [
+   "agent.py",
+   "app.py",
+   "test_app.py"
+  ]
+ },
+ {
+  "id": "f0403b",
+  "course": "1-4-3_1",
+  "title": "One Shape for the Intent",
+  "video": false,
+  "lab": "app.py",
+  "files": [
+   "agent.py",
+   "app.py",
+   "intent.py",
+   "test_app.py",
+   "tools.py"
+  ]
+ },
+ {
+  "id": "f0405",
+  "course": "1-4-5",
+  "title": "The Chat Widget in React",
+  "video": false,
+  "lab": "widget/index.html",
+  "files": [
+   "widget/index.html",
+   "widget/package-lock.json",
+   "widget/package.json",
+   "widget/src/App.css",
+   "widget/src/App.tsx",
+   "widget/src/main.tsx",
+   "widget/src/vite-env.d.ts",
+   "widget/tsconfig.app.json",
+   "widget/tsconfig.json",
+   "widget/tsconfig.node.json",
+   "widget/vite.config.ts"
+  ]
+ },
+ {
+  "id": "f0504",
+  "course": "1-5-4",
+  "title": "Querying the ERP",
+  "video": true,
+  "lab": "erp_query.py",
+  "files": [
+   "erp_query.py",
+   "erp_schema.py",
+   "ledgerline.py"
+  ]
+ },
+ {
+  "id": "f0506",
+  "course": "1-5-6",
+  "title": "A Middleware API over Oracle",
+  "video": true,
+  "lab": "middleware.py",
+  "files": [
+   "middleware.py",
+   "test_middleware.py"
+  ]
+ },
+ {
+  "id": "f0508",
+  "course": "1-5-8",
+  "title": "Pulling Old Chats from ServiceNow",
+  "video": true,
+  "lab": "pull_chats.py",
+  "files": [
+   "pull_chats.py"
+  ]
+ },
+ {
+  "id": "f0602",
+  "course": "1-6-2",
+  "title": "Ingesting the Carrier Feed",
+  "video": true,
+  "lab": "ingest_feed.py",
+  "files": [
+   "ingest_feed.py"
+  ]
+ },
+ {
+  "id": "f0604",
+  "course": "1-6-4",
+  "title": "Cleaning Chats with pandas",
+  "video": true,
+  "lab": "clean_chats.py",
+  "files": [
+   "clean_chats.py",
+   "read_batch.py",
+   "send_batch.py"
+  ]
+ },
+ {
+  "id": "f0702",
+  "course": "1-7-2",
+  "title": "Verified Sessions in Code",
+  "video": true,
+  "lab": "verify.py",
+  "files": [
+   "agent.py",
+   "app.py",
+   "test_app.py",
+   "tools.py",
+   "verify.py"
+  ]
+ },
+ {
+  "id": "f0702b",
+  "course": "1-7-2_1",
+  "title": "A Contract Price Only for the Right Role",
+  "video": true,
+  "lab": "prices.py",
+  "files": [
+   "agent.py",
+   "prices.py",
+   "test_app.py",
+   "tools.py",
+   "verify.py"
+  ]
+ },
+ {
+  "id": "f0703",
+  "course": "1-7-3",
+  "title": "Return Eligibility in the Prompt",
+  "video": true,
+  "lab": "returns_check.py",
+  "files": [
+   "returns_check.py",
+   "returns_prompt.py"
+  ]
+ },
+ {
+  "id": "f0703b",
+  "course": "1-7-3_1",
+  "title": "The Return Rule in Code",
+  "video": true,
+  "lab": "returns_check.py",
+  "files": [
+   "returns.py",
+   "returns_check.py",
+   "test_returns.py",
+   "try_returns.py"
+  ]
+ },
+ {
+  "id": "f0705",
+  "course": "1-7-5",
+  "title": "The Missing Cent in a Partial Refund",
+  "video": true,
+  "lab": "refund_split.py",
+  "files": [
+   "refund_split.py",
+   "test_refund_split.py"
+  ]
+ },
+ {
+  "id": "f0707",
+  "course": "1-7-7",
+  "title": "The Return Request: a Staging Table, an Approval Task and an Event Queue",
+  "video": true,
+  "lab": "staging.py",
+  "files": [
+   "approvals.py",
+   "poll_tasks.py",
+   "staging.py",
+   "worker.py"
+  ]
+ },
+ {
+  "id": "f0707b",
+  "course": "1-7-7_1",
+  "title": "Through the Middleware Without a Second Refund",
+  "video": true,
+  "lab": "middleware.py",
+  "files": [
+   "middleware.py",
+   "staging.py",
+   "submit_return.py"
+  ]
+ },
+ {
+  "id": "f0802",
+  "course": "1-8-2",
+  "title": "A Trace of Every Call",
+  "video": true,
+  "lab": "traces.py",
+  "files": [
+   "agent.py",
+   "intent.py",
+   "llm.py",
+   "show_traces.py",
+   "traces.py",
+   "try_trace.py"
+  ]
+ },
+ {
+  "id": "f0802b",
+  "course": "1-8-2_1",
+  "title": "One Door for Every Call",
+  "video": true,
+  "lab": "llm.py",
+  "files": [
+   "agent.py",
+   "app.py",
+   "llm.py"
+  ]
+ },
+ {
+  "id": "f0803",
+  "course": "1-8-3",
+  "title": "Scoring the Pilot",
+  "video": true,
+  "lab": "score.py",
+  "files": [
+   "intent.py",
+   "score.py"
+  ]
+ },
+ {
+  "id": "f0803b",
+  "course": "1-8-3_1",
+  "title": "The Missed Handoffs",
+  "video": true,
+  "lab": "intent.py",
+  "files": [
+   "intent.py",
+   "score.py"
+  ]
+ },
+ {
+  "id": "f0805",
+  "course": "1-8-5",
+  "title": "Simulated Customers",
+  "video": true,
+  "lab": "simulate.py",
+  "files": [
+   "profiles.py",
+   "simulate.py"
+  ]
+ },
+ {
+  "id": "f0805b",
+  "course": "1-8-5_1",
+  "title": "Difficult Customers",
+  "video": true,
+  "lab": "simulate.py",
+  "files": [
+   "simulate.py"
+  ]
+ },
+ {
+  "id": "f0807",
+  "course": "1-8-7",
+  "title": "Policy Answers with Sources",
+  "video": true,
+  "lab": "search.py",
+  "files": [
+   "index_policies.py",
+   "search.py"
+  ]
+ },
+ {
+  "id": "f0807b",
+  "course": "1-8-7_1",
+  "title": "The Answer with Its Link, and a Price That Is Never Copied",
+  "video": true,
+  "lab": "answer.py",
+  "files": [
+   "answer.py",
+   "index_policies.py",
+   "search.py"
+  ]
+ },
+ {
+  "id": "f0807c",
+  "course": "1-8-7_2",
+  "title": "The Return Window Changed Yesterday",
+  "video": true,
+  "lab": "test_index.py",
+  "files": [
+   "index_policies.py",
+   "test_index.py"
+  ]
+ },
+ {
+  "id": "f0811",
+  "course": "1-8-11",
+  "title": "A Return with an Attachment",
+  "video": true,
+  "lab": "check_attachment.py",
+  "files": [
+   "attachment.py",
+   "check_attachment.py",
+   "try_attachment.py"
+  ]
+ },
+ {
+  "id": "f0811b",
+  "course": "1-8-11_1",
+  "title": "The Currency the Check Missed",
+  "video": true,
+  "lab": "check_attachment.py",
+  "files": [
+   "check_attachment.py",
+   "score_attachments.py"
+  ]
+ },
+ {
+  "id": "f0903",
+  "course": "1-9-3",
+  "title": "The Adapter for Production",
+  "video": true,
+  "lab": "llm.py",
+  "files": [
+   "llm.py",
+   "try_busy.py"
+  ]
+ },
+ {
+  "id": "f0903b",
+  "course": "1-9-3_1",
+  "title": "When Claude Does Not Answer",
+  "video": true,
+  "lab": "llm.py",
+  "files": [
+   "app.py",
+   "llm.py",
+   "test_app.py",
+   "try_down.py"
+  ]
+ },
+ {
+  "id": "f1002",
+  "course": "1-10-2",
+  "title": "Pilot Metrics from Traces",
+  "video": true,
+  "lab": "metrics.py",
+  "files": [
+   "metrics.py",
+   "metrics.sql",
+   "traffic.py"
+  ]
+ },
+ {
+  "id": "f1002b",
+  "course": "1-10-2_1",
+  "title": "Why Chats Go to a Person, and What a Resolved Chat Costs",
+  "video": true,
+  "lab": "metrics.py",
+  "files": [
+   "metrics.py",
+   "metrics.sql"
+  ]
+ },
+ {
+  "id": "f1003",
+  "course": "1-10-3",
+  "title": "The Pilot Dashboard",
+  "video": false,
+  "lab": "widget/src/Dashboard.tsx",
+  "files": [
+   "app.py",
+   "metrics.py",
+   "metrics.sql",
+   "widget/src/Dashboard.css",
+   "widget/src/Dashboard.tsx",
+   "widget/src/main.tsx",
+   "widget/vite.config.ts"
+  ]
+ },
+ {
+  "id": "f1003b",
+  "course": "1-10-3_1",
+  "title": "The Sponsor Report",
+  "video": true,
+  "lab": "report.py",
+  "files": [
+   "metrics.py",
+   "metrics.sql",
+   "report-template.md",
+   "report.py",
+   "widget/src/Dashboard.tsx"
+  ]
+ },
+ {
+  "id": "f1102",
+  "course": "1-11-2",
+  "title": "The Launch Switch",
+  "video": true,
+  "lab": "launch.py",
+  "files": [
+   "launch.py",
+   "try_launch.py"
+  ]
+ },
+ {
+  "id": "f1102b",
+  "course": "1-11-2_1",
+  "title": "The Control Group and the Kill Switch",
+  "video": true,
+  "lab": "app.py",
+  "files": [
+   "app.py",
+   "launch.py",
+   "switch.py",
+   "test_app.py"
+  ]
+ }
+]

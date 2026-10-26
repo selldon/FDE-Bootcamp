@@ -1,0 +1,137 @@
+{
+ "exported": "2026-10-15",
+ "products": [
+  {
+   "name": "Aero 14 laptop",
+   "description": "A light 14-inch laptop for work and study: 16 GB of memory, a 512 GB SSD and a battery that lasts a full working day.",
+   "price": "1299.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "Aero 14 Pro laptop",
+   "description": "The 14-inch laptop for heavy work: 32 GB of memory, a 1 TB SSD and a brighter screen for photo and video editing.",
+   "price": "1749.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "Nova 24 monitor",
+   "description": "A 24-inch Full HD monitor for the office, with a stand that tilts and turns.",
+   "price": "329.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "Nova 27 monitor",
+   "description": "A 27-inch 4K monitor with USB-C: one cable charges a laptop and carries the picture.",
+   "price": "329.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "Nova 32 monitor",
+   "description": "A 32-inch curved monitor, our largest screen, for spreadsheets and code side by side.",
+   "price": "329.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "Volt 8 graphics card",
+   "description": "A graphics card with 8 GB of memory for games and 3D work.",
+   "price": "699.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "Wi-Fi router R6",
+   "description": "A Wi-Fi 6 router for a home or a small office, set up from a phone app.",
+   "price": "129.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "SSD 1 TB",
+   "description": "A 1 TB internal SSD that makes an older laptop start in seconds.",
+   "price": "89.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "SSD 2 TB",
+   "description": "A 2 TB internal SSD for large photo and video libraries.",
+   "price": "89.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "Keyboard K2",
+   "description": "A full-size wireless keyboard with keys that light up in the dark, and a battery that charges over USB-C.",
+   "price": "89.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "Mouse M3",
+   "description": "A quiet wireless mouse that connects to three computers and switches between them with one button.",
+   "price": "39.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "Power supply 850 W",
+   "description": "An 850-watt power supply for a desktop PC with a strong graphics card.",
+   "price": "119.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "Gaming headset H3",
+   "description": "A wired gaming headset with a microphone that folds away.",
+   "price": "99.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "Headset H5",
+   "description": "A wireless headset for calls, with noise cancelling and a 30-hour battery.",
+   "price": "99.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "Webcam W1",
+   "description": "A Full HD webcam with two microphones, for video calls.",
+   "price": "69.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "Webcam C2",
+   "description": "A 4K webcam with a cover that closes over the lens.",
+   "price": "69.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "Docking station D2",
+   "description": "A USB-C docking station: two screens, a network cable and four USB ports through one cable.",
+   "price": "189.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "Laser printer P5",
+   "description": "A black-and-white laser printer for the office that prints on both sides.",
+   "price": "249.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "Inkjet printer P2",
+   "description": "A colour inkjet printer that also scans and copies.",
+   "price": "249.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "Desk speakers S2",
+   "description": "A pair of small speakers for a desk, connected over USB.",
+   "price": "129.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "Smart speaker S1",
+   "description": "A speaker with a voice assistant and Wi-Fi.",
+   "price": "129.00",
+   "currency": "EUR"
+  },
+  {
+   "name": "Vento mini PC",
+   "description": "A small, quiet desktop computer that fits behind a monitor.",
+   "price": "99.00",
+   "currency": "EUR"
+  }
+ ]
+}

@@ -7,6 +7,8 @@ step by step. Each day of the course starts from a tag, so you can always catch 
 
 Put your Claude API key into `.env` (copy `.env.example`). Never commit `.env`.
 
+New to the course? Start with [For learners](#for-learners) at the end of this file.
+
 ## The hourly pipeline
 
 `python pipeline.py` reads Ledgerline and the carrier's newest file, runs the four checks and, only if all pass, loads the
@@ -89,3 +91,42 @@ The live checks of Build 4 (run on purpose; they call Claude or PostgreSQL):
     python -m pytest -m live test_retention_live.py          # traces, purge, erasure; temporary tables only
     python -m pytest -m live test_hard_messages_live.py      # the 10 hard messages, 3 runs, real Claude, fakes under it
     python policy_index.py                                   # the index live check: run twice, the counts must match
+
+## For learners
+
+This repository has two parts. The root is the product: the support chat for DemoStore that Claude Code builds in the
+build lessons, with a tag for every day. `sandbox/` is your lab folder, where you type the small programs of the labs
+(see `sandbox/README.md`). Both use DemoStore's systems in `sandbox/systems/`.
+
+### Setup
+
+**Path A - GitHub Codespaces (nothing to install on your computer).** Open this repository on GitHub, then Code,
+Codespaces, Create codespace. Before that, add your Claude API key as a Codespaces secret named `ANTHROPIC_API_KEY`
+(GitHub Settings, Codespaces, Secrets) and give it access to this repository. The environment installs everything and
+starts the systems; then run:
+
+    python doctor.py
+
+Codespaces is free for a number of core-hours a month on a personal account; this environment uses 2 cores (or 4 if you
+choose a bigger machine, which uses the hours twice as fast). Stop the codespace when you take a break.
+
+**Path B - your own computer.** You need Python 3.12 or newer, Node 22, Docker and git. Then:
+
+    python -m venv .venv && . .venv/bin/activate
+    pip install -r requirements.txt -r sandbox/requirements.txt
+    (cd widget && npm ci)
+    cp .env.example .env && cp sandbox/.env.example sandbox/.env      # then put your key into both
+    docker compose -f sandbox/systems/compose.yaml up -d
+    python doctor.py
+
+In both paths, set a monthly spend limit for your API key in the Claude Console before the first lab.
+
+### Catching up
+
+- In the labs: `python sandbox/catchup.py <lesson>` puts the lab files where they are when that lesson starts.
+- In the builds: open a day's starting point in its own folder, next to your work:
+
+      git worktree add builds/day4 c1-d4-start
+
+  Copy your `.env` into that folder and work there; your own branch and the sandbox stay as they are.
+

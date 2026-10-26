@@ -1,0 +1,85 @@
+# DemoStore's systems and partners, simulated for the course. The labs (sandbox/) and the product (the repo root) both
+# use them. Test passwords below are values of this local copy, not secrets.
+#   Ledgerline  the ERP: Oracle, no API; read-only account LL_READER, writer account LL_WRITER    localhost:1521
+#   carrier     the carrier's SFTP server with its nightly files                                   localhost:2222
+#   mail        Mailpit: it takes the one-time codes and shows every mail on a web page            localhost:8025
+#   ourdb       our own PostgreSQL with pgvector: database "assistant" (labs), "product" (builds)  localhost:5432
+#   servicenow  stand-in for ServiceNow: old chats, approval tasks, hand-off cases, live chats     localhost:8020
+#   atlas       stand-in for Atlas, the store platform: catalog, prices, contract prices           localhost:8030
+#   confluence  stand-in for Confluence: the policy pages with their valid dates                   localhost:8040
+#   outage      the Claude API on a busy day (every call 429), only for lesson 1-9-3:
+#               docker compose -f sandbox/systems/compose.yaml --profile outage up -d outage       localhost:8050
+#
+#   docker compose -f sandbox/systems/compose.yaml up -d      (the first start creates the schemas and the test data)
+services:
+  ledgerline:
+    image: gvenzl/oracle-free:23-slim-faststart
+    environment:
+      ORACLE_PASSWORD: demostore
+      APP_USER: ledgerline
+      APP_USER_PASSWORD: ledgerline
+    ports:
+      - "1521:1521"
+    volumes:
+      - ./ledgerline/init:/container-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      retries: 30
+  carrier:
+    image: atmoz/sftp:alpine
+    # user demostore, password feed; the nightly files are read-only for us
+    command: demostore:feed:1001
+    ports:
+      - "2222:22"
+    volumes:
+      - ./carrier/upload:/home/demostore/upload:ro
+  mail:
+    image: axllent/mailpit:v1.21
+    ports:
+      - "1025:1025"     # SMTP: our code sends the one-time codes here
+      - "8025:8025"     # the web page and API that show every mail
+  ourdb:
+    image: pgvector/pgvector:0.8.0-pg16
+    environment:
+      POSTGRES_USER: demostore
+      POSTGRES_PASSWORD: demostore
+      POSTGRES_DB: assistant
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./ourdb/init:/docker-entrypoint-initdb.d:ro
+  # the four stand-ins share one small image (Python and FastAPI), built on the first start
+  servicenow:
+    build: ./sims
+    image: demostore-sims
+    command: uvicorn sim:app --app-dir /systems/servicenow --host 0.0.0.0 --port 8020
+    ports:
+      - "8020:8020"
+    volumes:
+      - .:/systems:ro
+  atlas:
+    build: ./sims
+    image: demostore-sims
+    command: uvicorn sim:app --app-dir /systems/atlas --host 0.0.0.0 --port 8030
+    ports:
+      - "8030:8030"
+    volumes:
+      - .:/systems:ro
+  confluence:
+    build: ./sims
+    image: demostore-sims
+    command: uvicorn sim:app --app-dir /systems/confluence --host 0.0.0.0 --port 8040
+    ports:
+      - "8040:8040"
+    volumes:
+      - .:/systems:ro
+  outage:
+    build: ./sims
+    image: demostore-sims
+    profiles: [outage]
+    command: uvicorn sim:app --app-dir /systems/outage --host 0.0.0.0 --port 8050
+    ports:
+      - "8050:8050"
+    volumes:
+      - .:/systems:ro
