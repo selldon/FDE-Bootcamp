@@ -94,7 +94,7 @@ compose profile so `up` does not start it.
 ## Phase 5 - the jobs
 - [ ] Restore point first (global rule): the pipeline upserts the order store, the index rebuild replaces stale sections, retention deletes old traces. You dump
       before the first job that writes: `pg_dump -h 127.0.0.1 -U demostore product > ~/product-before-containers.sql`. I will say this again at the phase.
-- [ ] **Check for you (Docker):**
+- [x] **Check for you (Docker):** done 2026-10-26. `--check` agrees; `policy_index.py` stored 47 sections; `retention.py` deleted 0 traces. `pipeline.py` reached Ledgerline and the carrier by name but stopped by its own freshness check (newest carrier news 2026-10-22, 114 h old, limit 30) and wrote nothing: the sandbox carrier files are old, not a container fault. "pipeline ok" is not yet seen; it needs a carrier file from this week (`sandbox/systems/carrier/make_nights.py`, a change in the systems folder, so the author's call).
   ```
   docker compose run --rm jobs python policy_index.py --check          # read-only; brief check: "return windows: code and pages agree"
   # after the dump:
