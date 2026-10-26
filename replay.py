@@ -7,6 +7,7 @@ import kinds
 import refunds
 import servicenow
 import tools
+import traces
 from agent import answer
 
 DEFAULT_CUSTOMER = "maya.ross@example.com"
@@ -35,13 +36,18 @@ def owner(number):
 def play(chat):
     """One conversation as a verified session of the order's owner."""
     ctx = refunds.Context(owner(chat["order_number"]), f"replay-{chat['id']}")
-    result = answer(chat["message"], ctx)
+    token = traces.current_session.set(ctx.session_id)
+    try:
+        result = answer(chat["message"], ctx)
+    finally:
+        traces.current_session.reset(token)
     action = "start_return" if ctx.offer is not None else taken(result.action)
     return {**chat, "expected": score(chat["action"]), "taken": action, "reply": result.reply}
 
 
 def main():
     fake_drafts, snow = drafts.FakeDrafts(), servicenow.FakeServiceNow()
+    traces.set_sink(traces.FakeTraces())  # the replay writes no rows into the real table
     refunds.set_systems(None, fake_drafts, snow)  # Ledgerline stays the real, read-only copy
     if kinds.UNCONFIRMED:
         print("Note: the SKU kinds (kinds.py) are UNCONFIRMED - OQ-S3-2 is open (Marco); the replay runs on that mapping (D5).\n")

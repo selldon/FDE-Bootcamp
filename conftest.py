@@ -13,6 +13,7 @@ import refunds
 import servicenow
 import store
 import tools
+import traces
 
 NOW = datetime(2026, 10, 22, 12, 0, tzinfo=UTC)
 
@@ -117,3 +118,12 @@ def fake_systems(monkeypatch):
     monkeypatch.setattr(refunds, "_drafts", systems.drafts)
     monkeypatch.setattr(refunds, "_servicenow", systems.snow)
     return systems
+
+
+@pytest.fixture(autouse=True)
+def fake_traces(monkeypatch):
+    """Every test records model calls into a FakeTraces: the real table is never reached."""
+    fake = traces.FakeTraces()
+    monkeypatch.setattr(traces, "_sink", fake)
+    monkeypatch.setattr(traces, "failures", 0)
+    return fake

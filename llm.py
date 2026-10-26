@@ -4,9 +4,22 @@ import json
 from anthropic import Anthropic
 from dotenv import load_dotenv
 
+import traces
+
 load_dotenv()
 client = Anthropic()
 MODEL = "claude-sonnet-5-5"
+# US dollars per million tokens (input, output), per model. PLACEHOLDER: the author sets the real
+# prices. A model missing here is stored with no cost, never with a guessed one.
+PRICES = {"claude-sonnet-5-5": (3.0, 15.0)}
+
+
+def cost(model, usage):
+    """The cost of one call from its tokens, or None for a model with no price."""
+    if model not in PRICES:
+        return None
+    price_in, price_out = PRICES[model]
+    return (usage.input_tokens * price_in + usage.output_tokens * price_out) / 1_000_000
 
 
 def ask(prompt, schema=None, model=MODEL, usage=None):
@@ -21,10 +34,13 @@ def ask(prompt, schema=None, model=MODEL, usage=None):
         messages=[{"role": "user", "content": prompt}],
     )
     if response.stop_reason == "refusal":
+        traces.record("ask", model, prompt, f"refusal: {response.stop_details.category}",
+                      response.usage, cost(model, response.usage))
         raise ValueError(response.stop_details.category)
     if usage is not None:
         usage.append(response.usage)
     text = response.content[-1].text
+    traces.record("ask", model, prompt, text, response.usage, cost(model, response.usage))
     if schema:
         return json.loads(text)
     return text
@@ -42,4 +58,6 @@ def chat(system, tools, messages, usage=None):
     )
     if usage is not None:
         usage.append(response.usage)
+    traces.record("chat", MODEL, {"system": system, "messages": messages}, response.content,
+                  response.usage, cost(MODEL, response.usage))
     return response

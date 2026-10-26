@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 import handoff
 import refunds
+import traces
 import verify
 from agent import answer
 from intent import Intent, classify
@@ -81,6 +82,14 @@ def verify_check(body: VerifyCheckIn) -> VerifyOut:
 def chat(body: ChatIn) -> ChatOut:
     """One message in, one reply out."""
     session_id, session = get_session(body.session_id)
+    token = traces.current_session.set(session_id)  # B22: the model calls of this turn belong to this chat
+    try:
+        return _chat(body, session_id, session)
+    finally:
+        traces.current_session.reset(token)
+
+
+def _chat(body: ChatIn, session_id: str, session: dict) -> ChatOut:
     message = mask_cards(body.message)  # B21: first of all, so no later step can see a card number
     ctx = refunds.Context(session["customer"], session_id, session.get("offer"),
                           session.get("failed", 0), session.get("handed_off", False))

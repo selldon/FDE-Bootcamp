@@ -86,14 +86,15 @@ Answered 2026-10-26:
 - [x] Check: fast tests green. Result 2026-10-26: 648 fast tests, ruff, mypy green (tsc untouched).
 
 ## Phase 3 - every model call is recorded (B22, IT25)
-- [ ] `traces.py`: table `traces` (time, chat session, `customer_hash` null, model, prompt, reply, input/output tokens, cost, kind `ask`/`chat`), `create_tables`, `FakeTraces`
+- [x] `traces.py`: table `traces` (time, chat session, `customer_hash` null, model, prompt, reply, input/output tokens, cost, kind `ask`/`chat`), `create_tables`, `FakeTraces`
       with the same interface. Prompt and reply are stored after masking.
-- [ ] `llm.py`: `ask` and `chat` record every call; the chat session comes from a context variable set by `/chat` (and the replay), not from a new argument on each caller.
+- [x] `llm.py`: `ask` and `chat` record every call; the chat session comes from a context variable set by `/chat` (and the replay), not from a new argument on each caller.
       Cost = tokens x a price constant per model, kept in one place next to `MODEL`.
-- [ ] Decision to confirm (below): a failed trace write does not block the customer's reply; it is counted and logged.
-- [ ] Fast tests: one trace per `ask`, one per `chat` round; a tool round records the prompt as sent; a refusal is still recorded; cost is from tokens; a trace write that fails
+- [x] Decision to confirm (below): a failed trace write does not block the customer's reply; it is counted and logged.
+- [x] Fast tests: one trace per `ask`, one per `chat` round; a tool round records the prompt as sent; a refusal is still recorded; cost is from tokens; a trace write that fails
       does not fail the reply and is counted; a grep-style test that no module outside `llm.py` calls the Anthropic client; the stored prompt contains no card number.
-- [ ] Check: fast tests green. (The real table is first used in Phase 4's live check.)
+- [x] Check: fast tests green. (The real table is first used in Phase 4's live check.)
+      Result 2026-10-26: 658 fast tests, ruff, mypy green. Nothing was run against the real PostgreSQL or Claude. Decision 1 (trace failure does not block) is implemented as written; `llm.PRICES` holds a placeholder price for the author to set.
 
 ## Phase 4 - retention and erasure (B23, IT26)
 - [ ] `traces.customer_hash`: HMAC-SHA256 of the lower-cased email with `config.trace_key()`; set on `/verify/check` success, and the earlier rows of that session are filled then.
