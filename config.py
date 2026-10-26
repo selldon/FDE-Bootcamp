@@ -35,6 +35,16 @@ def servicenow():
             "password": setting("SERVICENOW_PASSWORD")}
 
 
+def confluence():
+    """Confluence: the policy space POL, read only."""
+    return {"url": setting("CONFLUENCE_URL").rstrip("/")}
+
+
+def trace_key():
+    """The secret of the keyed hash that finds a customer's traces (Build 4, D5)."""
+    return setting("TRACE_HMAC_KEY")
+
+
 def carrier():
     """The carrier's SFTP server."""
     return {"host": setting("CARRIER_HOST"),

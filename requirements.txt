@@ -10,3 +10,4 @@ pre-commit
 oracledb
 psycopg[binary]
 paramiko
+fastembed

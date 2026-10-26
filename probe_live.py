@@ -190,9 +190,90 @@ def servicenow_build3():
             print(f"    dictionary: not available ({error})")
 
 
+def confluence_get(path):
+    """One GET to Confluence. Returns (status, parsed json or None, text length); never any other verb."""
+    request = urllib.request.Request(config.confluence()["url"] + path, method="GET",
+                                     headers={"Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(request, timeout=10) as response:
+            raw = response.read()
+            status = response.status
+    except urllib.error.HTTPError as error:
+        return error.code, None, 0
+    try:
+        return status, json.loads(raw), len(raw)
+    except ValueError:
+        return status, None, len(raw)
+
+
+HEADING = re.compile(r"^(#{1,4})\s+(.+)$", re.MULTILINE)
+STOPWORDS = {"en": {"the", "and", "of", "to", "is", "you", "your", "we"},
+             "de": {"der", "die", "und", "das", "nicht", "sie", "ist", "wir"},
+             "fr": {"le", "la", "et", "les", "des", "vous", "est", "nous"},
+             "it": {"il", "di", "che", "per", "della", "sono", "non", "gli"}}
+
+
+def guess_language(text):
+    """A rough guess from common words: enough to tell English from the other markets' languages."""
+    words = re.findall(r"[a-zA-Z\u00c0-\u017f]+", text.lower())
+    score = {lang: sum(w in common for w in words) for lang, common in STOPWORDS.items()}
+    best = max(score, key=lambda lang: score[lang])
+    return f"{best} {score}" if score[best] else "unknown"
+
+
+def confluence_build4():
+    """Build 4: how Confluence serves the policy space. GET only; titles, ids, versions, metadata and
+    heading texts are printed, page bodies are not."""
+    print("\n== Confluence (GET only; no page bodies printed)")
+    print(f"  url {config.confluence()['url']}")
+    for path in ("/rest/api/user/current", "/rest/api/space/POL", "/rest/api/space?limit=10"):
+        status, body, size = confluence_get(path)
+        keys = ", ".join(sorted(body)) if isinstance(body, dict) else "-"
+        print(f"  GET {path}: HTTP {status}, {size} bytes, keys: {keys}")
+    status, body, size = confluence_get("/rest/api/content?spaceKey=POL&type=page&limit=100"
+                                        "&expand=version,metadata.labels,body.storage")
+    print(f"  GET content of POL: HTTP {status}, {size} bytes")
+    if not isinstance(body, dict):
+        return
+    pages = body.get("results", [])
+    print(f"  top-level keys: {', '.join(sorted(body))}; pages in this answer: {len(pages)}")
+    for page in pages:
+        text = page.get("body", "")
+        if isinstance(text, dict):  # real Confluence nests it: body.storage.value
+            text = text.get("storage", {}).get("value", "")
+        version = page.get("version", {})
+        print(f"\n  page {page.get('id')}  {page.get('title')!r}  version {version.get('number')} "
+              f"({version.get('when')})  metadata {page.get('metadata')}  links {page.get('_links')}")
+        headings = [f"{'#' * len(marks)} {title.strip()[:60]}" for marks, title in HEADING.findall(text)]
+        print(f"    body: {type(page.get('body')).__name__}, {len(text)} chars, "
+              f"language {guess_language(text)}; keys {', '.join(sorted(page))}")
+        print(f"    headings ({len(headings)}): " + "; ".join(headings[:15]))
+
+
+def postgres_build4():
+    """Build 4: can our PostgreSQL hold embeddings (the vector extension), and what is in it now."""
+    print("\n== Our PostgreSQL, Build 4 (read-only)")
+    with psycopg.connect(config.store_url()) as conn:
+        conn.read_only = True
+        print("  server:", conn.execute("SELECT version()").fetchone()[0])
+        for name, default, installed in conn.execute(
+                "SELECT name, default_version, installed_version FROM pg_available_extensions "
+                "WHERE name IN ('vector', 'pg_trgm') ORDER BY name").fetchall():
+            print(f"  extension {name}: available {default}, installed {installed}")
+        if not conn.execute("SELECT 1 FROM pg_available_extensions WHERE name = 'vector'").fetchone():
+            print("  extension vector: NOT available")
+        for schema, table in conn.execute(
+                "SELECT table_schema, table_name FROM information_schema.tables "
+                "WHERE table_schema NOT IN ('pg_catalog', 'information_schema') ORDER BY 1, 2").fetchall():
+            print(f"  table {schema}.{table}")
+
+
 if __name__ == "__main__":
-    steps = (ledgerline_build3, servicenow_build3) if sys.argv[1:] == ["build3"] \
-        else (ledgerline, carrier, store)
+    steps: tuple = (ledgerline, carrier, store)
+    if sys.argv[1:] == ["build3"]:
+        steps = (ledgerline_build3, servicenow_build3)
+    elif sys.argv[1:] == ["build4"]:
+        steps = (confluence_build4, postgres_build4)
     for step in steps:
         try:
             step()

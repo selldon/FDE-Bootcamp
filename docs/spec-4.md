@@ -38,13 +38,25 @@ forbids, in 3 runs out of 3.
 Tests: the fast tests use fakes of Confluence and of the model and never call Claude. Live checks, run on request: the
 index against the real Confluence copy, and the 10 hard messages, 3 runs.
 
-## 3. Open questions
+## 3. Decisions of 2026-10-26
+
+Made while planning (`docs/plan-4.md`).
+
+| ID | Decision | Why |
+|---|---|---|
+| D1 | The embeddings of IT21 are made locally: `fastembed` with `BAAI/bge-small-en-v1.5`. No text leaves our machine and no new key is needed. The fast tests use a fake embedder. | Policy text and customers' questions stay inside DemoStore. The model is English-only: if the pages or the questions turn out to be in other languages, we stop and decide again. |
+| D2 | The answer key for G4 (the right page for each of the 8 policy conversations, or "no page: offer a person") is proposed from the pages of `POL` in `data/policy_key.json` and confirmed by the author before any score uses it. | `data/conversations.json` labels the action, not the page. |
+| D3 | The stored records of a chat (B23) are the `traces` table; chats themselves live only in memory. Erasure also drops her in-memory sessions. ServiceNow cases are not covered until OQ-S4-1 is answered. | No second copy of personal data. |
+| D4 | The policy tool needs a market. `/chat` takes an optional `market`; a verified customer's Ledgerline market wins. If no market is known the assistant asks which country, never guesses. The widget is not changed (out of scope). | A policy question can come before the code is checked, and policy pages are not order data (B1). |
+| D5 | A trace is found again by `traces.customer_hash`, the HMAC-SHA256 of the lower-cased email with a secret from the settings (`TRACE_HMAC_KEY`), not a plain hash. It is filled when the session is verified. | A plain hash of an email can be matched against a list of known emails. |
+
+## 4. Open questions
 
 | ID | Question | For |
 |---|---|---|
 | OQ-S4-1 | Cases in ServiceNow keep the chat so far, and our account cannot delete them. Who erases a customer's data there? | Sofia Lindqvist, Ravi Menon |
 
-## 4. Boundaries
+## 5. Boundaries
 
 **Out of scope for this build:** attachments (invoices and photos), product questions and prices, contract prices,
 changes to the chat widget beyond the links.

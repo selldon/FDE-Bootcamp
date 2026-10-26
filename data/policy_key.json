@@ -1,0 +1,42 @@
+{
+  "status": "CONFIRMED",
+  "note": "Claude's proposal from the 16 pages of space POL on 2026-10-26, for the author to confirm (D2 in docs/spec-4.md). page is a page id of POL, or null when no page answers and the assistant must offer a person.",
+  "key": {
+    "C07": {
+      "page": "1001",
+      "section": "Return window",
+      "why": "UK: 14 days from delivery."
+    },
+    "C12": {
+      "page": null,
+      "why": "Returns - Germany says the price and the original delivery cost are refunded, but not who pays the shipping back. Confirmed: no page."
+    },
+    "C14": {
+      "page": "1013",
+      "section": "Return window",
+      "why": "US: an opened item can be returned within 15 days."
+    },
+    "C29": {
+      "page": null,
+      "why": "No page lists the countries we ship to."
+    },
+    "C30": {
+      "page": "1008",
+      "section": "What the warranty covers",
+      "why": "France: two-year warranty on every item."
+    },
+    "C31": {
+      "page": null,
+      "why": "No page has a holiday or Black Friday rule; the only dated rule is the UK delivery page."
+    },
+    "C32": {
+      "page": null,
+      "why": "No page lists payment methods."
+    },
+    "C40": {
+      "page": null,
+      "why": "No page about buying back old laptops; the assistant says it cannot find it and offers a person."
+    }
+  },
+  "confirmed": "2026-10-26, by the author; C12 stays no page"
+}

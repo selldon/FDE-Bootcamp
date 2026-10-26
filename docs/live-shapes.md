@@ -79,3 +79,31 @@ Names, types and counts only; no rows, no emails.
 2. **Columns of `LL_RTN_REQ_STG`:** found (above). There is no customer, currency or reason column.
 3. **`interaction`:** `fde_tasks` may create rows (`short_description`, `u_conversation`) but not read them; the 401 was the read (D3).
 4. **`sc_task`:** `fde_tasks` creates and reads it with `short_description` and `u_draft` (D3).
+
+## Build 4: what the policy index needs (found by `python probe_live.py build4`, read-only, 2026-10-26)
+
+### Confluence (`CONFLUENCE_URL` in `.env`)
+
+- Reachable with **no login** (plain GET). A mock, not a full Confluence: `/rest/api/user/current`, `/rest/api/space/POL` and `/rest/api/space` answer 404.
+  Only `GET /rest/api/content?spaceKey=POL&type=page&limit=100` works: `{"results": [...], "size": 16}`, all 16 pages in one answer.
+- A page: `id` (text), `type`, `title`, `version` `{number, when}`, `metadata` `{market, valid_from, valid_to}`, `_links.webui` (a path, for example
+  `/wiki/spaces/POL/pages/1001`), and `body` as a **Markdown string** (not `body.storage.value`). Market and the valid dates are in `metadata`, not in labels.
+- Pages: Returns, Warranty and Delivery for each of UK, DE, FR, IT, US (15 pages), plus `1016` "Delivery - UK (new rule)" valid from 2026-11-02;
+  `1003` "Delivery - UK" is valid until 2026-11-01. `valid_to` is null for the rest. No page has a holiday rule, payment methods, shipping countries or a buy-back.
+- Sections are `##` headings. Returns: Return window, Condition, Refunds, Company customers. Warranty: What the warranty covers, What it does not cover, How to claim.
+  Delivery: Delivery costs, Delivery times. 4 + 3 + 2 sections.
+- All pages, also those of DE, FR and IT, are written in **English**, so the English-only embedder (D1) fits.
+- No version history through the API (only the current version); two versions of one rule appear as two pages with different valid dates (1003 and 1016).
+- The "Return window" sections say 14 days (UK, DE, FR, IT) and 30 / 15 opened (US): equal to `returns.WINDOWS` / `US_OPENED` today.
+
+### Our PostgreSQL
+
+- PostgreSQL 16.10. Extension `vector` 0.8.0 is **available, not installed**; `pg_trgm` is available too. Tables now: `orders`, `parcels`, `load_state`.
+  `CREATE EXTENSION vector` is a change to the container's database: Phase 6 does it only after you say yes (it is not done by the probe).
+
+### Differences from what Phases 5-9 assume
+
+1. The page body is Markdown, so `policy.py` cuts on `## ` headings (not HTML). `confluence.py` reads one list call; there is no per-page call and no version history.
+2. Market and valid dates are in `metadata` (always present on the 16 pages); a page without them is still an error naming the page.
+3. Two rules for the same thing are two pages with different dates, so the "versions" of Phase 6 are really page ids; both stay in the index and "valid today" decides.
+4. The key for G4 has 5 of 8 conversations with no page (`data/policy_key.json`): the "offer a person" path is half of the check.

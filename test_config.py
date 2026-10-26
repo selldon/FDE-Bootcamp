@@ -6,7 +6,8 @@ import config
 NAMES = ["LEDGERLINE_DSN", "LEDGERLINE_USER", "LEDGERLINE_PASSWORD",
          "CARRIER_HOST", "CARRIER_PORT", "CARRIER_USER", "CARRIER_PASSWORD",
          "STORE_URL", "LEDGERLINE_WRITER_USER", "LEDGERLINE_WRITER_PASSWORD",
-         "SERVICENOW_URL", "SERVICENOW_USER", "SERVICENOW_PASSWORD"]
+         "SERVICENOW_URL", "SERVICENOW_USER", "SERVICENOW_PASSWORD",
+         "CONFLUENCE_URL", "TRACE_HMAC_KEY"]
 
 
 @pytest.fixture
@@ -22,6 +23,8 @@ def test_all_settings_present(env):
     assert config.store_url() == "x"
     assert config.ledgerline_writer() == {"dsn": "x", "user": "x", "password": "x"}
     assert config.servicenow() == {"url": "x", "user": "x", "password": "x"}
+    assert config.confluence() == {"url": "x"}
+    assert config.trace_key() == "x"
 
 
 @pytest.mark.parametrize("name", NAMES)
@@ -33,6 +36,8 @@ def test_a_missing_setting_names_itself(env, name):
         config.store_url()
         config.ledgerline_writer()
         config.servicenow()
+        config.confluence()
+        config.trace_key()
 
 
 @pytest.mark.parametrize("name", NAMES)
@@ -40,7 +45,7 @@ def test_each_setting_is_read_by_its_own_function(env, name):
     """Each missing name is reported by the function that reads it."""
     env.delenv(name)
     readers = [config.ledgerline, config.carrier, config.store_url,
-               config.ledgerline_writer, config.servicenow]
+               config.ledgerline_writer, config.servicenow, config.confluence, config.trace_key]
     failed = []
     for read in readers:
         try:
@@ -56,5 +61,6 @@ def test_the_probe_never_writes():
     with open("probe_live.py") as f:
         source = f.read()
     for forbidden in ("POST", "PUT", "PATCH", "DELETE", "ledgerline_writer", "WRITER",
-                      "INSERT", "UPDATE", "MERGE", "TRUNCATE", "DROP", ".commit("):
+                      "INSERT", "UPDATE", "MERGE", "TRUNCATE", "DROP", ".commit(",
+                      "CREATE ", "ALTER ", "GRANT "):
         assert forbidden not in source, forbidden
