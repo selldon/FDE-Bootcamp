@@ -78,12 +78,12 @@ Answered 2026-10-26:
 3. `TRACE_HMAC_KEY` is in `.env` now (Phase 4 uses it).
 
 ## Phase 2 - card numbers are masked first (B21, IT24)
-- [ ] `masking.py`: pure `mask_cards(text)` - 13 to 19 digits, spaces or dashes between, Luhn-valid -> `[card number removed]`; keeps the rest of the message.
-- [ ] `app.py` `/chat`: the message is masked before anything else sees it (classify, history, offer check, hand-off summary, model).
-- [ ] Fast tests: the four card messages X07-X10 (spaced, plain, dashed, 15-digit Amex); a Luhn-invalid long number and an order number `DS-20377` are kept;
+- [x] `masking.py`: pure `mask_cards(text)` - 13 to 19 digits, spaces or dashes between, Luhn-valid -> `[card number removed]`; keeps the rest of the message.
+- [x] `app.py` `/chat`: the message is masked before anything else sees it (classify, history, offer check, hand-off summary, model).
+- [x] Fast tests: the four card messages X07-X10 (spaced, plain, dashed, 15-digit Amex); a Luhn-invalid long number and an order number `DS-20377` are kept;
       two cards in one message; digits split by text are not joined; the history and the case carry only the masked text; `classify` and `answer` never get the digits
       (assert on the fake model's inputs); the module does no I/O.
-- [ ] Check: fast tests green.
+- [x] Check: fast tests green. Result 2026-10-26: 648 fast tests, ruff, mypy green (tsc untouched).
 
 ## Phase 3 - every model call is recorded (B22, IT25)
 - [ ] `traces.py`: table `traces` (time, chat session, `customer_hash` null, model, prompt, reply, input/output tokens, cost, kind `ask`/`chat`), `create_tables`, `FakeTraces`

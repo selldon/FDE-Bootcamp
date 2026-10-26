@@ -10,6 +10,7 @@ import refunds
 import verify
 from agent import answer
 from intent import Intent, classify
+from masking import mask_cards
 
 GREETING = ("Hi, I am DemoStore's AI assistant. "
             "You can ask for a person at any time.")
@@ -80,10 +81,11 @@ def verify_check(body: VerifyCheckIn) -> VerifyOut:
 def chat(body: ChatIn) -> ChatOut:
     """One message in, one reply out."""
     session_id, session = get_session(body.session_id)
+    message = mask_cards(body.message)  # B21: first of all, so no later step can see a card number
     ctx = refunds.Context(session["customer"], session_id, session.get("offer"),
                           session.get("failed", 0), session.get("handed_off", False))
-    chat_so_far = session["history"] + [{"role": "user", "content": body.message}]
-    if ctx.offer is not None and ctx.customer is not None and refunds.is_yes(body.message):
+    chat_so_far = session["history"] + [{"role": "user", "content": message}]
+    if ctx.offer is not None and ctx.customer is not None and refunds.is_yes(message):
         # B15, B16: only the customer's own yes, checked here, writes a draft - the model never runs.
         intent = Intent(summary="The customer confirmed the refund request.", intent="return_request",
                         order_number=ctx.offer["order"], needs_human=False, damaged=False, language="en")
@@ -93,7 +95,7 @@ def chat(body: ChatIn) -> ChatOut:
         ctx.offer = None  # any other message drops the offer
         if declined:
             ctx.failed += 1  # decision 6: a declined or unclear reply to an offer is a failed try
-        intent = classify(body.message)
+        intent = classify(message)
         damaged = intent["damaged"]
         if intent["needs_human"] or damaged or intent["intent"] not in COVERED:
             # B4, B5: decided here, so no wording of the message can talk the
@@ -104,12 +106,12 @@ def chat(body: ChatIn) -> ChatOut:
         elif ctx.failed >= handoff.FAILED_LIMIT:
             reply = handoff.open_case(ctx, None, chat_so_far, "failed_tries", "two failed tries")
         else:
-            reply = answer(body.message, ctx, history=session["history"]).reply
+            reply = answer(message, ctx, history=session["history"]).reply
     session["offer"], session["failed"], session["handed_off"] = ctx.offer, ctx.failed, ctx.handed_off
     if not session["history"]:
         reply = GREETING + "\n\n" + reply
     session["history"] += [
-        {"role": "user", "content": body.message},
+        {"role": "user", "content": message},
         {"role": "assistant", "content": reply},
     ]
     return ChatOut(session_id=session_id, reply=reply,
