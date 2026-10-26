@@ -13,11 +13,12 @@ MAX_NEWS_AGE = timedelta(hours=30)  # IT14: older than this is stale
 
 
 def news_age(news_date, now):
-    """How old a news dated `news_date` is: counted from the end of that day, UTC (IT14).
+    """How old a news dated `news_date` is: counted from the start of that day, UTC (IT14).
 
-    Negative while the day has not ended yet (news dated today is 0 hours old at midnight)."""
-    end = datetime.combine(news_date + timedelta(days=1), time.min, tzinfo=UTC)
-    return now - end
+    The start of the day is the earliest the news can be from, so this is the largest possible
+    age and old news never looks fresher than it is."""
+    start = datetime.combine(news_date, time.min, tzinfo=UTC)
+    return now - start
 
 
 def check_row_count(name, count, recent_counts):

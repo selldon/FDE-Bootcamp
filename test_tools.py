@@ -38,12 +38,12 @@ def test_an_unknown_parcel_gives_an_error():
     assert "error" in delivery_status("EP-0000000", MAYA)
 
 
-# The 30-hour rule (B9, IT14): news dated 2026-10-21 ends at 2026-10-22 00:00 UTC.
-END_OF_NEWS = datetime(2026, 10, 22, tzinfo=UTC)
+# The 30-hour rule (B9, IT14): news dated 2026-10-21 starts at 2026-10-21 00:00 UTC.
+START_OF_NEWS = datetime(2026, 10, 21, tzinfo=UTC)
 
 
 def at(monkeypatch, delta):
-    monkeypatch.setattr(tools, "clock", lambda: END_OF_NEWS + delta)
+    monkeypatch.setattr(tools, "clock", lambda: START_OF_NEWS + delta)
 
 
 def test_news_at_29h59m_gives_the_date(monkeypatch):

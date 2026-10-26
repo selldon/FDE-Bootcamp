@@ -3,7 +3,7 @@ from datetime import UTC, date, datetime, timedelta
 import checks
 
 DAY = date(2026, 10, 22)
-END = datetime(2026, 10, 23, tzinfo=UTC)  # the end of the 22nd
+START = datetime(2026, 10, 22, tzinfo=UTC)  # the start of the 22nd: IT14 counts from here
 
 
 def test_row_count_in_band_passes():
@@ -43,11 +43,18 @@ def test_statuses():
 
 
 def test_news_age_edge():
-    assert checks.check_news_fresh(DAY, END + timedelta(hours=30)) == []  # exactly 30h: still fine
-    assert checks.check_news_fresh(DAY, END + timedelta(hours=30, seconds=1))
-    assert checks.check_news_fresh(DAY, END + timedelta(hours=29, minutes=59)) == []
+    assert checks.check_news_fresh(DAY, START + timedelta(hours=30)) == []  # exactly 30h: still fine
+    assert checks.check_news_fresh(DAY, START + timedelta(hours=30, seconds=1))
+    assert checks.check_news_fresh(DAY, START + timedelta(hours=29, minutes=59)) == []
+
+
+def test_news_dated_the_22nd_turns_stale_at_06_00_on_the_23rd():
+    assert checks.check_news_fresh(DAY, datetime(2026, 10, 23, 6, 0, tzinfo=UTC)) == []
+    assert checks.check_news_fresh(DAY, datetime(2026, 10, 23, 6, 0, 1, tzinfo=UTC))
+    # news from 00:05 may be 54 hours old at 06:00 on the 24th; the rule must not call it fresh
+    assert checks.check_news_fresh(DAY, datetime(2026, 10, 24, 6, 0, tzinfo=UTC))
 
 
 def test_news_today_is_fresh_and_none_fails():
-    assert checks.check_news_fresh(DAY, END - timedelta(hours=5)) == []
-    assert checks.check_news_fresh(None, END)
+    assert checks.check_news_fresh(DAY, START + timedelta(hours=5)) == []
+    assert checks.check_news_fresh(None, START)

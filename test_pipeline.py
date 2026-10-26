@@ -8,8 +8,8 @@ import pipeline
 import store
 from test_carrier import FakeFiles
 
-NOW = datetime(2026, 10, 23, 8, 0, tzinfo=UTC)
-LATER = datetime(2026, 10, 23, 9, 0, tzinfo=UTC)
+NOW = datetime(2026, 10, 23, 2, 0, tzinfo=UTC)  # 26h after the start of the news date 2026-10-22 (IT14)
+LATER = datetime(2026, 10, 23, 3, 0, tzinfo=UTC)
 FILE = ("tracking,status,place,date\n"
         "EP-1,in transit,Leeds depot,2026-10-22\n"
         "EP-2,delivered,front door,2026-10-22\n")
