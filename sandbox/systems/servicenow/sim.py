@@ -205,6 +205,8 @@ def list_tasks(sysparm_query: str = ""):
         rows = [t for t in TASKS if t["approval"] != sysparm_query[10:]]
     elif sysparm_query.startswith("approval="):
         rows = [t for t in TASKS if t["approval"] == sysparm_query[9:]]
+    elif sysparm_query.startswith("u_draft="):            # the product looks a draft's task up by its key
+        rows = [t for t in TASKS if t["u_draft"] == sysparm_query[8:]]
     return {"result": rows}
 
 
