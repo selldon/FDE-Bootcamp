@@ -90,3 +90,11 @@ def test_the_dates_in_the_result_come_from_the_store(order_store):
 
 def test_the_tools_do_not_read_the_old_files():
     assert not hasattr(tools, "ORDERS")
+
+
+def test_the_tools_clock_follows_the_pinned_time(monkeypatch):
+    """Brief-ci: the age of the carrier's news is read from the same pinned instant as the pipeline's freshness check."""
+    from datetime import UTC, datetime
+    monkeypatch.undo()  # the autouse fixtures replaced tools.clock; this test wants the real one
+    monkeypatch.setenv("DEMOSTORE_NOW", "2026-10-22T05:00:00+00:00")
+    assert tools.clock() == datetime(2026, 10, 22, 5, 0, tzinfo=UTC)

@@ -64,3 +64,27 @@ def test_the_probe_never_writes():
                       "INSERT", "UPDATE", "MERGE", "TRUNCATE", "DROP", ".commit(",
                       "CREATE ", "ALTER ", "GRANT "):
         assert forbidden not in source, forbidden
+
+
+def test_fast_tests_get_their_own_trace_key():
+    """CI has no .env: no fast test may depend on a secret from it. conftest.py sets a fixed key for every test."""
+    assert config.trace_key() == "test-trace-key"
+
+
+# Brief-ci "the eval gate": the replay on a runner needs the same clock every day (DEMOSTORE_NOW), or the carrier's news is stale.
+def test_now_is_the_wall_clock_when_nothing_is_pinned(monkeypatch):
+    from datetime import UTC, datetime, timedelta
+    monkeypatch.delenv("DEMOSTORE_NOW", raising=False)
+    assert abs(datetime.now(UTC) - config.now()) < timedelta(seconds=5)
+
+
+def test_now_can_be_pinned(monkeypatch):
+    from datetime import UTC, datetime
+    monkeypatch.setenv("DEMOSTORE_NOW", "2026-10-22T05:00:00+00:00")
+    assert config.now() == datetime(2026, 10, 22, 5, 0, tzinfo=UTC)
+
+
+def test_a_pinned_time_without_a_zone_is_an_error_that_names_the_setting(monkeypatch):
+    monkeypatch.setenv("DEMOSTORE_NOW", "2026-10-22T05:00:00")
+    with pytest.raises(RuntimeError, match="DEMOSTORE_NOW"):
+        config.now()

@@ -1,5 +1,6 @@
 """The connection settings of DemoStore's systems, read from the environment."""
 import os
+from datetime import UTC, datetime
 
 from dotenv import load_dotenv
 
@@ -56,3 +57,20 @@ def carrier():
 def store_url():
     """Our own PostgreSQL, where the order store lives."""
     return setting("STORE_URL")
+
+
+def now():
+    """The time the product reads as now: the wall clock, unless DEMOSTORE_NOW pins it (an ISO instant with a zone).
+
+    A runner pins it to the day of the sandbox's carrier files, so the freshness checks and the replay give the same
+    answers every day. Production sets nothing."""
+    pinned = os.environ.get("DEMOSTORE_NOW")
+    if not pinned:
+        return datetime.now(UTC)
+    try:
+        moment = datetime.fromisoformat(pinned)
+    except ValueError:
+        moment = None
+    if moment is None or moment.tzinfo is None:
+        raise RuntimeError(f"DEMOSTORE_NOW is {pinned!r}: use an ISO time with a zone, e.g. 2026-10-22T05:00:00+00:00")
+    return moment

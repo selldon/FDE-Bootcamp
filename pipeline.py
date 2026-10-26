@@ -6,10 +6,10 @@ record is the watermark, so the watermark moves only after the commit. Run it wi
 `python pipeline.py`; the exit code is not zero when a check fails or a source cannot be read.
 """
 import sys
-from datetime import UTC, datetime
 
 import carrier
 import checks
+import config
 import ledgerline
 import store as order_store
 
@@ -51,7 +51,7 @@ def run_checks(orders, parcels, newest_news, db, now):
 def run(db=None, orders=None, files=None, now=None):
     """One load. Returns (order rows, parcel rows) written; raises PipelineError, writing nothing."""
     db = db or order_store.Store()
-    now = now or datetime.now(UTC)
+    now = now or config.now()
     db.create_tables()
     db.watermark()  # the last good load; the new one is recorded by save() after the commit
     orders = ledgerline.all_orders() if orders is None else orders

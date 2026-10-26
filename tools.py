@@ -1,7 +1,8 @@
 """Tools the agent may ask for: an order and its delivery. They read only the order store."""
-from datetime import UTC, date, datetime
+from datetime import date
 
 import checks
+import config
 import store as order_store
 
 _store = None
@@ -22,7 +23,7 @@ def set_store(db):
 
 def clock():
     """Now. Replaced in tests, so the age of the carrier's news is never read from the wall clock."""
-    return datetime.now(UTC)
+    return config.now()
 
 
 def _stale(news_date, carrier_status=None):
