@@ -192,3 +192,20 @@ def test_report_is_zero_when_equal(capsys):
     _, index = build(window_pages())
     assert policy_index.report_windows(index, TODAY) == 0
     assert capsys.readouterr().err == ""
+
+
+def test_an_empty_page_list_never_wipes_the_index():
+    """B18, B19, IT22: Confluence answering with no pages is a failure, not 'every page was removed'."""
+    _, index = build([page(), page(id="1002", market="US")])
+    before = index.all()
+    with pytest.raises(PolicyError):
+        build([], index)
+    assert index.all() == before
+
+
+def test_pages_with_no_sections_never_wipe_the_index():
+    _, index = build([page()])
+    before = index.all()
+    with pytest.raises(PolicyError):
+        build([page(body="")], index)
+    assert index.all() == before

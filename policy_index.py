@@ -163,7 +163,9 @@ def rebuild(source=None, embedder=None, index=None):
         if key in seen:
             raise policy.PolicyError(f"page {cut['page_id']} has the heading {cut['heading']!r} twice")
         seen.add(key)
-    vectors = embed([f"{c['heading']}\n{c['text']}" for c in cuts]) if cuts else []
+    if not cuts:  # no pages is a failure, never "every page was removed": the old index stays
+        raise policy.PolicyError("Confluence gave no sections; the index is not replaced")
+    vectors = embed([f"{c['heading']}\n{c['text']}" for c in cuts])
     index.replace([{**cut, "embedding": vector} for cut, vector in zip(cuts, vectors, strict=True)])
     return len(cuts)
 

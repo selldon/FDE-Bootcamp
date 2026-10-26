@@ -49,6 +49,25 @@ def test_too_short_or_too_long_runs_are_kept():
         assert mask_cards(kept) == kept
 
 
+@pytest.mark.parametrize("typed", [
+    "4111.1111.1111.1111", "4111  1111 1111 1111", "4111/1111/1111/1111", "4111\u00a01111\u00a01111\u00a01111",
+    "4111 - 1111 - 1111 - 1111"])
+def test_other_separators_do_not_hide_a_card(typed):
+    assert mask_cards(f"card {typed} thanks") == f"card {REMOVED} thanks"
+
+
+@pytest.mark.parametrize("typed, rest", [
+    ("4111 1111 1111 1111 123", " 123"), ("4111111111111111 123", " 123"), ("123 4111 1111 1111 1111", "123 ")])
+def test_a_card_next_to_a_cvv_is_still_removed(typed, rest):
+    out = mask_cards(typed)
+    assert REMOVED in out and "4111" not in out
+    assert out.replace(REMOVED, "") == rest
+
+
+def test_two_cards_in_one_run_of_digits():
+    assert mask_cards("4111111111111111 5500005555555559") == f"{REMOVED} {REMOVED}"
+
+
 def test_module_does_no_io():
     tree = ast.parse(Path(masking.__file__).read_text())
     imported = {n.names[0].name for n in ast.walk(tree) if isinstance(n, ast.Import)}
