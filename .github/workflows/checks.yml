@@ -29,10 +29,7 @@ jobs:
       # the labs in sandbox/ and the build folders under builds/ are not the product (as in .pre-commit-config.yaml)
       - run: ruff check . --extend-exclude sandbox --extend-exclude builds
       - run: git ls-files '*.py' ':!:sandbox' ':!:builds' | xargs mypy
-      # .env is not in git, so the runner has none; the tests need a value for the keyed hash of traces (a throwaway, not a secret)
       - run: python -m pytest -q -m "not live"
-        env:
-          TRACE_HMAC_KEY: ci-test-key-not-a-secret
 
   widget:
     runs-on: ubuntu-latest

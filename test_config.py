@@ -64,3 +64,8 @@ def test_the_probe_never_writes():
                       "INSERT", "UPDATE", "MERGE", "TRUNCATE", "DROP", ".commit(",
                       "CREATE ", "ALTER ", "GRANT "):
         assert forbidden not in source, forbidden
+
+
+def test_fast_tests_get_their_own_trace_key():
+    """CI has no .env: no fast test may depend on a secret from it. conftest.py sets a fixed key for every test."""
+    assert config.trace_key() == "test-trace-key"

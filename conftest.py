@@ -121,6 +121,12 @@ def fake_systems(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def trace_key(monkeypatch):
+    """Every test hashes emails with a fixed key of its own: no test needs a secret from .env (CI has none)."""
+    monkeypatch.setenv("TRACE_HMAC_KEY", "test-trace-key")
+
+
+@pytest.fixture(autouse=True)
 def fake_traces(monkeypatch):
     """Every test records model calls into a FakeTraces: the real table is never reached."""
     fake = traces.FakeTraces()
