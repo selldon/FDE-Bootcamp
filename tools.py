@@ -102,6 +102,19 @@ TOOLS = [
         },
     },
     {
+        "name": "policy_answer",
+        "description": "Search DemoStore's policy pages (returns, warranty, delivery) for the customer's market. "
+        "Give the customer's question. Give `market` only if the customer said which country they are in. "
+        "Returns sections with a link, or no_page, or says the market is unknown.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"question": {"type": "string"},
+                           "market": {"type": "string", "enum": ["UK", "DE", "FR", "IT", "US"],
+                                      "description": "Only if the customer said their country; otherwise leave out."}},
+            "required": ["question"],
+        },
+    },
+    {
         "name": "hand_off",
         "description": "Pass the chat to a person. Use it when the "
         "customer asks for a person, is angry, or asks about "

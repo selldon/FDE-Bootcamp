@@ -54,7 +54,7 @@ def test_eligible_return_makes_an_offer_and_writes_nothing(fake_model, fake_syst
 
 
 def test_no_model_tool_creates_a_draft():
-    assert {t["name"] for t in tools.TOOLS} == {"find_order", "delivery_status", "prepare_return", "hand_off"}
+    assert {t["name"] for t in tools.TOOLS} == {"find_order", "delivery_status", "prepare_return", "policy_answer", "hand_off"}
 
 
 def test_yes_writes_one_draft_and_one_task_and_the_model_does_not_run(fake_model, fake_systems):

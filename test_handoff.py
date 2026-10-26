@@ -16,7 +16,7 @@ OTHER = json.dumps({"summary": "chat", "intent": "other", "order_number": None,
                     "needs_human": False, "damaged": False, "language": "en"})
 PERSON = json.dumps({"summary": "wants a person", "intent": "other", "order_number": None,
                      "needs_human": True, "damaged": False, "language": "en"})
-POLICY = json.dumps({"summary": "policy", "intent": "policy_question", "order_number": None,
+PRODUCT = json.dumps({"summary": "policy", "intent": "product_question", "order_number": None,
                      "needs_human": False, "damaged": False, "language": "en"})
 STATUS = json.dumps({"summary": "status", "intent": "order_status", "order_number": "DS-20388",
                      "needs_human": False, "damaged": False, "language": "en"})
@@ -50,8 +50,8 @@ def test_request_for_a_person_opens_one_case(fake_model, fake_systems):
 
 
 def test_not_covered_topic_opens_one_case(fake_model, fake_systems):
-    fake_model(reply(text(POLICY)))
-    send("What is your return policy?")
+    fake_model(reply(text(PRODUCT)))
+    send("Do you sell the Nova 27 monitor in white?")
     assert len(fake_systems.snow.cases) == 1
 
 

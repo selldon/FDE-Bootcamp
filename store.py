@@ -62,6 +62,7 @@ WHERE p.tracking = %(tracking)s AND o.customer = %(customer)s
 
 OWNER_OF = "SELECT customer FROM orders WHERE number = %(number)s"
 HAS_CUSTOMER = "SELECT 1 FROM orders WHERE customer = %(customer)s LIMIT 1"
+MARKET_OF = "SELECT market FROM orders WHERE customer = %(customer)s AND market IS NOT NULL ORDER BY number LIMIT 1"
 ORDER_NUMBERS = "SELECT number FROM orders"
 RECENT_RUNS = "SELECT order_rows, parcel_rows FROM load_state ORDER BY finished_at DESC LIMIT %s"
 WATERMARK = "SELECT max(finished_at) FROM load_state"
@@ -159,6 +160,12 @@ class Store:
         with self._connect() as conn:
             return conn.execute(HAS_CUSTOMER, {"customer": email.lower()}).fetchone() is not None
 
+    def market_of(self, email):
+        """The market (Ledgerline `MKT_CD`, copied with the orders) of this customer, or None."""
+        with self._connect() as conn:
+            record = conn.execute(MARKET_OF, {"customer": email.lower()}).fetchone()
+        return record[0] if record else None
+
     def order_numbers(self):
         with self._connect() as conn:
             return {r[0] for r in conn.execute(ORDER_NUMBERS).fetchall()}
@@ -225,6 +232,11 @@ class FakeStore:
 
     def has_customer(self, email):
         return any(o["customer"] == email.lower() for o in self.orders.values())
+
+    def market_of(self, email):
+        markets = [o["market"] for _, o in sorted(self.orders.items())
+                   if o["customer"] == email.lower() and o["market"]]
+        return markets[0] if markets else None
 
     def order_numbers(self):
         return set(self.orders)

@@ -63,6 +63,7 @@ class Context:
     offer: dict | None = None  # {"order", "line", "amount", "key", "order_lines"}
     failed: int = 0  # failed tries so far in this session (decision 6)
     handed_off: bool = False  # a case was opened: no second one
+    market: str | None = None  # verified customer's market, else the API's (D4); the policy tool needs one
 
 
 def is_yes(message):

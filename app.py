@@ -7,10 +7,12 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 import handoff
+import policy_answer
 import refunds
+import tools
 import traces
 import verify
-from agent import answer
+from agent import OFFER_REPLY, answer
 from intent import Intent, classify
 from masking import mask_cards
 
@@ -19,7 +21,7 @@ GREETING = ("Hi, I am DemoStore's AI assistant. "
 
 # The only intent this build answers; "other" (greetings, follow-ups) still
 # goes to the model, which hands off by itself when it must.
-COVERED = {"order_status", "return_request", "other"}
+COVERED = {"order_status", "return_request", "policy_question", "other"}
 
 app = FastAPI(title="DemoStore chat")
 SESSIONS: dict[str, dict] = {}
@@ -28,6 +30,7 @@ SESSIONS: dict[str, dict] = {}
 class ChatIn(BaseModel):
     session_id: str | None = None
     message: str
+    market: str | None = None  # D4: where the customer is, if the site knows; a verified customer's market wins
 
 
 class ChatOut(BaseModel):
@@ -137,8 +140,10 @@ def chat(body: ChatIn) -> ChatOut:
 
 def _chat(body: ChatIn, session_id: str, session: dict) -> ChatOut:
     message = mask_cards(body.message)  # B21: first of all, so no later step can see a card number
+    verified = tools.get_store().market_of(session["customer"]) if session["customer"] else None
+    market = policy_answer.market_for(verified, body.market, session.get("market"))  # D4
     ctx = refunds.Context(session["customer"], session_id, session.get("offer"),
-                          session.get("failed", 0), session.get("handed_off", False))
+                          session.get("failed", 0), session.get("handed_off", False), market)
     chat_so_far = session["history"] + [{"role": "user", "content": message}]
     if ctx.offer is not None and ctx.customer is not None and refunds.is_yes(message):
         # B15, B16: only the customer's own yes, checked here, writes a draft - the model never runs.
@@ -161,8 +166,12 @@ def _chat(body: ChatIn, session_id: str, session: dict) -> ChatOut:
         elif ctx.failed >= handoff.FAILED_LIMIT:
             reply = handoff.open_case(ctx, None, chat_so_far, "failed_tries", "two failed tries")
         else:
-            reply = answer(message, ctx, history=session["history"]).reply
+            result = answer(message, ctx, history=session["history"])
+            reply = result.reply
+            if intent["intent"] == "policy_question" and result.action == "reply" and not result.policy:
+                reply = OFFER_REPLY  # B18: a policy reply that did not come from the tool is never sent
     session["offer"], session["failed"], session["handed_off"] = ctx.offer, ctx.failed, ctx.handed_off
+    session["market"] = None if verified else ctx.market  # a verified customer's market is read again each turn
     if not session["history"]:
         reply = GREETING + "\n\n" + reply
     session["history"] += [

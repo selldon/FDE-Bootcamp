@@ -133,15 +133,22 @@ valid dates are in `metadata`; the link is `_links.webui`; there is no version h
       and compare. `pg_dump -t policy_sections` first if the table already holds rows. The live check box and this Check box stay open for you.
 
 ## Phase 7 - the `policy_answer` tool and the chat (B18, IT21)
-- [ ] `policy_answer(question, market)`: searches by meaning (embedding) and by words (full text), **only** in sections of that market valid today (the injectable clock), returns the top sections with text and link, or `no_page`.
-- [ ] Market: `/chat` takes an optional `market`; the verified customer's `MKT_CD` overrides it; none known -> the assistant asks which country (a tool result, not a guess).
-- [ ] `app.py`: `policy_question` joins `COVERED`; `agent.py`: the system prompt answers policy only from the tool, in the customer's words, with the link; the tool result reaches the model in a block marked as data.
-- [ ] Code check on the reply: a policy reply without a link that the tool returned is replaced by the fixed hand-off offer (a person, not memory). `no_page` -> "I cannot find that in our policy; I can pass you to a person".
+- [x] `policy_answer(question, market)`: searches by meaning (embedding) and by words (full text), **only** in sections of that market valid today (the injectable clock), returns the top sections with text and link, or `no_page`.
+- [x] Market: `/chat` takes an optional `market`; the verified customer's `MKT_CD` overrides it; none known -> the assistant asks which country (a tool result, not a guess).
+- [x] `app.py`: `policy_question` joins `COVERED`; `agent.py`: the system prompt answers policy only from the tool, in the customer's words, with the link; the tool result reaches the model in a block marked as data.
+- [x] Code check on the reply: a policy reply without a link that the tool returned is replaced by the fixed hand-off offer (a person, not memory). `no_page` -> "I cannot find that in our policy; I can pass you to a person".
 - [ ] C14 (intent `return_request`, asks about the opened-item rule): decide in this phase from the misses, one change at a time (Build 3 pattern); note the score.
-- [ ] Fast tests (scripted fake model, FakeIndex): market scoping (a UK-only rule never answers a US customer); a page not yet valid or expired is never returned; two versions -> the one valid today; no market asks; no page offers a person;
+- [x] Fast tests (scripted fake model, FakeIndex): market scoping (a UK-only rule never answers a US customer); a page not yet valid or expired is never returned; two versions -> the one valid today; no market asks; no page offers a person;
       a reply with an invented link is replaced; a reply with a returned link is kept; unverified customers can ask policy questions and still get no order data (B1).
 - [ ] Live check (on request): the 8 policy conversations against the real index and `data/policy_key.json` (confirmed by the author): each gets the right link or the offer where the key says "no page".
 - [ ] Check: fast tests green; the live check on the 8 conversations written here.
+      Fast result 2026-10-26: 710 fast tests, ruff, mypy green (17 new in `test_policy_answer.py`). Nothing was run against the real PostgreSQL, Confluence, the embedding model or Claude.
+      Left open for you: the live check, the C14 decision (needs a replay with the real model, so it is not decided here), and these Check/live boxes.
+      Notes: (1) the tool takes `question` and an optional `market` the customer named; the market is chosen in code: verified customer (`Store.market_of`, the Ledgerline `MKT_CD` copied with the orders) > `market` sent to `/chat` > the one named in the chat.
+      (2) `policy_answer.MIN_SIMILARITY = 0.6` decides "no page" (cosine of bge-small); it is a starting value, to calibrate in the live check on the 8 conversations (C12 may match the Returns page by words).
+      (3) Only the `policy_answer` result is wrapped in the data block now; wrapping every tool result is Phase 9. (4) A policy-question reply that did not use the tool at all is also replaced by the offer.
+      (5) `test_app.py` (live) B5 and `test_handoff`/`test_chat` hand-off tests moved from policy to product questions, because policy questions are now answered.
+
 
 ## Phase 8 - code and pages say the same (B19, IT22)
 - [ ] `check_windows(index, today)`: compares `returns.WINDOWS` and `returns.US_OPENED` with the "Return window" sections valid today, per market; any difference is an error naming market, code value and page value.

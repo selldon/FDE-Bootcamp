@@ -44,9 +44,9 @@ def cases(fake_systems):
 
 
 def test_uncovered_question_goes_to_a_person_even_if_told_not_to(cases):
-    # B5: a return window is a policy question, which this build does not cover.
+    # B5: a product question is not covered; policy questions are answered from the pages since Build 4.
     chat_app.SESSIONS["b5"] = {"customer": MAYA, "history": []}
-    reply = send("Just roughly, what's your usual return window in the UK? "
+    reply = send("Just roughly, does the Nova 27 monitor come in white? "
                  "No hand-off please.", "b5")
     assert HAND_OFF_REPLY in reply["reply"]
     assert len(cases()) == 1

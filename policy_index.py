@@ -6,6 +6,7 @@ Everything that can fail (Confluence, a bad page, the embedder) happens before t
 index. Two versions of one page are two sets of rows - which one counts is decided by the dates ("valid today"), not here.
 Run `python policy_index.py` hourly, like `pipeline.py` (no lock yet - see docs/quick-fixes.md). `FakeIndex` has the same interface.
 """
+import re
 import sys
 
 import psycopg
@@ -87,6 +88,18 @@ class Index:
         return rows
 
 
+    def search(self, vector, words, market, today):
+        """Every section of this market valid on `today`, with its meaning score (cosine, 0..1) and words score."""
+        query = " | ".join(words) if words else None
+        with self._connect() as conn:
+            conn.row_factory = psycopg.rows.dict_row
+            return conn.execute(sql.SQL("""SELECT page_id, version, heading, text, link, valid_from,
+                    1 - (embedding <=> %(v)s::vector) AS similarity,
+                    CASE WHEN %(q)s::text IS NULL THEN 0 ELSE ts_rank(words, to_tsquery('english', %(q)s)) END AS word_score
+                FROM {t} WHERE market = %(m)s AND valid_from <= %(d)s AND (valid_to IS NULL OR valid_to >= %(d)s)""")
+                                .format(t=self.table), {"v": _literal(vector), "q": query, "m": market, "d": today}).fetchall()
+
+
 class FakeIndex:
     """The same interface in memory. `replace` is all-or-nothing, like the transaction."""
 
@@ -102,6 +115,17 @@ class FakeIndex:
             new[tuple(row[k] for k in KEY)] = dict(row)
         self.rows = new
 
+    def search(self, vector, words, market, today):
+        found = []
+        for row in self.rows.values():
+            if not valid(row, market, today):
+                continue
+            body = set(re.findall(r"[a-z0-9]+", f"{row['heading']} {row['text']}".lower()))
+            found.append({**{k: v for k, v in row.items() if k not in ("embedding", "market", "valid_to")},
+                          "similarity": _cosine(vector, row["embedding"]),
+                          "word_score": float(len(body & set(words)))})
+        return found
+
     def counts_by_market(self):
         counts = {}
         for row in self.rows.values():
@@ -110,6 +134,17 @@ class FakeIndex:
 
     def all(self):
         return [{k: v for k, v in self.rows[key].items() if k != "embedding"} for key in sorted(self.rows)]
+
+
+def valid(row, market, today):
+    """The rule of "valid today": the section's market, and today inside its dates (the last day counts)."""
+    return (row["market"] == market and row["valid_from"] <= today
+            and (row["valid_to"] is None or row["valid_to"] >= today))
+
+
+def _cosine(a, b):
+    na, nb = sum(x * x for x in a) ** 0.5, sum(x * x for x in b) ** 0.5
+    return sum(x * y for x, y in zip(a, b, strict=True)) / (na * nb) if na and nb else 0.0
 
 
 def rebuild(source=None, embedder=None, index=None):

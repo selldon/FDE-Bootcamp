@@ -127,3 +127,15 @@ def fake_traces(monkeypatch):
     monkeypatch.setattr(traces, "_sink", fake)
     monkeypatch.setattr(traces, "failures", 0)
     return fake
+
+
+@pytest.fixture(autouse=True)
+def fake_policy(monkeypatch):
+    """Every test searches a FakeIndex with a FakeEmbedder: the real index and the embedding model are never reached."""
+    import embedder
+    import policy_answer
+    import policy_index
+    fake = SimpleNamespace(index=policy_index.FakeIndex(), embedder=embedder.FakeEmbedder())
+    monkeypatch.setattr(policy_answer, "_index", fake.index)
+    monkeypatch.setattr(policy_answer, "_embedder", fake.embedder)
+    return fake
