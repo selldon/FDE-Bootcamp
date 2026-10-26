@@ -91,7 +91,7 @@ if drafts written is not 0 (the brief's "writes nothing").
 
 ## Phase 4 - the eval job
 
-- [ ] `.github/workflows/eval.yml` (`workflow_call`) so the PR run and the nightly share one definition. Job `eval`:
+- [x] `.github/workflows/eval.yml` (`workflow_call`) so the PR run and the nightly share one definition. Job `eval`:
   - first step, only on a pull request from a fork: print the message and `exit 1`.
   - checkout, setup-python, `pip install -r requirements-runtime.txt`, cache `FASTEMBED_CACHE_PATH`.
   - `docker compose -f sandbox/systems/compose.yaml up -d --wait ledgerline carrier ourdb confluence` (Oracle takes a minute or two).
@@ -101,13 +101,18 @@ if drafts written is not 0 (the brief's "writes nothing").
     echoes the environment; no `set -x`).
   - on failure: `docker compose logs` (the systems hold only test data), and the replay output stays in the log with the `MISS` ids.
   - `permissions: contents: read`; `timeout-minutes: 20`.
-- [ ] `checks.yml` gets job `eval`: `uses: ./.github/workflows/eval.yml`, `needs: [python, widget]`, `secrets: inherit`.
-- [ ] Check (I run): YAML parses; `grep` shows the key in exactly one place. **Check for you (GitHub):**
+- [x] `checks.yml` gets job `eval`: `uses: ./.github/workflows/eval.yml`, `needs: [python, widget]`, and passes only `ANTHROPIC_API_KEY` (not `secrets: inherit`, which would hand over every secret). The check is named `eval / replay`.
+- [x] Check (I run): YAML parses; the key is in three places only (declared, passed by the caller, the replay step's `env`). **Check for you (GitHub):**
   ```
   git push
   gh pr checks --watch        # eval runs after python and widget; read the log: score line, GATE: pass, no key in it
   gh run view --log | grep -c "sk-ant"      # must print 0
   ```
+  **Result (2026-10-26, PR #1, push 933745a):** `python` 47 s, `widget` 11 s, `eval / replay` **1 m 36 s**, all green. In the log: systems
+  started in about 56 s (Oracle is the slow one), `pipeline ok: 33 orders, 33 parcels`, 47 sections stored, `Score: 39 of 40`
+  (miss C26), policy 8 of 8, drafts 0, nobody left with the assistant, `GATE: pass`. `sk-ant` appears 0 times in the log; the key shows
+  once as `ANTHROPIC_API_KEY: ***`, on the replay step only. The same code scored 38 on the laptop and 39 here (the model varies by
+  one or two a run), so the goal of 36 leaves a margin of 2-3.
   **Stop.**
 
 ## Phase 5 - the nightly run
