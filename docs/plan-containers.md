@@ -108,7 +108,7 @@ compose profile so `up` does not start it.
 - [x] README section "Run in containers": first start, the two env files, the jobs and the cron lines for IT, what is not in the image.
 - [x] `docs/quick-fixes.md`: codes go to a file inside the container; requirements unpinned; no scheduler; `host-gateway` for `host.docker.internal`; `/erase` is proxied but the widget has no UI for it.
 - [x] Offline check (I run): fast tests; `cd widget && npx tsc -b`.
-- [ ] **Check for you (Docker):**
+- [x] **Check for you (Docker):** done 2026-10-26. Nothing changed: 13 layers CACHED, no container recreated. `app.py` touched: chat rebuilt from COPY on (pip and model layers CACHED) and recreated, the widget image not rebuilt. `down` removed only our two containers; the four `systems` containers kept running. Not shown: a widget-only change. The `/* touch */` comment is stripped by Vite, so the image stayed identical and nothing was recreated (correct); a real CSS rule (`.touch{color:red}`) was not run.
   ```
   docker compose up -d --build                                         # nothing changed: all CACHED, no container recreated
   echo "# touch" >> widget/src/App.css && docker compose up -d --build   # only the widget image rebuilds; chat is not recreated
