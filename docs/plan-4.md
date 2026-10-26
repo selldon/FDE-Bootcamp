@@ -151,9 +151,9 @@ valid dates are in `metadata`; the link is `_links.webui`; there is no version h
 
 
 ## Phase 8 - code and pages say the same (B19, IT22)
-- [ ] `check_windows(index, today)`: compares `returns.WINDOWS` and `returns.US_OPENED` with the "Return window" sections valid today, per market; any difference is an error naming market, code value and page value.
-- [ ] `policy_index.py` runs it after each rebuild and exits non-zero on a difference (the index is still stored; the check tells the support team). `python policy_index.py --check` runs it alone.
-- [ ] Fast tests: equal windows pass; a changed page (UK 14 -> 21) fails and names it; a page that does not state a window for a market fails; a new version valid from tomorrow does not fail today and fails from tomorrow;
+- [x] `check_windows(index, today)`: compares `returns.WINDOWS` and `returns.US_OPENED` with the "Return window" sections valid today, per market; any difference is an error naming market, code value and page value.
+- [x] `policy_index.py` runs it after each rebuild and exits non-zero on a difference (the index is still stored; the check tells the support team). `python policy_index.py --check` runs it alone.
+- [x] Fast tests: equal windows pass; a changed page (UK 14 -> 21) fails and names it; a page that does not state a window for a market fails; a new version valid from tomorrow does not fail today and fails from tomorrow;
       "within an hour" tested with the fake clock: page changed at 10:00, rebuild at 10:59, a question at 11:00 gets the new rule on its first valid day.
 - [ ] Live check (on request): `python policy_index.py --check` against the real `POL` reports equal or the exact differences.
 - [ ] Check: fast tests green; the live check result written here.

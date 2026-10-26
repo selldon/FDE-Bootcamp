@@ -5,6 +5,8 @@ section is stored by (page id, version, heading); sections of pages or versions 
 Everything that can fail (Confluence, a bad page, the embedder) happens before the transaction, so a failure leaves the old
 index. Two versions of one page are two sets of rows - which one counts is decided by the dates ("valid today"), not here.
 Run `python policy_index.py` hourly, like `pipeline.py` (no lock yet - see docs/quick-fixes.md). `FakeIndex` has the same interface.
+`check_windows` (IT22) compares `returns.WINDOWS` / `US_OPENED` with the "Return window" sections valid today; the job
+stores the index first, then exits non-zero on a difference. `python policy_index.py --check` runs only the check.
 """
 import re
 import sys
@@ -16,6 +18,8 @@ import config
 import confluence
 import embedder as real_embedder
 import policy
+import returns
+import tools
 
 KEY = ("page_id", "version", "heading")
 FIELDS = KEY + ("text", "market", "valid_from", "valid_to", "link", "embedding")
@@ -164,9 +168,62 @@ def rebuild(source=None, embedder=None, index=None):
     return len(cuts)
 
 
-def main():
+_DAYS = re.compile(r"(\d+)\s*(?:calendar\s+|working\s+)?days?", re.IGNORECASE)
+_OPENED = (re.compile(r"(\d+)\s*(?:days?\s*)?(?:if |when |for )?(?:the item is |it is )?opened\b", re.IGNORECASE),
+           re.compile(r"\bopened\b[^.\d]*(\d+)", re.IGNORECASE))
+
+
+def _page_windows(text):
+    """(days, days if opened) stated in a "Return window" text; None for what it does not state."""
+    opened = None
+    for pattern in _OPENED:
+        found = pattern.search(text)
+        if found:
+            opened = int(found.group(1))
+            text = text[:found.start()] + text[found.end():]
+            break
+    found = _DAYS.search(text)
+    return (int(found.group(1)) if found else None), opened
+
+
+def check_windows(index, today):
+    """Differences between the code's windows and the pages valid `today`: a list of messages, empty when equal."""
+    sections = [r for r in index.all() if r["heading"].strip().lower() == "return window"]
+    problems = []
+    for market, code_days in returns.WINDOWS.items():
+        valid_now = [r for r in sections if valid(r, market, today)]
+        if not valid_now:
+            problems.append(f"{market}: no 'Return window' section valid on {today}; code says {code_days} days")
+        for row in valid_now:
+            days, opened = _page_windows(row["text"])
+            where = f"page {row['page_id']} version {row['version']}"
+            if days is None:
+                problems.append(f"{market}: {where} states no window; code says {code_days} days")
+            elif days != code_days:
+                problems.append(f"{market}: code says {code_days} days, {where} says {days} days")
+            if market == "US":
+                if opened is None:
+                    problems.append(f"US: {where} states no window for opened items; code says {returns.US_OPENED} days")
+                elif opened != returns.US_OPENED:
+                    problems.append(f"US: code says {returns.US_OPENED} days if opened, {where} says {opened} days")
+    return problems
+
+
+def report_windows(index, today=None):
+    problems = check_windows(index, today or tools.clock().date())
+    for problem in problems:
+        print(f"RETURN WINDOW DIFFERS - {problem}", file=sys.stderr)
+    if not problems:
+        print("return windows: code and pages agree")
+    return 1 if problems else 0
+
+
+def main(argv=None):
+    argv = sys.argv[1:] if argv is None else argv
     try:
         index = Index()
+        if "--check" in argv:
+            return report_windows(index)
         index.create_tables()
         before = index.counts_by_market()
         stored = rebuild(index=index)
@@ -174,7 +231,7 @@ def main():
         print(f"policy index not rebuilt: {error}", file=sys.stderr)
         return 1
     print(f"{stored} sections stored; per market before {before}, after {index.counts_by_market()}")
-    return 0
+    return report_windows(index)
 
 
 if __name__ == "__main__":

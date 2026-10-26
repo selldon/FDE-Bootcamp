@@ -108,3 +108,87 @@ def test_sql_names_the_key_and_the_vector_extension():
     text = " ".join(s.as_string() for s in policy_index.tables())
     assert "CREATE EXTENSION IF NOT EXISTS vector" in text
     assert "PRIMARY KEY (page_id, version, heading)" in text and "tsvector" in text
+
+
+# Phase 8: the code's return windows against the pages (B19, IT22)
+
+TODAY = date(2026, 10, 22)
+WINDOW = "## Return window\n{text}\n"
+ALL_MARKETS = {"UK": 14, "DE": 14, "FR": 14, "IT": 14, "US": 30}
+
+
+def window_pages(**overrides):
+    """One 'Return window' page per market, equal to returns.WINDOWS; `overrides` maps a market to its text."""
+    pages = []
+    for n, (market, days) in enumerate(ALL_MARKETS.items()):
+        text = f"You have {days} days." if market != "US" else "You have 30 days, or 15 days if opened."
+        pages.append(page(id=str(2000 + n), market=market, body=WINDOW.format(text=overrides.get(market, text))))
+    return pages
+
+
+def test_equal_windows_pass():
+    _, index = build(window_pages())
+    assert policy_index.check_windows(index, TODAY) == []
+
+
+def test_a_changed_page_fails_and_names_it():
+    _, index = build(window_pages(UK="You have 21 days."))
+    problems = policy_index.check_windows(index, TODAY)
+    assert len(problems) == 1
+    assert "UK" in problems[0] and "14" in problems[0] and "21" in problems[0]
+
+
+def test_a_changed_us_opened_window_fails():
+    _, index = build(window_pages(US="You have 30 days, or 7 days if opened."))
+    problems = policy_index.check_windows(index, TODAY)
+    assert len(problems) == 1 and "US" in problems[0] and "15" in problems[0] and "7" in problems[0]
+
+
+def test_a_page_without_a_window_fails():
+    _, index = build(window_pages(DE="Ask the support team."))
+    problems = policy_index.check_windows(index, TODAY)
+    assert len(problems) == 1 and problems[0].startswith("DE") and "no window" in problems[0]
+
+
+def test_a_market_without_a_page_fails():
+    _, index = build([p for p in window_pages() if p["market"] != "FR"])
+    problems = policy_index.check_windows(index, TODAY)
+    assert len(problems) == 1 and problems[0].startswith("FR")
+
+
+def test_a_version_valid_from_tomorrow_fails_only_from_tomorrow():
+    tomorrow = date(2026, 10, 23)
+    pages = window_pages(UK="You have 14 days.")
+    pages[0]["valid_to"] = TODAY
+    pages.append(page(id="2100", version=4, valid_from=tomorrow, body=WINDOW.format(text="You have 21 days.")))
+    _, index = build(pages)
+    assert policy_index.check_windows(index, TODAY) == []
+    problems = policy_index.check_windows(index, tomorrow)
+    assert len(problems) == 1 and "UK" in problems[0] and "21" in problems[0]
+
+
+def test_a_change_reaches_the_first_valid_day_within_the_hour(monkeypatch):
+    """Page changed at 10:00, hourly rebuild at 10:59: the question at 11:00 already gets the new rule and the check reports it."""
+    from datetime import datetime
+
+    import tools
+    day = date(2026, 10, 22)
+    index = FakeIndex()
+    rebuild(FakeConfluence(window_pages()), FakeEmbedder(), index)
+    changed = window_pages(UK="You have 21 days.")  # edited at 10:00, valid from today
+    for hour, minute, source in ((10, 0, None), (10, 59, changed)):
+        monkeypatch.setattr(tools, "clock", lambda h=hour, m=minute: datetime(2026, 10, 22, h, m))
+        if source:
+            rebuild(FakeConfluence(source), FakeEmbedder(), index)
+    monkeypatch.setattr(tools, "clock", lambda: datetime(2026, 10, 22, 11, 0))
+    now = tools.clock().date()
+    assert now == day
+    found = index.search(FakeEmbedder().embed(["days"])[0], ["days"], "UK", now)
+    assert [r["text"] for r in found] == ["You have 21 days."]
+    assert policy_index.report_windows(index) == 1
+
+
+def test_report_is_zero_when_equal(capsys):
+    _, index = build(window_pages())
+    assert policy_index.report_windows(index, TODAY) == 0
+    assert capsys.readouterr().err == ""
