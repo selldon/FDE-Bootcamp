@@ -92,6 +92,30 @@ The live checks of Build 4 (run on purpose; they call Claude or PostgreSQL):
     python -m pytest -m live test_hard_messages_live.py      # the 10 hard messages, 3 runs, real Claude, fakes under it
     python policy_index.py                                   # the index live check: run twice, the counts must match
 
+## Run in containers
+
+One image for the Python code (the chat service and the jobs) and one for the widget (built with Node, served by nginx).
+Nothing secret and no data is in an image: keys, passwords and addresses come from `.env` and `.env.containers` when a
+container starts, and the order store, the traces and the policy index stay in our PostgreSQL.
+
+    cp .env.containers.example .env.containers      # the hosts as containers see them; put the PostgreSQL password into STORE_URL
+    docker compose up -d --build                    # the chat service and the widget: http://localhost:8080
+    docker compose run --rm jobs python policy_index.py --check   # a job: do the code and the pages agree?
+
+DemoStore's systems run in their own compose project (`systems`); our containers join its network `systems_default` and reach
+them by service name. ServiceNow and Confluence run on this machine and are reached through `host.docker.internal`. We never
+start or stop the `systems` containers; `docker compose down` here stops only the chat service and the widget.
+
+The jobs are the same image with another command. IT's cron runs them (`-T`: cron has no terminal):
+
+    0 * * * *  cd /path/to/repo && docker compose run --rm -T jobs python pipeline.py
+    5 * * * *  cd /path/to/repo && docker compose run --rm -T jobs python policy_index.py
+    30 2 * * * cd /path/to/repo && docker compose run --rm -T jobs python retention.py
+
+Not in the image: `.env`, the tests, the labs (`sandbox/`), `data/*.jsonl`, the dev tools. The embedding model is in the image,
+so no start downloads it. A second `up` after a change rebuilds only what changed. The one-time codes of `/verify` and `/erase`
+are written to a file inside the chat container (see `docs/quick-fixes.md`).
+
 ## For learners
 
 This repository has two parts. The root is the product: the support chat for DemoStore that Claude Code builds in the

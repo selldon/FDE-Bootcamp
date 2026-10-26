@@ -105,9 +105,9 @@ compose profile so `up` does not start it.
   **Stop.**
 
 ## Phase 6 - second `up` rebuilds only what changed, and the notes
-- [ ] README section "Run in containers": first start, the two env files, the jobs and the cron lines for IT, what is not in the image.
-- [ ] `docs/quick-fixes.md`: codes go to a file inside the container; requirements unpinned; no scheduler; `host-gateway` for `host.docker.internal`; `/erase` is proxied but the widget has no UI for it.
-- [ ] Offline check (I run): fast tests; `cd widget && npx tsc -b`.
+- [x] README section "Run in containers": first start, the two env files, the jobs and the cron lines for IT, what is not in the image.
+- [x] `docs/quick-fixes.md`: codes go to a file inside the container; requirements unpinned; no scheduler; `host-gateway` for `host.docker.internal`; `/erase` is proxied but the widget has no UI for it.
+- [x] Offline check (I run): fast tests; `cd widget && npx tsc -b`.
 - [ ] **Check for you (Docker):**
   ```
   docker compose up -d --build                                         # nothing changed: all CACHED, no container recreated
