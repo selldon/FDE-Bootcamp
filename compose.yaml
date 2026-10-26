@@ -1,0 +1,41 @@
+# The pilot in containers: the chat service and the widget. DemoStore's systems run in their own compose project
+# (`systems`, sandbox/systems/compose.yaml); we only join its network and never start or stop it.
+# Secrets and addresses come from .env, then .env.containers (the later file wins); neither is in an image or here.
+#   docker compose up -d --build                     the chat service and the widget (http://localhost:8080)
+#   docker compose run --rm jobs python pipeline.py  a job: the same image, another command
+name: demostore
+
+x-python: &python
+  build: .
+  image: demostore-app
+  env_file: [.env, .env.containers]
+  extra_hosts:
+    - "host.docker.internal:host-gateway"  # ServiceNow and Confluence run on the host; Linux needs this line
+  networks: [default, systems]
+
+services:
+  chat:
+    <<: *python
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/openapi.json')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+  widget:
+    build: ./widget
+    image: demostore-widget
+    ports:
+      - "8080:80"
+    depends_on:
+      chat:
+        condition: service_healthy
+  # not started by `up`; run with: docker compose run --rm jobs python policy_index.py --check
+  jobs:
+    <<: *python
+    profiles: [jobs]
+
+networks:
+  systems:
+    name: systems_default
+    external: true

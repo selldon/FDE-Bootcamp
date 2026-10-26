@@ -69,13 +69,13 @@ compose profile so `up` does not start it.
   **Stop.**
 
 ## Phase 3 - compose.yaml
-- [ ] `compose.yaml`, project name `demostore`. `chat`: `build: .`, `image: demostore-app`, `env_file: [.env, .env.containers]`, networks `default` and
+- [x] `compose.yaml`, project name `demostore`. `chat`: `build: .`, `image: demostore-app`, `env_file: [.env, .env.containers]`, networks `default` and
       `systems_default` (`external: true`; we never start it), `extra_hosts: host.docker.internal:host-gateway` (so it also works on Linux servers),
       healthcheck with Python's `urllib` on `/openapi.json` (no curl in slim). `widget`: `build: ./widget`, `8080:80`, `depends_on` chat healthy.
       `jobs`: same build and image, same env and networks, `profiles: [jobs]`, no ports, no restart.
-- [ ] No secret in the file: only names, ports and the two env files.
-- [ ] `.env.containers.example` (committed); `.gitignore`: `.env.containers`.
-- [ ] Offline check (I run): the YAML parses; grep shows no password or key in `compose.yaml`; fast tests pass.
+- [x] No secret in the file: only names, ports and the two env files.
+- [x] `.env.containers.example` (committed); `.gitignore`: `.env.containers`.
+- [x] Offline check (I run): the YAML parses; grep shows no password or key in `compose.yaml`; fast tests pass.
 - [ ] **Check for you (Docker):** `cp .env.containers.example .env.containers` and fill it, then `docker compose config -q` (silent = valid), `docker compose config | grep -ci "sk-ant"` (0).
   **Stop.**
 
