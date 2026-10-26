@@ -112,11 +112,12 @@ Answered 2026-10-26:
 ## Phase 5 - read the policy pages, cut them into sections (IT21, IT22)
 Changed after Phase 1: one list call `GET /rest/api/content?spaceKey=POL&type=page&limit=100` returns all 16 pages; the body is Markdown (`##` headings); market and
 valid dates are in `metadata`; the link is `_links.webui`; there is no version history through the API; no login.
-- [ ] `confluence.py`: read-only client (GET) with the account from `config.py`: pages of space `POL`, each with id, title, version, market, valid-from/valid-to, link, body. `FakeConfluence` (a dict) with the same interface.
-- [ ] `policy.py`: cut a page into sections by headings; each section keeps page id, page version, heading, text, market, valid dates, link. A page with no market or no valid-from is an error naming the page, never a default.
-- [ ] Fast tests with canned page bodies (including the "Return window" section, a holiday rule with dates, two versions of one page, a page for all markets): headings cut right, dates and market kept, link built from the page,
+- [x] `confluence.py`: read-only client (GET) with the account from `config.py`: pages of space `POL`, each with id, title, version, market, valid-from/valid-to, link, body. `FakeConfluence` (a dict) with the same interface.
+- [x] `policy.py`: cut a page into sections by headings; each section keeps page id, page version, heading, text, market, valid dates, link. A page with no market or no valid-from is an error naming the page, never a default.
+- [x] Fast tests with canned page bodies (including the "Return window" section, a holiday rule with dates, two versions of one page, a page for all markets): headings cut right, dates and market kept, link built from the page,
       a page with missing metadata raises, the cut is the same on a second run.
 - [ ] Check: fast tests green; (live, on request) the reader lists the real `POL` pages and the section counts match the probe.
+      Result 2026-10-26: 683 fast tests, ruff, mypy green. The live part (list the real `POL` pages, 16 pages and 4+3+2 sections per type) is left for you, so this box stays open.
 
 ## Phase 6 - the index in PostgreSQL with embeddings (IT21, IT22)
 - [ ] `embedder.py`: `embed(texts)` with fastembed `BAAI/bge-small-en-v1.5` (lazy load, so tests and the app start without the model); `FakeEmbedder` (deterministic, small).
