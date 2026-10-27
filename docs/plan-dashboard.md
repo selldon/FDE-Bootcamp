@@ -79,6 +79,15 @@ and a way to mark answers. Reading the code showed four things the brief only hi
 - Seen: `ShadowStore.delete_before` / `FakeShadowStore.delete_before` and `retention.purge_shadow` (same 90-day rule on `opened_at`, marks deleted first); `python retention.py` now calls both. Fast tests 836 passed. Nothing was run against PostgreSQL: the first real run waits for your `pg_dump`.
 **Check:** `python -m pytest -q -m "not live"`, ruff, mypy, `npx tsc -b`; pre-commit is not skipped. **Stop.**
 
+## Phase 9 - "resolved" needs a date (offline)
+Found when reading the 26 "where is my order" rows before showing Lena: 16 gave a status and a date, 10 gave a status, said they had no date and offered a person, and the page counted all 26 as resolved. Six chats have been marked on the page (2 worse, 2 same, 2 better, by one person); one of them, IMS0231469 (better), is among the 26.
+- [x] Tests first (`test_agent.py`, `test_shadow.py`, `test_pilot.py`): the flag follows the tool result (`offer_person` from `find_order` / `delivery_status`), never the reply text; a failed lookup is not flagged; the row records `no_date`; a dateless answer is not resolved, in the totals, the criterion and the action breakdown; old rows are counted and named.
+- [x] `agent.Result.no_date`, set when a status tool result carries `offer_person` (the code already drops the date there). `action` stays `give_status`, so the replay scoring does not change.
+- [x] `shadow_answer` stores `no_date` in `would_have` (no table change); `pilot.is_resolved` is false when it is true; `criterion.date_unrecorded` counts status answers stored before, and the first sentence says how many are counted as resolved.
+- [x] `docs/quick-fixes.md`: `no_date` lives in `would_have`.
+- Seen: fast tests 843 passed. A read-only replay of the tools for the 26 stored rows (clock at each row's `answered_at`, no model call) gives 16 dated and 10 without a date, the same chats as reading the texts: DS-20502 (4), DS-20462 (2), DS-20521 (2), DS-20417 (2). The stored rows have no `no_date` yet, so until they are backfilled the page still counts them as resolved and says so. The backfill is the only step that changes existing rows: it waits for a `pg_dump` and your word.
+**Check:** `python -m pytest -q -m "not live"`, ruff and mypy on the changed files, `npx tsc -b`. **Stop.**
+
 ## Rules for the whole plan
 - Every model call goes through `llm.py`; the page and `pilot.py` make none. The numbers come from code and SQL.
 - The worker writes nothing to ServiceNow, Ledgerline or the real trace table. The only writes are our own `shadow_chats` and `shadow_marks`.
@@ -86,7 +95,7 @@ and a way to mark answers. Reading the code showed four things the brief only hi
 - Customer messages stay inside DemoStore: no public address, no email in any payload, card numbers masked.
 - I never start, stop or change the sandbox systems. The only SQL that changes or deletes existing rows is the retention run, behind a dump.
 - Fast tests keep passing; pre-commit is never skipped; shortcuts go to `docs/quick-fixes.md`.
-- Phases 1-8 add or change code only; no restore point is needed until the first real retention run.
+- Phases 1-9 add or change code only; no restore point is needed until the first real retention run.
 
 ## Verification, end to end
 1. Fast tests, ruff, mypy, tsc all green.

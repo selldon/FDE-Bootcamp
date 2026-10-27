@@ -13,7 +13,7 @@ NOW = datetime(2026, 10, 28, 12, 0, tzinfo=UTC)
 def chat(number, days=0, **extra):
     row = {"number": number, "opened_at": T0 + timedelta(days=days), "opened_for": "x@example.com", "market": "US",
            "message": "Where is DS-1?", "intent": "order_status", "action": "give_status", "answer": "Monday.",
-           "answered_at": T0, "input_tokens": 1000, "output_tokens": 100}
+           "answered_at": T0, "input_tokens": 1000, "output_tokens": 100, "would_have": {"no_date": False}}
     return row | extra
 
 
@@ -137,3 +137,23 @@ def test_sentence_with_a_big_enough_sample_gives_the_range():
     third = pilot.sentences(pilot.numbers(store, NOW))[2]
     assert third == ("How sure: of 20 checked chats, 16 (80%) were marked the same as the agent or better; "
                      "with 95% confidence the true share is between 58% and 92%.")
+
+
+def test_an_answer_without_a_date_is_not_resolved_even_if_the_assistant_gave_a_status():
+    dateless = chat("INT2", would_have={"no_date": True})
+    assert pilot.is_resolved(chat("INT1")) and not pilot.is_resolved(dateless)
+    assert not pilot.is_resolved(chat("INT3", action="hand_off"))
+    result = pilot.numbers(store_with(chat("INT1"), dateless, chat("INT3", would_have={"no_date": True}, action="reply")), NOW)
+    assert (result["criterion"]["chats"], result["criterion"]["resolved"], result["resolved"]) == (3, 1, 1)
+    assert result["actions"][0] == {"key": "give_status", "chats": 2, "resolved": 1}  # the breakdown agrees
+
+
+def test_rows_stored_before_the_date_was_recorded_are_counted_and_named():
+    old = chat("INT2", would_have={})  # no "no_date" key: the tools' answer was not kept
+    result = pilot.numbers(store_with(chat("INT1"), old, chat("INT3", action="hand_off", would_have={})), NOW)
+    assert result["criterion"]["date_unrecorded"] == 1  # only a status answer needs the date; a hand-off does not
+    assert result["criterion"]["resolved"] == 2
+    [first, *_] = pilot.sentences(result)
+    assert "1 of them were stored before the date was recorded and are counted as resolved." in first
+    clean = pilot.numbers(store_with(chat("INT1")), NOW)
+    assert clean["criterion"]["date_unrecorded"] == 0 and "before the date" not in pilot.sentences(clean)[0]

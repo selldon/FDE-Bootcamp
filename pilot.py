@@ -17,7 +17,8 @@ PRODUCT_COST = 0.99       # dollars per resolution of the ready-made product
 SUCCESS_RATE = 0.5        # share of "where is my order" chats solved without a person
 CRITERION_INTENT = "order_status"
 
-# A chat counts as resolved when the gate passed and the assistant did not hand off.
+# A chat counts as resolved when the gate passed and the assistant did not hand off, and a status answer
+# gave the customer a date: when the tools left it out (`no_date` in `would_have`) the answer ends in an offer of a person.
 RESOLVED = ("give_status", "reply", "start_return")
 VERDICTS = ("same", "better", "worse", "wrong")
 
@@ -31,7 +32,12 @@ def rate(part, whole):
 
 
 def is_resolved(chat):
-    return chat.get("action") in RESOLVED
+    return chat.get("action") in RESOLVED and not (chat.get("would_have") or {}).get("no_date")
+
+
+def date_unrecorded(chat):
+    """A status answer stored before `no_date` was kept: the tools' answer is gone, so the date cannot be checked."""
+    return chat.get("action") == "give_status" and "no_date" not in (chat.get("would_have") or {})
 
 
 def breakdown(chats, key):
@@ -100,7 +106,8 @@ def numbers(store, now):
         "unclassified": sum(1 for c in chats if c.get("intent") is None),
         "criterion": {"intent": CRITERION_INTENT, "chats": len(in_criterion), "resolved": done,
                       "rate": rate(done, len(in_criterion)), "target": SUCCESS_RATE,
-                      "unclassified": sum(1 for c in chats if c.get("intent") is None)},
+                      "unclassified": sum(1 for c in chats if c.get("intent") is None),
+                      "date_unrecorded": sum(date_unrecorded(c) for c in in_criterion)},
         "checked": checked(marks),
         "cost": costs(chats),
         "baseline": dict(BASELINE),
@@ -145,6 +152,8 @@ def _where_we_are(data):
             f"({pct(c['rate'])}), against the aim of {pct(c['target'])}.")
     if c["unclassified"]:
         text += f" {c['unclassified']} chats without an intent are not in this count."
+    if c["date_unrecorded"]:
+        text += (f" {c['date_unrecorded']} of them were stored before the date was recorded and are counted as resolved.")
     return f"{text} {estimate}"
 
 

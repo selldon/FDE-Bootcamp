@@ -342,6 +342,14 @@ def answer_one(message, classifier=None, answerer=None):
     return shadow.shadow_answer(chat_row, answerer, classifier), answerer
 
 
+def test_the_row_records_whether_the_tools_left_the_date_out():
+    row, _ = answer_one("Where is DS-20417?")
+    assert row["would_have"]["no_date"] is False  # recorded, so the page can tell it from a row stored before
+    dateless = lambda message, ctx: Result("Shipped.", "give_status", 2, no_date=True)
+    row, _ = answer_one("Where is DS-20417?", answerer=dateless)
+    assert row["action"] == "give_status" and row["would_have"]["no_date"] is True
+
+
 def test_a_covered_chat_stores_its_intent_and_the_tokens_of_every_call():
     class Both(Answerer):
         def __call__(self, message, ctx):

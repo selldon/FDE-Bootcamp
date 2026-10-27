@@ -356,6 +356,7 @@ def shadow_answer(chat, answerer, classifier=None):
     token = traces.current_session.set(ctx.session_id)
     try:
         intent = (classifier or real_classifier)(message)
+        no_date = None  # None: no status answer was made (a hand-off)
         reason = handoff_reason(intent)
         if reason:
             reply = handoff.open_case(ctx, intent["summary"], [{"role": "user", "content": message}],
@@ -365,6 +366,7 @@ def shadow_answer(chat, answerer, classifier=None):
             result = answerer(message, ctx)
             reply = result.reply
             action = "start_return" if ctx.offer is not None else result.action
+            no_date = getattr(result, "no_date", False)
     finally:
         traces.current_session.reset(token)
     calls = fake_traces.rows
@@ -372,7 +374,8 @@ def shadow_answer(chat, answerer, classifier=None):
             "market": chat.get("u_market") or None, "message": message, "intent": intent["intent"],
             "action": action, "answer": mask_cards(reply),
             "would_have": plain({"offer": ctx.offer, "drafts": list(fake_drafts.rows.values()),
-                                 "tasks": fake_snow.tasks, "cases": fake_snow.cases}),
+                                 "tasks": fake_snow.tasks, "cases": fake_snow.cases,
+                                 **({} if no_date is None else {"no_date": no_date})}),
             "state": chat.get("state"), "answered_at": datetime.now(UTC),
             "input_tokens": sum(r["input_tokens"] for r in calls) if calls else None,
             "output_tokens": sum(r["output_tokens"] for r in calls) if calls else None}
