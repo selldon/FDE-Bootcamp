@@ -7,6 +7,7 @@ NAMES = ["LEDGERLINE_DSN", "LEDGERLINE_USER", "LEDGERLINE_PASSWORD",
          "CARRIER_HOST", "CARRIER_PORT", "CARRIER_USER", "CARRIER_PASSWORD",
          "STORE_URL", "LEDGERLINE_WRITER_USER", "LEDGERLINE_WRITER_PASSWORD",
          "SERVICENOW_URL", "SERVICENOW_USER", "SERVICENOW_PASSWORD",
+         "SERVICENOW_READER_USER", "SERVICENOW_READER_PASSWORD",
          "CONFLUENCE_URL", "TRACE_HMAC_KEY"]
 
 
@@ -23,6 +24,7 @@ def test_all_settings_present(env):
     assert config.store_url() == "x"
     assert config.ledgerline_writer() == {"dsn": "x", "user": "x", "password": "x"}
     assert config.servicenow() == {"url": "x", "user": "x", "password": "x"}
+    assert config.servicenow_reader() == {"url": "x", "user": "x", "password": "x"}
     assert config.confluence() == {"url": "x"}
     assert config.trace_key() == "x"
 
@@ -36,6 +38,7 @@ def test_a_missing_setting_names_itself(env, name):
         config.store_url()
         config.ledgerline_writer()
         config.servicenow()
+        config.servicenow_reader()
         config.confluence()
         config.trace_key()
 
@@ -45,7 +48,7 @@ def test_each_setting_is_read_by_its_own_function(env, name):
     """Each missing name is reported by the function that reads it."""
     env.delenv(name)
     readers = [config.ledgerline, config.carrier, config.store_url,
-               config.ledgerline_writer, config.servicenow, config.confluence, config.trace_key]
+               config.ledgerline_writer, config.servicenow, config.servicenow_reader, config.confluence, config.trace_key]
     failed = []
     for read in readers:
         try:

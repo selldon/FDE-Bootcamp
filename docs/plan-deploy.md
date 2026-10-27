@@ -52,11 +52,11 @@ My defaults (tell me if wrong):
 
 ## Phase 1 - settings and the shadow store (offline)
 - [x] Save this plan as `docs/plan-deploy.md`.
-- [ ] `config.servicenow_reader()` (`SERVICENOW_READER_USER`, `SERVICENOW_READER_PASSWORD`, same URL); add the two names to `.env.example` and `.env.containers.example`. I do not read or edit your `.env`.
-- [ ] `shadow.py`, store part: `ShadowStore` (PostgreSQL, `shadow_chats`: `number` primary key, `opened_at`, `opened_for`, `market`, `message`, `intent`, `action`, `answer`, `would_have` JSON, `state`, `agent_reply`, `answered_at`;
+- [x] `config.servicenow_reader()` (`SERVICENOW_READER_USER`, `SERVICENOW_READER_PASSWORD`, same URL); add the two names to `.env.example` and `.env.containers.example`. I do not read or edit your `.env`.
+- [x] `shadow.py`, store part: `ShadowStore` (PostgreSQL, `shadow_chats`: `number` primary key, `opened_at`, `opened_for`, `market`, `message`, `intent`, `action`, `answer`, `would_have` JSON, `state`, `agent_reply`, `answered_at`;
       `CREATE TABLE IF NOT EXISTS`), a fake store for tests, `watermark()`, `save()` (insert, never overwrite), `close(number, agent_reply)`, `last(n)`.
-- [ ] Tests (`test_shadow.py`): saves once per number; the watermark; `close` only fills an empty `agent_reply`; the table holds no other data than the chat.
-- [ ] Check (I run): fast tests, ruff, mypy pass.
+- [x] Tests (`test_shadow.py`): saves once per number; the watermark; `close` only fills an empty `agent_reply`; the table holds no other data than the chat.
+- [x] Check (I run): fast tests, ruff, mypy pass.
 
 ## Phase 2 - the worker and the report (offline)
 - [ ] `shadow.py`, run part: `poll(client, store, answerer)` - read new chats with the reader account (`opened_at>watermark`, ordered, paged), for each run `answer()` as a verified `refunds.Context(opened_for, f"shadow-{number}", market=u_market)` with `FakeDrafts`, `FakeServiceNow`,
