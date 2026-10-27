@@ -71,3 +71,23 @@ def test_the_switch_keeps_what_is_left_out_and_refuses_a_bad_share(client):
     assert body["share"] == 0.25 and body["intents"] == ["order_status"]
     assert client.post("/api/golive/switch", json={"share": 2}).status_code == 422
     assert client.get("/api/golive/switch").json()["share"] == 0.25
+
+
+def test_starting_the_service_makes_the_go_live_tables(monkeypatch):
+    """The page said 'could not load the data' because nothing ever created golive_chats in the real database."""
+    fresh = FakeGoLiveStore()  # tables not made yet: settings() raises, as the real store does on a missing table
+    monkeypatch.setattr(chat_app, "golive_store", lambda: fresh)
+    with TestClient(chat_app.app) as client:  # entering the client runs the startup
+        assert client.get("/api/golive").status_code == 200
+    assert fresh.settings()["on"] is False
+
+
+def test_the_service_still_starts_when_the_database_is_down(monkeypatch, caplog):
+    class Down:
+        def create_tables(self):
+            raise ConnectionError("no database")
+
+    monkeypatch.setattr(chat_app, "golive_store", lambda: Down())
+    with TestClient(chat_app.app) as client, caplog.at_level("ERROR"):
+        assert client.get("/openapi.json").status_code == 200
+    assert "go-live tables" in caplog.text

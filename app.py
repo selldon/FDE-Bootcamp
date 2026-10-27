@@ -1,5 +1,7 @@
 """The chat service: the widget sends a message, we reply."""
+import logging
 import uuid
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from functools import lru_cache
 from typing import Annotated, Literal
@@ -25,7 +27,21 @@ from shadow import ShadowStore
 GREETING = ("Hi, I am DemoStore's AI assistant. "
             "You can ask for a person at any time.")
 
-app = FastAPI(title="DemoStore chat")
+log = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(_app):
+    """Make the go-live tables (CREATE ... IF NOT EXISTS, so a restart changes nothing). If the database is down the
+    service still starts: live_settings() then keeps the assistant off and a person answers."""
+    try:
+        golive_store().create_tables()
+    except Exception:
+        log.exception("could not make the go-live tables")
+    yield
+
+
+app = FastAPI(title="DemoStore chat", lifespan=lifespan)
 SESSIONS: dict[str, dict] = {}
 
 
