@@ -67,8 +67,8 @@ and a way to mark answers. Reading the code showed four things the brief only hi
 **Check:** fast tests, ruff, mypy. **Stop.**
 
 ## Phase 7 - the page (offline, then I look at it)
-- [ ] `widget/src/Pilot.tsx` (new), shown by `App.tsx` when `location.pathname === "/pilot"`; no router dependency. Plain tables: days, markets, actions, intents, checked sample with its size, cost and baseline, the three sentences under the numbers, the side-by-side list with the four verdict buttons, the "sounded sure" tick on `wrong`, a name field kept in `localStorage`. Every rate shows its base. A visible note: "would have resolved is an estimate".
-- [ ] It only reads, except `POST /api/pilot/mark`.
+- [x] `widget/src/Pilot.tsx` (new), shown by `App.tsx` when `location.pathname === "/pilot"`; no router dependency. Plain tables: days, markets, actions, intents, checked sample with its size, cost and baseline, the three sentences under the numbers, the side-by-side list with the four verdict buttons, the "sounded sure" tick on `wrong`, a name field kept in `localStorage`. Every rate shows its base. A visible note: "would have resolved is an estimate".
+- [x] It only reads, except `POST /api/pilot/mark`.
 **Check:** `cd widget && npx tsc -b` and `npm run build`. I open the page in the browser against the local chat service with the fake data, screenshot it, and mark one chat. **Stop.**
 
 ## Phase 8 - retention, notes, ticks (offline)
