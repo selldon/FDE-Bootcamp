@@ -138,7 +138,7 @@ def noop_sleep(_):
 def test_a_tick_stores_new_chats_only_and_nothing_real_is_written():
     store, reader, answerer = FakeShadowStore(), FakeReader([snow_chat(1, -60), snow_chat(2, 5), snow_chat(3, 9)]), Answerer()
     done = shadow.poll(reader, store, answerer, since=T0, sleep=noop_sleep)  # the old chat is before `since`
-    assert done == {"stored": 2, "closed": 0, "errors": 0}
+    assert done == {"stored": 2, "closed": 0, "errors": 0, "clashes": 0}
     assert sorted(store.rows) == ["IMS0000002", "IMS0000003"]
     row = store.rows["IMS0000002"]
     assert row["message"] == "Where is DS-2?" and row["answer"] == "It ships Monday." and row["action"] == "reply"
@@ -157,6 +157,25 @@ def test_a_chat_answered_twice_is_stored_once():
     shadow.poll(reader, store, answerer, since=T0, sleep=noop_sleep)
     done = shadow.poll(reader, store, answerer, since=T0, sleep=noop_sleep)
     assert done["stored"] == 0 and len(store.rows) == 1 and len(answerer.seen) == 1
+
+
+def test_a_new_chat_with_a_number_already_stored_is_reported_not_swallowed(caplog):
+    store, answerer = FakeShadowStore(), Answerer()
+    shadow.poll(FakeReader([snow_chat(1, 5)]), store, answerer, since=T0, sleep=noop_sleep)
+    assert len(answerer.seen) == 1
+    again = FakeReader([snow_chat(1, 8), snow_chat(2, 9)])  # the same number, opened later: a source that restarted its count
+    with caplog.at_level("WARNING", logger="shadow"):
+        done = shadow.poll(again, store, answerer, since=T0, sleep=noop_sleep)
+    assert done["clashes"] == 1 and done["stored"] == 1 and done["errors"] == 0
+    assert "IMS0000001" in caplog.text and "already stored" in caplog.text
+    assert len(answerer.seen) == 2  # the clashing chat is not answered again: that would spend a model call for nothing
+    assert store.rows["IMS0000001"]["opened_at"] == T0 + timedelta(minutes=5)  # the stored one is untouched
+
+
+def test_a_clash_fails_a_single_run(monkeypatch):
+    monkeypatch.setattr(shadow, "tick", lambda store: {"stored": 0, "closed": 0, "errors": 0, "clashes": 1})
+    monkeypatch.setattr(shadow, "ShadowStore", lambda: type("S", (), {"create_tables": lambda self: None})())
+    assert shadow.main(["--once"]) == 1
 
 
 def test_an_empty_table_without_a_start_stores_nothing():
@@ -185,7 +204,7 @@ def test_429_is_waited_out_and_retried():
 def test_a_server_error_is_counted_and_retried_at_the_next_tick():
     store, reader = FakeShadowStore(), FakeReader([snow_chat(1, 5)])
     reader.failures = [shadow.ReadError("503", 503)]
-    assert shadow.poll(reader, store, Answerer(), since=T0, sleep=noop_sleep) == {"stored": 0, "closed": 0, "errors": 1}
+    assert shadow.poll(reader, store, Answerer(), since=T0, sleep=noop_sleep) == {"stored": 0, "closed": 0, "errors": 1, "clashes": 0}
     assert shadow.poll(reader, store, Answerer(), since=T0, sleep=noop_sleep)["stored"] == 1
 
 

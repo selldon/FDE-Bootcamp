@@ -160,18 +160,26 @@ EVERY = int(os.environ.get("SNOW_INCOMING_EVERY", "0"))
 OPEN_FOR = int(os.environ.get("SNOW_INCOMING_OPEN", "240"))
 POOL = json.loads(Path(__file__).with_name("incoming.json").read_text())
 STARTED = datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0)
+EPOCH = datetime(2026, 10, 1)  # where the live chats' numbers count from (UTC); see incoming()
 
 
-def incoming():
+def incoming(now=None, started=None):
     """The live chats opened since the stand-in started, one every EVERY seconds; closed with the agent's reply after
-    OPEN_FOR seconds. Made up from the clock on every request, so they are the same however often a poller asks."""
+    OPEN_FOR seconds. Made up from the clock on every request, so they are the same however often a poller asks.
+
+    Chat k opens at EPOCH + EVERY*k and is numbered from k, not from the start of this process: a stand-in that is
+    recreated (a deploy does it) goes on with the numbers of the clock and never hands out one twice, as a real
+    ServiceNow never does. Keep EVERY the same between starts, or the slots (and the numbers) move."""
     if not EVERY:
         return []
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    now = now or datetime.now(timezone.utc).replace(tzinfo=None)
+    started = started or STARTED
+    first = int((started - EPOCH).total_seconds() // EVERY) + 1   # the first slot after the start
+    last = int((now - EPOCH).total_seconds() // EVERY)            # the last slot that has come
     rows = []
-    for k in range(int((now - STARTED).total_seconds() // EVERY)):
+    for k in range(first, last + 1):
         chat = POOL[k % len(POOL)]
-        opened = STARTED + timedelta(seconds=EVERY * (k + 1))
+        opened = EPOCH + timedelta(seconds=EVERY * k)
         closed = now >= opened + timedelta(seconds=OPEN_FOR)
         rows.append({
             "sys_id": hashlib.md5(f"incoming-{k}".encode()).hexdigest(),
