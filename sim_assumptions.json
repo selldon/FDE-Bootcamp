@@ -4,26 +4,116 @@
   "days": 14,
   "visitors_per_day": 175,
   "assistant_cap": 150,
-  "followups": [1, 3],
+  "followups": [
+    1,
+    3
+  ],
   "hard_profile_share": 0.3,
   "ask_person_share": 0.08,
-  "intent_mix": {"order_status": 0.75, "policy_question": 0.1, "return_request": 0.1, "other": 0.05},
+  "intent_mix": {
+    "order_status": 0.75,
+    "policy_question": 0.1,
+    "return_request": 0.1,
+    "other": 0.05
+  },
   "repeat_window_days": 7,
-  "control_repeat_rate": null,
-  "control_repeat_rate_n": null,
+  "control_repeat_rate": 0.9877450980392157,
+  "control_repeat_rate_n": 2040,
   "control": {
-    "order_status": {"resolved": 0.86, "handed_off": 0.09, "unanswered": 0.05, "rating": [0.02, 0.04, 0.14, 0.38, 0.42]},
-    "policy_question": {"resolved": 0.8, "handed_off": 0.12, "unanswered": 0.08, "rating": [0.03, 0.05, 0.17, 0.38, 0.37]},
-    "return_request": {"resolved": 0.7, "handed_off": 0.22, "unanswered": 0.08, "rating": [0.04, 0.07, 0.2, 0.37, 0.32]},
-    "other": {"resolved": 0.6, "handed_off": 0.25, "unanswered": 0.15, "rating": [0.06, 0.1, 0.24, 0.32, 0.28]}
+    "order_status": {
+      "resolved": 0.86,
+      "handed_off": 0.09,
+      "unanswered": 0.05,
+      "rating": [
+        0.02,
+        0.04,
+        0.14,
+        0.38,
+        0.42
+      ]
+    },
+    "policy_question": {
+      "resolved": 0.8,
+      "handed_off": 0.12,
+      "unanswered": 0.08,
+      "rating": [
+        0.03,
+        0.05,
+        0.17,
+        0.38,
+        0.37
+      ]
+    },
+    "return_request": {
+      "resolved": 0.7,
+      "handed_off": 0.22,
+      "unanswered": 0.08,
+      "rating": [
+        0.04,
+        0.07,
+        0.2,
+        0.37,
+        0.32
+      ]
+    },
+    "other": {
+      "resolved": 0.6,
+      "handed_off": 0.25,
+      "unanswered": 0.15,
+      "rating": [
+        0.06,
+        0.1,
+        0.24,
+        0.32,
+        0.28
+      ]
+    }
   },
   "assistant_rating": {
-    "resolved": [0.02, 0.04, 0.14, 0.38, 0.42],
-    "handed_off": [0.03, 0.06, 0.2, 0.38, 0.33],
-    "unanswered": [0.3, 0.3, 0.25, 0.1, 0.05],
-    "wrong": [0.6, 0.25, 0.1, 0.04, 0.01]
+    "resolved": [
+      0.02,
+      0.04,
+      0.14,
+      0.38,
+      0.42
+    ],
+    "handed_off": [
+      0.03,
+      0.06,
+      0.2,
+      0.38,
+      0.33
+    ],
+    "unanswered": [
+      0.3,
+      0.3,
+      0.25,
+      0.1,
+      0.05
+    ],
+    "wrong": [
+      0.6,
+      0.25,
+      0.1,
+      0.04,
+      0.01
+    ]
   },
-  "assistant_repeat_factor": {"resolved": 1.0, "handed_off": 1.0, "unanswered": 3.0, "wrong": 5.0},
-  "estimate": {"calls_per_turn": 3, "input_tokens_per_call": 1500, "output_tokens_per_call": 120},
-  "margins": {"confidently_wrong": 0.01, "hand_off_min": 0.95, "unanswered_points": 0.03, "rating": 0.2}
+  "assistant_repeat_factor": {
+    "resolved": 1.0,
+    "handed_off": 1.0,
+    "unanswered": 3.0,
+    "wrong": 5.0
+  },
+  "estimate": {
+    "calls_per_turn": 3,
+    "input_tokens_per_call": 1500,
+    "output_tokens_per_call": 120
+  },
+  "margins": {
+    "confidently_wrong": 0.01,
+    "hand_off_min": 0.95,
+    "unanswered_points": 0.03,
+    "rating": 0.2
+  }
 }
