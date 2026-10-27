@@ -77,11 +77,13 @@ Phases 1-5 run one at a time, stopping after each. Phases 6-8 (the two weeks, th
 ## Phase 7 - the drill (item 4) - its own phase
 - [x] Restore point: dump of `product`, and the time on the clock noted. Add one sim night with no carrier file (`DEMOSTORE_NOW` pinned to that day; the file simply missing, as `newest_rows` would see it).
 - [x] Run that day's assistant chats against the real code. Read the numbers: did a stale status go out as fact? **Yes: 8 of 12 (see `docs/drill-notes.md`).**
-- [ ] If yes (alert): switch the assistant off from the page (time it; new chats go to a person within seconds), write the failing test first (`test_tools.py` / `test_pipeline.py`), fix the cause (start from the quick-fixes rows), replay `data/conversations.json` and the bad day's chats with `replay.py`, then switch on. If no: record that the guard held and still time off -> on.
-- [ ] Write down how long the assistant was off, in `docs/drill-notes.md` (times, cause, test, replay result).
-- [ ] Check: the new test fails before the fix and passes after; fast tests pass; `python replay.py` result recorded; the page shows the alert, then clears.
+- [x] If yes (alert): switch the assistant off from the page (time it; new chats go to a person within seconds), write the failing test first (`test_tools.py` / `test_pipeline.py`), fix the cause (start from the quick-fixes rows), replay `data/conversations.json` and the bad day's chats with `replay.py`, then switch on. If no: record that the guard held and still time off -> on.
+- [x] Write down how long the assistant was off, in `docs/drill-notes.md` (times, cause, test, replay result).
+- [x] Check: the new test fails before the fix and passes after; fast tests pass; `python replay.py` result recorded; the page shows the alert, then clears.
 
-### Phase 7 - the night with no carrier file, planned (27 Oct 2026) - PROPOSED, decisions D1-D4 to confirm before the run
+**Result (27 Oct 2026):** off 13:07:32, on 13:18:58 UTC = 11 min 26 s; the "within seconds" for a new chat was not timed. Fix: the 03:00 rule (OQ-5, hour to be confirmed). Replays: 38 of 40 and 0 of 12. Clearing day 16: 0 of 10, alert cleared. Details in `docs/drill-notes.md`.
+
+### Phase 7 - the night with no carrier file, planned (27 Oct 2026) - decisions D1-D4 as proposed; run and closed, see the result above
 **Restore point (done):** `backups/product-2026-10-27-before-drill/` - all 10 tables of `product` (row counts checked: `golive_chats` 2,453, `traces` 1,007, `orders` 33, `parcels` 33, ...), `CLOCK_AND_STATE.json`, and copies of the simulator log, `cases.jsonl`, `outbox.jsonl`. Noted there: wall clock 2026-10-27 12:53 UTC; the service pinned to 2026-10-22T05:00:00+00:00; the switch on at 5 % for `order_status`; git `2e2e5bc`. It is a data-level CSV dump (`pg_dump` is not installed here). The ServiceNow stand-in cannot be backed up from here: the drill's hand-offs will add cases to it.
 
 **The night.** The carrier's file for the 23rd never comes. The SFTP server already holds only `carrier-2026-10-20/21/22.csv`, so nothing is added or removed. The order store keeps the load of the 22nd. The service's clock is pinned to the morning of the 23rd.

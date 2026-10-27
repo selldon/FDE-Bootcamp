@@ -12,11 +12,14 @@ Phase 7 of `docs/plan-golive.md`. All times UTC, 27 Oct 2026, wall clock. The si
 | 13:01:56 - 13:05:07 | Drill day 15 ran: 12 assistant conversations (155 of 165) |
 | **13:07:32** | **The assistant was switched off from the page** (`golive_settings.changed_at`, `on = false`). Seen from the page's alert for day 15 |
 | 13:13:02 | Fix committed (`5764f04`) |
-| - | Replays run on the new code (below) |
-| *to fill* | The assistant switched on again: take the time from the switch row (`changed_at`) |
+| 13:13 - 13:18 | Replays run on the new code (below) |
+| 13:18:32 | The service restarted on the new code, still pinned to 2026-10-23T05:00:00+00:00 |
+| **13:18:58** | **The assistant was switched on again from the page** (`golive_settings.changed_at`, `on = true`) |
+| 13:19 - 13:2x | Clearing day 16 ran: 10 assistant conversations (165 of 165) |
 
-**How long the assistant was off:** from 13:07:32 until the switch-on time above (to fill when the team switches it on). The
-chats between 13:05:07 (the last drill chat) and the switch-off had no new customers: all traffic was simulated.
+**How long the assistant was off: 11 minutes 26 seconds** (13:07:32.27 to 13:18:58.47 UTC, both from the switch row). All traffic was
+simulated, so no customer was affected. Not timed: how quickly a new chat reached a person after the switch-off (the Phase 2 tests
+cover the routing; nobody sent a chat in those minutes).
 
 ## What happened
 No file for the 23rd. The order store still held the load of the 22nd. At 05:00 on the 23rd the 22nd's news was 29 hours old; the
@@ -55,11 +58,21 @@ offers a person. The hourly check also says the file is missing. The hour is a w
 - **The mechanism, which does not depend on the model:** at 05:00 on the 23rd the guard fires for all 8 undelivered parcels (before:
   1 of 8); at 02:59 it fires for 1 (the file is not due); at the CI pin on the 22nd for 1; delivered parcels are never touched.
 
+## Clearing day 16 (live, the new code, the same night)
+Run at 13:19 UTC, after the switch-on, with the service pinned to 05:00 on the 23rd and no file for the 23rd on the server:
+**0 of 10 confidently wrong** (interval 0 % to 28 %). The page's latest-day alert is clear (`day.alert` false); the alert days stay
+`[8, 15]` on the record. All 7 chats on orders with an undelivered parcel said the carrier's news is old and had no date; the 3 chats on
+delivered orders gave their dates as before (final news is left alone). Model cost $0.44; assistant conversations used 165 of 165
+(the cap of 150 plus the 15 allowed for the drill). Day 15 and day 16 are drill days: the week and the two weeks still read days 1-14
+(1 of 96 confidently wrong, which does not hold; unchanged by the drill).
+
 ## Also seen (not measured by any line)
 In several drill and replay chats the assistant again told the customer it had not checked when the traces show a lookup before every
-reply (see `docs/plan-golive.md`, "Observed in week two"). The replay run of the drill chats showed it once more (DS-20502). Not fixed.
+reply (see `docs/plan-golive.md`, "Observed in week two"). The replay of the drill chats showed it once more (DS-20502), and so did a control chat of day 16 (DS-20444, a delivered order). Not fixed.
 
 ## Still open
-1. The service must be restarted on the new code before the assistant is switched on: the running process was started before `5764f04` and still has the 30-hour rule.
-2. The clearing day (day 16, 10 assistant conversations, 165 of 165) under the same night, after the switch-on, so that the page's latest-day alert clears.
-3. The hour 03:00 UTC: Ravi Menon's team (OQ-5).
+1. The hour 03:00 UTC: Ravi Menon's team confirms it (OQ-5). Until then it is a working value.
+2. The service is still pinned to the morning of the 23rd. The drill is over; unpin or move the pin back (the sandbox's carrier files end on
+   the 22nd, so any real clock after 03:00 UTC on the 23rd makes every undelivered parcel old, as intended).
+3. Phase 8 reads days 1-14: confidently wrong is 1 of 96 (1.04 % against a limit of 1 %), which does not hold. Lena decides with that number.
+4. The assistant telling a customer it had not checked when it had.
