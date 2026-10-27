@@ -104,10 +104,10 @@ Phases 1-5 run one at a time, stopping after each. Phases 6-8 (the two weeks, th
 - **D4 - the clearing day.** After the fix, day 16 under the same night, 10 assistant conversations, so the page's latest-day alert can clear. Cap: 143 used + 12 + 10 = 165 = 150 + the 15 allowed. About $0.4 per day in model calls.
 
 ## Phase 8 - the decision and the report (item 5)
-- [ ] If all lines hold for the two weeks: switch to 25 % and add `return_request` to the live intents (drafts only; the writer account's only use is still `LL_RTN_REQ_STG`).
-- [ ] `docs/week-2-report.md` from the page's numbers (script, not by hand): operator hours saved a week (resolved assistant chats x `PERSON_MINUTES`, scaled from the 5 % sample), and what 100 % would mean, with the assumptions (simulated traffic, seeded ratings, scale-up, tiny samples) said out loud.
-- [ ] Write the new quick fixes into `docs/quick-fixes.md`.
-- [ ] Check: fast tests pass; every number in the report matches `GET /api/golive`; the report says "simulated" in its first lines.
+- [x] **Not done, on purpose (27 Oct 2026): a line does not hold** (confidently wrong, 1 of 96 = 1.04 % against 1 %), so by Lena's signed lines we do not widen: the assistant stays at 5 % and returns stay off. If all lines hold for the two weeks: switch to 25 % and add `return_request` to the live intents (drafts only; the writer account's only use is still `LL_RTN_REQ_STG`).
+- [x] `docs/week-2-report.md` from the page's numbers (`python golive_report.py`, not by hand): operator hours saved a week (resolved assistant chats x `PERSON_MINUTES`, scaled from the 5 % sample), and what 100 % would mean, with the assumptions (simulated traffic, seeded ratings, scale-up, tiny samples) said out loud.
+- [x] Write the new quick fixes into `docs/quick-fixes.md`: the first reply that hides the partly-shipped status, and "I had not checked" when it had; each with how we would test it.
+- [x] Check: fast tests pass (1,027); every number in the report matches `GET /api/golive` (a fresh render of the endpoint equals the file); the report says "simulated" in its first lines.
 
 ## Limits kept throughout
 Simulated everywhere (page, report, every row). Switch never needs a deploy. Every model call through `llm.py`; numbers from code and SQL. Restore point before any change to stored rows. Containers in `sandbox/systems/`, Ledgerline and the carrier's server are never started, stopped or changed; Ledgerline writes stay limited to the return draft.
