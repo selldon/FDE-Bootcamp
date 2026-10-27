@@ -1,8 +1,9 @@
 """The agent loop: Claude asks for tools, our code runs them."""
 import json
 
-from llm import MODEL, client
 from prices import price
+
+from llm import MODEL, client
 from tools import TOOLS, delivery_status, find_order
 from verify import send_code
 

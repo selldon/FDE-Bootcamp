@@ -2,8 +2,9 @@
 import json
 from concurrent.futures import ThreadPoolExecutor
 
-from returns import can_return
 from returns_prompt import decide
+
+from returns import can_return
 
 with open("data/borderline_returns.json") as f:
     cases = json.load(f)

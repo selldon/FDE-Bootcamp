@@ -1,6 +1,6 @@
 """Splits an order amount, like an invoice's tax, across the order's items."""
 import random
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 
 CENT = Decimal("0.01")
 RATES = ["0.08", "0.19", "0.20", "0.22"]

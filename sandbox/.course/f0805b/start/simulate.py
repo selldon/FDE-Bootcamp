@@ -1,5 +1,4 @@
 """Simulated customers: Haiku plays each profile, code checks the outcome."""
-import json
 import uuid
 
 from agent import answer

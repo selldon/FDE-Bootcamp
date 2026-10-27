@@ -27,14 +27,14 @@ with the reply in the transcript. They come with the old chats from the Table AP
 sysparm_query=opened_at>YYYY-MM-DD HH:MM:SS^ORDERBYopened_at (UTC), and for one chat with number=IMS...
 """
 import csv
+import hashlib
 import json
 import os
-import sys
-import hashlib
 import random
 import secrets
+import sys
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -159,7 +159,7 @@ def interactions(request: Request, response: Response, sysparm_limit: int = 100,
 EVERY = int(os.environ.get("SNOW_INCOMING_EVERY", "0"))
 OPEN_FOR = int(os.environ.get("SNOW_INCOMING_OPEN", "240"))
 POOL = json.loads(Path(__file__).with_name("incoming.json").read_text())
-STARTED = datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0)
+STARTED = datetime.now(UTC).replace(tzinfo=None, microsecond=0)
 EPOCH = datetime(2026, 10, 1)  # where the live chats' numbers count from (UTC); see incoming()
 
 
@@ -172,7 +172,7 @@ def incoming(now=None, started=None):
     ServiceNow never does. Keep EVERY the same between starts, or the slots (and the numbers) move."""
     if not EVERY:
         return []
-    now = now or datetime.now(timezone.utc).replace(tzinfo=None)
+    now = now or datetime.now(UTC).replace(tzinfo=None)
     started = started or STARTED
     first = int((started - EPOCH).total_seconds() // EVERY) + 1   # the first slot after the start
     last = int((now - EPOCH).total_seconds() // EVERY)            # the last slot that has come

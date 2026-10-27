@@ -61,9 +61,9 @@ and a way to mark answers. Reading the code showed four things the brief only hi
 **Check:** fast tests, ruff, mypy. **Stop.**
 
 ## Phase 6 - the API (offline)
-- [ ] `app.py`: `GET /api/pilot` (numbers + sentences), `GET /api/pilot/sample`, `POST /api/pilot/mark`. Store injected so tests use `FakeShadowStore`. Payloads never include `opened_for` (the customer's email); message and answer are masked again on the way out (covers old rows).
-- [ ] `widget/nginx.conf`: add `api` to the proxied prefixes.
-- [ ] Tests (`TestClient`): numbers shape, sample, a mark stored and returned, bad verdict is a 422, no email in any payload, a card number in an old row comes out masked.
+- [x] `app.py`: `GET /api/pilot` (numbers + sentences), `GET /api/pilot/sample`, `POST /api/pilot/mark`. Store injected so tests use `FakeShadowStore`. Payloads never include `opened_for` (the customer's email); message and answer are masked again on the way out (covers old rows).
+- [x] `widget/nginx.conf`: add `api` to the proxied prefixes.
+- [x] Tests (`TestClient`): numbers shape, sample, a mark stored and returned, bad verdict is a 422, no email in any payload, a card number in an old row comes out masked.
 **Check:** fast tests, ruff, mypy. **Stop.**
 
 ## Phase 7 - the page (offline, then I look at it)

@@ -3,13 +3,13 @@ import uuid
 
 import uvicorn
 from fastapi import FastAPI
+from launch import route, to_person
+from metrics import numbers
 from pydantic import BaseModel
 
 from agent import answer
 from intent import Intent, classify
-from launch import route, to_person
 from llm import NoAnswer
-from metrics import numbers
 from verify import check_code
 
 GREETING = ("Hi, I am DemoStore's AI assistant. "
