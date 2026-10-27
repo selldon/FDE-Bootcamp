@@ -20,6 +20,13 @@ Week one's first scoring said 19 of 39 assistant order-status chats were confide
 - **Repeat contact is not measured.** The old ServiceNow chats come from 15 customers: "the same customer wrote again within 7 days" is true of 0.99 of them, "the same customer about the same order" of 0.003. Neither is a baseline and none is invented. The page shows the row as not measured, with that reason; the table holds no repeat values; it is not one of the rollback lines.
 - **A zero that measured nothing is not a pass.** The simulator writes its outcome labels (rating, confidently wrong, needs a person, control outcome) into `golive_chats` after every day, because the page reads only that table. A rescore stops if an assistant chat that should have replies has none, instead of scoring it right.
 - **A failed model call is a hand-off, not an error.** The chat goes to a person with the chat so far and stays in the assistant group, so the lines count it.
+- **A negated status is not a claim (week two).** "It isn't still on its way" followed by the right status was scored as claiming "on the way" and flagged two correct answers. A claim now counts only when no negation sits just before it, and a negation never hides a claim that is really made (tests for both).
+- **A rule is not softened after it fails (user, 27 Oct).** The partly-shipped rule above stayed exactly as written when week two's day-8 chat failed it: the reply gave right facts and did not name the part-shipped status, so it counts as wrong. The line reads what it reads, and Lena decides with that number.
+
+### Observed in week two, not measured by any line
+Two chats where the assistant told the customer something untrue about its own process after the customer pushed back. The traces show a `find_order` and `delivery_status` lookup before every reply in both chats, so it had checked each time; the facts it gave stayed right.
+- Day 8, DS-20468, chat `ace2921e-5bd9-4e3c-822b-3c0e6b61d297`: "I should have checked the system before my last message" and "I should have done that before my earlier replies" - it had looked the order up before each reply.
+- Day 12, DS-20570, chat `361926db-9c9b-4dce-ad1c-4167564e70e2`: "I said I had just checked again, but I hadn't" - it had (lookups at 12:37:52 and 12:37:53 before that reply).
 
 ## Where we start (read)
 - `app.py`: `/chat` has `session_id`, no visitor id and no group; `get_session` keeps sessions in memory; `/api/pilot*` serve the shadow page from `ShadowStore`.
@@ -63,9 +70,9 @@ Phases 1-5 run one at a time, stopping after each. Phases 6-8 (the two weeks, th
 - [x] Check: fast tests of the API with the fake store, `tsc` clean, and one look at the page in the browser with seeded fake rows.
 
 ## Phase 6 - the two simulated weeks (item 2) - asks before it spends
-- [ ] Restore point first: `pg_dump` of `product` to `backups/` and say so. Then show the dry-run cost and wait for a yes.
-- [ ] Run week 1 and week 2 at 5 % (live: Claude calls, at most 150 assistant conversations) against the running service, one sim day at a time, rows labelled simulated.
-- [ ] Check: the page shows both groups for 14 days; row counts per day add up; assistant conversations <= 150; no line is hand-edited.
+- [x] Restore point first: `pg_dump` of `product` to `backups/` and say so. Then show the dry-run cost and wait for a yes.
+- [x] Run week 1 and week 2 at 5 % (live: Claude calls, at most 150 assistant conversations) against the running service, one sim day at a time, rows labelled simulated.
+- [x] Check: the page shows both groups for 14 days; row counts per day add up; assistant conversations <= 150; no line is hand-edited.
 
 ## Phase 7 - the drill (item 4) - its own phase
 - [ ] Restore point: dump of `product`, and the time on the clock noted. Add one sim night with no carrier file (`DEMOSTORE_NOW` pinned to that day; the file simply missing, as `newest_rows` would see it).
