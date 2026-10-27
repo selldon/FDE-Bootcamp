@@ -138,7 +138,7 @@ jobs:
           systemctl enable --now docker
           EOF
             ID="$(aws ec2 run-instances \
-              --image-id "$AMI" --instance-type t3.large --subnet-id "$SUBNET" \
+              --image-id "$AMI" --instance-type m7i-flex.large --subnet-id "$SUBNET" \
               --iam-instance-profile Name=fde-course-ec2 \
               --block-device-mappings 'DeviceName=/dev/xvda,Ebs={VolumeSize=30,VolumeType=gp3,DeleteOnTermination=true}' \
               --metadata-options HttpTokens=required,HttpEndpoint=enabled \
