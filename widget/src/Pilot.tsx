@@ -97,13 +97,18 @@ export default function Pilot() {
   const [note, setNote] = useState("");
 
   async function load() {
-    const [numbers, list] = await Promise.all([fetch("/api/pilot"), fetch("/api/pilot/sample")]);
-    if (!numbers.ok || !list.ok) {
-      setNote("Could not load the pilot data.");
-      return;
+    try {
+      const [numbers, list] = await Promise.all([fetch("/api/pilot"), fetch("/api/pilot/sample")]);
+      if (!numbers.ok || !list.ok) {
+        setNote("Could not load the pilot data.");
+        return;
+      }
+      // a wrong proxy or server answers with an HTML page: json() throws, and we say so
+      setData(await numbers.json());
+      setSample(await list.json());
+    } catch {
+      setNote("Could not load the pilot data: the answer was not JSON, or the service did not respond.");
     }
-    setData(await numbers.json());
-    setSample(await list.json());
   }
 
   useEffect(() => {
