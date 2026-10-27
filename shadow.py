@@ -29,9 +29,12 @@ from psycopg import sql
 
 import config
 import drafts
+import handoff
 import refunds
 import servicenow
 import traces
+from intent import handoff_reason
+from masking import mask_cards
 
 log = logging.getLogger("shadow")
 
@@ -42,7 +45,7 @@ RETRIES = 3  # tries for one call that gets 429
 
 # The columns, in order. Only the chat and what we made of it: no session id, no hash, no other customer data.
 FIELDS = ("number", "opened_at", "opened_for", "market", "message", "intent", "action", "answer",
-          "would_have", "state", "agent_reply", "answered_at")
+          "would_have", "state", "agent_reply", "answered_at", "input_tokens", "output_tokens")
 
 
 def tables(name="shadow_chats"):
@@ -51,7 +54,10 @@ def tables(name="shadow_chats"):
         number text PRIMARY KEY, opened_at timestamptz NOT NULL, opened_for text NOT NULL, market text,
         message text NOT NULL, intent text, action text, answer text,
         would_have jsonb NOT NULL DEFAULT '{{}}'::jsonb, state text,
-        agent_reply text, answered_at timestamptz NOT NULL)""").format(t=sql.Identifier(name))]
+        agent_reply text, answered_at timestamptz NOT NULL)""").format(t=sql.Identifier(name)),
+            # additive: rows from before the tokens were stored keep NULL ("unpriced" on the pilot page)
+            *[sql.SQL("ALTER TABLE {t} ADD COLUMN IF NOT EXISTS {c} int").format(t=sql.Identifier(name), c=sql.Identifier(c))
+              for c in ("input_tokens", "output_tokens")]]
 
 
 class ShadowStore:
@@ -224,27 +230,49 @@ def plain(value):
     return json.loads(json.dumps(value, default=str))
 
 
-def shadow_answer(chat, answerer):
-    """Answer one live chat as its verified customer; return the row to store. Everything it would write goes to fakes."""
+def real_classifier(message):
+    from intent import classify
+    return classify(message)
+
+
+def shadow_answer(chat, answerer, classifier=None):
+    """Answer one live chat as its verified customer; return the row to store. Everything it would write goes to fakes.
+
+    Same gate as the chat service: classify, then `handoff_reason`; a hand-off opens the case against the fake
+    ServiceNow and `answerer` is not called. Card numbers are masked before the model sees them and before storing.
+    """
     fake_drafts, fake_snow, fake_traces = drafts.FakeDrafts(), servicenow.FakeServiceNow(), traces.FakeTraces()
+    traces.set_sink(fake_traces)  # first of all, so no model call of this chat reaches the real trace table
     refunds.set_systems(None, fake_drafts, fake_snow)  # Ledgerline stays the read-only copy
-    traces.set_sink(fake_traces)
-    number, message = chat["number"], customer_message(chat.get("transcript", ""))
+    number = chat["number"]
+    message = mask_cards(customer_message(chat.get("transcript", "")))
     ctx = refunds.Context(chat["opened_for"], f"shadow-{number}", market=chat.get("u_market") or None)
     token = traces.current_session.set(ctx.session_id)
     try:
-        result = answerer(message, ctx)
+        intent = (classifier or real_classifier)(message)
+        reason = handoff_reason(intent)
+        if reason:
+            reply = handoff.open_case(ctx, intent["summary"], [{"role": "user", "content": message}],
+                                      reason, reason.replace("_", " "))
+            action = "hand_off"
+        else:
+            result = answerer(message, ctx)
+            reply = result.reply
+            action = "start_return" if ctx.offer is not None else result.action
     finally:
         traces.current_session.reset(token)
+    calls = fake_traces.rows
     return {"number": number, "opened_at": parse_stamp(chat["opened_at"]), "opened_for": chat["opened_for"],
-            "market": chat.get("u_market") or None, "message": message, "intent": None,
-            "action": "start_return" if ctx.offer is not None else result.action, "answer": result.reply,
+            "market": chat.get("u_market") or None, "message": message, "intent": intent["intent"],
+            "action": action, "answer": mask_cards(reply),
             "would_have": plain({"offer": ctx.offer, "drafts": list(fake_drafts.rows.values()),
                                  "tasks": fake_snow.tasks, "cases": fake_snow.cases}),
-            "state": chat.get("state"), "answered_at": datetime.now(UTC)}
+            "state": chat.get("state"), "answered_at": datetime.now(UTC),
+            "input_tokens": sum(r["input_tokens"] for r in calls) if calls else None,
+            "output_tokens": sum(r["output_tokens"] for r in calls) if calls else None}
 
 
-def poll(client, store, answerer, since=None, sleep=time.sleep):
+def poll(client, store, answerer, since=None, sleep=time.sleep, classifier=None):
     """One tick. Returns {"stored", "closed", "errors", "clashes"}.
 
     New chats are those opened after the newest one stored (or `since` for an empty table). They are answered in
@@ -270,7 +298,7 @@ def poll(client, store, answerer, since=None, sleep=time.sleep):
                             "the new chat is NOT stored", chat["number"], chat.get("opened_at"), stamp(mark))
                 done["clashes"] += 1
                 continue
-            done["stored"] += store.save(shadow_answer(chat, answerer))
+            done["stored"] += store.save(shadow_answer(chat, answerer, classifier))
         except Exception:
             log.exception("chat %s failed; it will be tried again", chat.get("number"))
             done["errors"] += 1

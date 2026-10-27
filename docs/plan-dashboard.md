@@ -40,9 +40,9 @@ and a way to mark answers. Reading the code showed four things the brief only hi
 **Check:** `python -m pytest -q -m "not live"`, ruff, mypy. **Stop.**
 
 ## Phase 2 - the worker stores what the page needs (offline)
-- [ ] `shadow.py`: columns `input_tokens int`, `output_tokens int` added with `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` next to the CREATE (additive, old rows get NULL); `FIELDS`, `FakeShadowStore`, and the column test in `test_shadow.py:64-71` follow.
-- [ ] `shadow_answer`: set the fake sink before anything, `classify(mask_cards(message))`, store `intent`; if `handoff_reason` is set the action is `hand_off` and `answer()` is not called (the reply comes from `handoff.open_case` against the fake ServiceNow, as live, so the text is the live text); else `answer()`. Tokens = sum over `fake_traces.rows` (includes the classify call). Mask message and answer before storing.
-- [ ] Tests: a covered chat stores its intent and tokens; an angry and a damaged message store `hand_off` with no `answer()` call; a card number in the message is stored masked; nothing is written to the real sinks (existing test keeps passing).
+- [x] `shadow.py`: columns `input_tokens int`, `output_tokens int` added with `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` next to the CREATE (additive, old rows get NULL); `FIELDS`, `FakeShadowStore`, and the column test in `test_shadow.py:64-71` follow.
+- [x] `shadow_answer`: set the fake sink before anything, `classify(mask_cards(message))`, store `intent`; if `handoff_reason` is set the action is `hand_off` and `answer()` is not called (the reply comes from `handoff.open_case` against the fake ServiceNow, as live, so the text is the live text); else `answer()`. Tokens = sum over `fake_traces.rows` (includes the classify call). Mask message and answer before storing.
+- [x] Tests: a covered chat stores its intent and tokens; an angry and a damaged message store `hand_off` with no `answer()` call; a card number in the message is stored masked; nothing is written to the real sinks (existing test keeps passing).
 **Check:** fast tests, ruff, mypy. Then you run `python shadow.py --once` against the sandbox (it calls Claude and the ServiceNow reader; I do not start systems) and I look at `python shadow.py report` for one new row with intent and tokens. **Stop.**
 
 ## Phase 3 - marks and the sample (offline)
