@@ -229,3 +229,61 @@ def test_the_read_side_of_ledgerline_has_no_write_statement():
 def test_the_group_and_log_module_touches_no_other_system():
     imports = set(re.findall(r"^(?:import|from) (\w+)", Path("golive.py").read_text(), re.MULTILINE))
     assert not imports & {"drafts", "ledgerline", "refunds", "servicenow", "handoff", "llm", "oracledb"}
+
+
+# ---- a model call that fails: the chat goes to a person, never an error to the customer --------------------------
+
+def credit_error():
+    """The 400 the API gave when the account ran out of credit."""
+    import anthropic
+    import httpx
+    request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+    response = httpx.Response(400, request=request, json={"type": "error", "error": {
+        "type": "invalid_request_error", "message": "Your credit balance is too low to access the Anthropic API."}})
+    return anthropic.BadRequestError("credit balance is too low", response=response, body=None)
+
+
+def model_that_fails_after(monkeypatch, good_replies, error):
+    """The first `len(good_replies)` calls answer; every later call raises `error`."""
+    import llm
+    replies = list(good_replies)
+
+    def create(**kwargs):
+        if replies:
+            return replies.pop(0)
+        raise error
+
+    monkeypatch.setattr(llm.client, "messages", type("M", (), {"create": staticmethod(create)})())
+
+
+def test_a_failed_classify_call_hands_the_chat_to_a_person_not_an_error(fake_golive, fake_systems, monkeypatch):
+    settings(fake_golive, share=0.25)
+    model_that_fails_after(monkeypatch, [], credit_error())
+    response = client.post("/chat", json={"message": "Where is DS-20388?", "visitor_id": visitor_in(ASSISTANT, 0.25)})
+    assert response.status_code == 200
+    assert response.json()["reply"] == handoff.HAND_OFF_REPLY
+    assert len(fake_systems.snow.cases) == 1
+    [row] = fake_golive.chats()
+    # still the assistant group (it was assigned there), so the lines count the failure instead of hiding it
+    assert (row["group_name"], row["outcome"], row["handed_off"]) == (ASSISTANT, "handed_off", True)
+
+
+def test_a_failure_in_the_answer_call_hands_the_chat_to_a_person_too(fake_golive, fake_systems, monkeypatch):
+    settings(fake_golive, share=0.25)
+    model_that_fails_after(monkeypatch, [reply(text(ORDER))], RuntimeError("connection reset"))
+    out = send("Where is DS-20388?", visitor=visitor_in(ASSISTANT, 0.25))
+    assert out["reply"] == handoff.HAND_OFF_REPLY and len(fake_systems.snow.cases) == 1
+
+
+def test_a_failure_later_in_an_open_chat_hands_it_over_once_with_the_chat_so_far(fake_golive, fake_systems,
+                                                                                monkeypatch):
+    settings(fake_golive, share=0.25)
+    v = visitor_in(ASSISTANT, 0.25)
+    model_that_fails_after(monkeypatch, [reply(text(ORDER)), reply(text("It ships Monday."))], credit_error())
+    first = send("Where is DS-20388?", visitor=v)
+    second = send("And the invoice?", first["session_id"], visitor=v)
+    third = send("Hello?", first["session_id"], visitor=v)
+    assert second["reply"] == handoff.HAND_OFF_REPLY and third["reply"] == handoff.HAND_OFF_REPLY
+    [case] = fake_systems.snow.cases  # one case for the chat, not one per message
+    assert "It ships Monday." in case["u_conversation"] and "And the invoice?" in case["u_conversation"]
+    assert fake_golive.chats()[0]["handed_off"] is True

@@ -194,7 +194,14 @@ def _route(body: ChatIn, session_id: str, session: dict) -> ChatOut:
         return _to_person(body, session_id, session, None, "", new)
     if group == PERSON:
         return _to_person(body, session_id, session, "switched_off", "the assistant is not live", new)
-    return _chat(body, session_id, session, settings, new)
+    try:
+        return _chat(body, session_id, session, settings, new)
+    except Exception:
+        # Any failure on the assistant's path (a model call that is refused, out of credit, timed out...) is never the
+        # customer's error: the chat goes to a person with everything said so far. The group stays "assistant", so the
+        # lines count the failure instead of hiding it. The traceback is logged.
+        log.exception("the assistant failed; the chat goes to a person")
+        return _to_person(body, session_id, session, "assistant_failed", "the assistant could not answer", new)
 
 
 def _to_person(body: ChatIn, session_id: str, session: dict, reason: str | None, trigger: str, new: bool) -> ChatOut:
