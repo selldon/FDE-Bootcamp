@@ -152,6 +152,13 @@ class ShadowStore:
                 cols=sql.SQL(", ").join(map(sql.Identifier, FIELDS)), t=self.table), (n,))
             return [dict(zip(FIELDS, r, strict=True)) for r in cur]
 
+    def all(self):
+        """Every stored chat, oldest first, as dicts."""
+        with self._connect() as conn:
+            cur = conn.execute(sql.SQL("SELECT {cols} FROM {t} ORDER BY opened_at, number").format(
+                cols=sql.SQL(", ").join(map(sql.Identifier, FIELDS)), t=self.table))
+            return [dict(zip(FIELDS, r, strict=True)) for r in cur]
+
     def mark(self, number, marker, verdict, sounded_sure=False, now=None):
         """A person's verdict on a chat; marking again replaces it and moves `marked_at`. ValueError if rejected."""
         marker = check_mark(marker, verdict, sounded_sure)
@@ -219,6 +226,9 @@ class FakeShadowStore:
 
     def last(self, n=20):
         return [dict(r) for r in sorted(self.rows.values(), key=lambda r: (r["opened_at"], r["number"]), reverse=True)[:n]]
+
+    def all(self):
+        return [dict(r) for r in sorted(self.rows.values(), key=lambda r: (r["opened_at"], r["number"]))]
 
     def mark(self, number, marker, verdict, sounded_sure=False, now=None):
         marker = check_mark(marker, verdict, sounded_sure)

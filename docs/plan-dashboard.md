@@ -51,8 +51,8 @@ and a way to mark answers. Reading the code showed four things the brief only hi
 **Check:** fast tests, ruff, mypy. **Stop.**
 
 ## Phase 4 - the numbers (`pilot.py`, offline)
-- [ ] `numbers(store, now) -> dict`: one function, plain data, no model, no HTML. Per day, per market, per action; per intent with an "unclassified" row; checked verdict counts with the sample size beside them; tokens and cost (per chat, per resolved chat, unpriced count); the baseline constants ($7, 4 min, $0.99, 50%) in one place at the top.
-- [ ] Tests: **every breakdown sums to the same total** (days, markets, actions, intents); a market of None is its own row; an empty store gives zeros and no division error; a row without tokens is unpriced, not free; the numbers are identical on two calls.
+- [x] `numbers(store, now) -> dict`: one function, plain data, no model, no HTML. Per day, per market, per action; per intent with an "unclassified" row; checked verdict counts with the sample size beside them; tokens and cost (per chat, per resolved chat, unpriced count); the baseline constants ($7, 4 min, $0.99, 50%) in one place at the top.
+- [x] Tests: **every breakdown sums to the same total** (days, markets, actions, intents); a market of None is its own row; an empty store gives zeros and no division error; a row without tokens is unpriced, not free; the numbers are identical on two calls.
 **Check:** fast tests, ruff, mypy. **Stop.**
 
 ## Phase 5 - the words for Lena (offline)
