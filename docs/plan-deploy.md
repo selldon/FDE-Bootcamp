@@ -95,12 +95,12 @@ python against them and the laptop's PostgreSQL. No container is started or chan
 - [ ] Check (I run): `bash -n`, `shellcheck` if present, YAML parses, `grep` finds no key or password that is not a labelled test value, no `set -x` near the key, fast tests pass.
 
 ## Phase 5 - `.github/workflows/deploy.yml` (offline)
-- [ ] Triggers: `push` to `main`; `workflow_dispatch` with `commit` (rollback, default the current head) and `report` (boolean). `permissions: id-token: write, contents: read`. No GitHub environment. `concurrency: deploy` without cancel (a deploy is never cut short).
-- [ ] Job `images` (skipped on rollback and on report): OIDC with `vars.AWS_DEPLOY_ROLE_ARN`, region `us-east-1`; ECR login; build `fde-course/demostore-app:<sha>` and `fde-course/demostore-widget:<sha>`, push; print the digests.
-- [ ] Job `server`: **security-group guard** (`describe-security-groups` on the default group: fail on any inbound rule from `0.0.0.0/0` or `::/0`); find the instance with tag `project=fde-course` not terminated; start it if stopped, else `describe-images` (newest AL2023) + `run-instances`
+- [x] Triggers: `push` to `main`; `workflow_dispatch` with `commit` (rollback, default the current head) and `report` (boolean). `permissions: id-token: write, contents: read`. No GitHub environment. `concurrency: deploy` without cancel (a deploy is never cut short).
+- [x] Job `images` (skipped on rollback and on report): OIDC with `vars.AWS_DEPLOY_ROLE_ARN`, region `us-east-1`; ECR login; build `fde-course/demostore-app:<sha>` and `fde-course/demostore-widget:<sha>`, push; print the digests.
+- [x] Job `server`: **security-group guard** (`describe-security-groups` on the default group: fail on any inbound rule from `0.0.0.0/0` or `::/0`); find the instance with tag `project=fde-course` not terminated; start it if stopped, else `describe-images` (newest AL2023) + `run-instances`
       (`t3.large`, 30 GB gp3, tags on instance and disk, default subnet in us-east-1a, instance profile `fde-course-ec2`, user-data installs Docker, compose plugin, git); wait for the SSM agent to be online; print instance id, type, state, disk size.
-- [ ] Job `deploy`: `ssm send-command` (`AWS-RunShellScript`) running `remote-deploy.sh <sha>` then `check.sh`; wait; print the output; **red** on any non-zero exit. With `report: true` it runs only `docker compose exec shadow python shadow.py report`.
-- [ ] Actions pinned by version like the others; no secret anywhere (only the repository variable). The workflow never prints the key (the script reads it on the server).
+- [x] Job `deploy`: `ssm send-command` (`AWS-RunShellScript`) running `remote-deploy.sh <sha>` then `check.sh`; wait; print the output; **red** on any non-zero exit. With `report: true` it runs only `docker compose exec shadow python shadow.py report`.
+- [x] Actions pinned by version like the others; no secret anywhere (only the repository variable). The workflow never prints the key (the script reads it on the server).
 - [ ] Check (I run): YAML parses, `actionlint` if present, fast tests pass; `grep` shows no `secrets.` in the file and no ARN. Open the pull request; `checks.yml` must be green (the eval gate spends real Claude calls: it runs on the pull request as usual).
 
 ## Phase 6 - first deploy: merge to `main` (AWS, in Actions; I stop)
