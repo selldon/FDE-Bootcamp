@@ -9,7 +9,34 @@ from statistics import median
 import ledgerline
 
 BAND = 0.25  # a run is normal within +-25% of the median of the recent runs (edges included)
-MAX_NEWS_AGE = timedelta(hours=30)  # IT14: older than this is stale
+MAX_NEWS_AGE = timedelta(hours=30)  # IT14: the pipeline's own news check; the tools use the 03:00 rule below
+FILE_EXPECTED_BY = time(3, 0)  # UTC (OQ-5, Ravi's team to confirm): the carrier's night file is due by this hour
+
+
+def expected_news_date(now):
+    """The date the newest news should carry: today once 03:00 UTC has passed, else yesterday (the file is not late yet).
+
+    At 03:00:00 sharp the file is still on time; from the next second on it is missing."""
+    now = now.astimezone(UTC)
+    return now.date() if now.time() > FILE_EXPECTED_BY else now.date() - timedelta(days=1)
+
+
+def news_is_old(news_date, now):
+    """True when the carrier's news is older than the night file due by now would carry (the 03:00 rule, IT14).
+
+    News dated yesterday is current until 03:00 UTC and old after it, however few hours it has been: at 05:00 the
+    22nd's news is 29 hours old but the file of the 23rd is overdue."""
+    return news_date < expected_news_date(now)
+
+
+def check_file_arrived(file_date, now):
+    """After 03:00 UTC the newest file on the server must be dated today; if not, say the night file is missing."""
+    expected = expected_news_date(now)
+    if file_date >= expected:
+        return []
+    message = (f"carrier: file carrier-{expected}.csv is missing (due by 03:00 UTC); the newest file on the server is "
+               f"carrier-{file_date}.csv")
+    return [message]
 
 
 def news_age(news_date, now):

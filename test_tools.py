@@ -38,7 +38,8 @@ def test_an_unknown_parcel_gives_an_error():
     assert "error" in delivery_status("EP-0000000", MAYA)
 
 
-# The 30-hour rule (B9, IT14): news dated 2026-10-21 starts at 2026-10-21 00:00 UTC.
+# The 03:00 rule (B9, IT14, OQ-5): the carrier's night file is expected by 03:00 UTC. News dated the 21st is current until
+# 03:00 UTC on the 22nd and old after it - not 30 hours after its start, which let the 22nd's news pass until 06:00 on the 23rd.
 START_OF_NEWS = datetime(2026, 10, 21, tzinfo=UTC)
 
 
@@ -46,22 +47,37 @@ def at(monkeypatch, delta):
     monkeypatch.setattr(tools, "clock", lambda: START_OF_NEWS + delta)
 
 
-def test_news_at_29h59m_gives_the_date(monkeypatch):
-    at(monkeypatch, timedelta(hours=29, minutes=59))
+def test_yesterdays_news_gives_the_date_until_03_00_utc(monkeypatch):
+    at(monkeypatch, timedelta(hours=27))  # 03:00:00 on the 22nd: the file is not late yet
     parcel = delivery_status("EP-7718204", MAYA)
     assert parcel["date"] == "2026-10-21" and "offer_person" not in parcel
     order = find_order("DS-20417", MAYA)
     assert order["promised"] == "2026-10-19" and "offer_person" not in order
 
 
-def test_news_at_30h01m_gives_no_date_and_the_flag(monkeypatch):
-    at(monkeypatch, timedelta(hours=30, minutes=1))
+def test_yesterdays_news_gives_no_date_and_the_flag_after_03_00_utc(monkeypatch):
+    at(monkeypatch, timedelta(hours=27, seconds=1))
     parcel = delivery_status("EP-7718204", MAYA)
     assert parcel["date"] is None and parcel["offer_person"] is True
     assert parcel["status"] == "in transit" and parcel["place"] == "Leeds depot"
     order = find_order("DS-20417", MAYA)
     assert order["promised"] is None and order["offer_person"] is True
     assert "2026-10-21" not in json.dumps(order) + json.dumps(parcel)
+
+
+def test_the_morning_of_a_missing_night_is_old_even_though_the_news_is_only_29_hours_old(monkeypatch):
+    """The drill (27 Oct): no file for the 23rd; at 05:00 on the 23rd the 22nd's news was 29 hours old and passed as fresh."""
+    tools.get_store().parcels["EP-7718204"]["news_date"] = "2026-10-22"
+    monkeypatch.setattr(tools, "clock", lambda: datetime(2026, 10, 23, 5, 0, tzinfo=UTC))
+    parcel = delivery_status("EP-7718204", MAYA)
+    assert parcel["date"] is None and parcel["offer_person"] is True
+    monkeypatch.setattr(tools, "clock", lambda: datetime(2026, 10, 23, 2, 59, tzinfo=UTC))
+    assert delivery_status("EP-7718204", MAYA)["date"] == "2026-10-22"  # the night file is not due yet
+
+
+def test_news_two_days_old_is_old_at_any_hour(monkeypatch):
+    at(monkeypatch, timedelta(hours=50))  # 02:00 on the 23rd
+    assert delivery_status("EP-7718204", MAYA)["offer_person"] is True
 
 
 def test_a_delivered_parcel_keeps_its_dates_however_old_the_news(monkeypatch):

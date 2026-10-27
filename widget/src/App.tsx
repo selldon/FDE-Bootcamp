@@ -1,4 +1,5 @@
 import { useState } from "react";
+import GoLive from "./GoLive";
 import Pilot from "./Pilot";
 
 interface Message {
@@ -20,6 +21,7 @@ type Step = "email" | "code" | "done";
 
 export default function App() {
   if (location.pathname === "/pilot") return <Pilot />;
+  if (location.pathname === "/golive") return <GoLive />;
   return <Chat />;
 }
 

@@ -51,6 +51,11 @@ def connect():
         transport.close()
 
 
+def file_date(name):
+    """The date in a carrier file's name."""
+    return date.fromisoformat(NAME.match(name).group(1))
+
+
 def newest_name(files):
     """The name of the file with the latest date in its name; an empty folder is an error."""
     dated = [(m.group(1), n) for n in files.names() if (m := NAME.match(n))]

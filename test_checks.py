@@ -58,3 +58,48 @@ def test_news_dated_the_22nd_turns_stale_at_06_00_on_the_23rd():
 def test_news_today_is_fresh_and_none_fails():
     assert checks.check_news_fresh(DAY, START + timedelta(hours=5)) == []
     assert checks.check_news_fresh(None, START)
+
+
+# ---- the night file is expected by 03:00 UTC (OQ-5): after that, yesterday's news is old ----------------------------------
+
+D21, D22, D23 = date(2026, 10, 21), date(2026, 10, 22), date(2026, 10, 23)
+
+
+def utc(day, hour, minute=0, second=0):
+    return datetime(2026, 10, day, hour, minute, second, tzinfo=UTC)
+
+
+def test_the_news_date_expected_flips_after_03_00_utc():
+    assert checks.expected_news_date(utc(23, 2, 59, 59)) == D22
+    assert checks.expected_news_date(utc(23, 3, 0, 0)) == D22  # "by 03:00": still on time at 03:00:00
+    assert checks.expected_news_date(utc(23, 3, 0, 1)) == D23
+    assert checks.expected_news_date(utc(23, 23, 59)) == D23
+
+
+def test_yesterdays_news_is_old_after_03_00_and_todays_never_is():
+    assert checks.news_is_old(D22, utc(23, 3, 0, 0)) is False
+    assert checks.news_is_old(D22, utc(23, 3, 0, 1)) is True
+    assert checks.news_is_old(D22, utc(23, 5)) is True  # the morning pin of the drill: 29 hours, but the file is overdue
+    assert checks.news_is_old(D23, utc(23, 5)) is False
+    assert checks.news_is_old(D21, utc(23, 2)) is True  # two days old is old at any hour
+
+
+def test_the_clock_is_read_in_utc_whatever_its_zone():
+    from datetime import timezone
+    cest = timezone(timedelta(hours=2))
+    assert checks.expected_news_date(datetime(2026, 10, 23, 4, 30, tzinfo=cest)) == D22  # 02:30 UTC
+    assert checks.expected_news_date(datetime(2026, 10, 23, 5, 30, tzinfo=cest)) == D23  # 03:30 UTC
+
+
+def test_the_hourly_check_says_the_file_is_missing():
+    problems = checks.check_file_arrived(D22, utc(23, 3, 0, 1))
+    assert len(problems) == 1
+    assert ("carrier-2026-10-23.csv" in problems[0] and "missing" in problems[0] and "03:00 UTC" in problems[0]
+            and "carrier-2026-10-22.csv" in problems[0])
+
+
+def test_the_hourly_check_is_quiet_while_the_file_is_not_due_or_when_it_is_there():
+    assert checks.check_file_arrived(D22, utc(23, 3, 0, 0)) == []
+    assert checks.check_file_arrived(D22, utc(23, 2, 0)) == []
+    assert checks.check_file_arrived(D23, utc(23, 3, 30)) == []
+    assert checks.check_file_arrived(D23, utc(23, 23, 0)) == []

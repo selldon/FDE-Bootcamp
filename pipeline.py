@@ -34,8 +34,9 @@ def build_rows(orders, news):
     return orders, parcels
 
 
-def run_checks(orders, parcels, newest_news, db, now):
-    """All four checks; a list of 'check: problem' lines, empty when the load may go on."""
+def run_checks(orders, parcels, newest_news, db, now, file_date=None):
+    """All the checks; a list of 'check: problem' lines, empty when the load may go on. `file_date` is the date in the
+    newest file's name: after 03:00 UTC it must be today's, and if not, the message says the file is missing."""
     recent = db.recent_runs()
     known = {o["number"] for o in orders} | db.order_numbers()
     results = {
@@ -44,6 +45,7 @@ def run_checks(orders, parcels, newest_news, db, now):
         "parcels known": checks.check_parcels_known(parcels, known),
         "statuses": checks.check_statuses(orders),
         "news fresh": checks.check_news_fresh(newest_news, now),
+        "file arrived": checks.check_file_arrived(file_date, now) if file_date else [],
     }
     return [f"check '{name}' failed: {p}" for name, problems in results.items() for p in problems]
 
@@ -57,11 +59,11 @@ def run(db=None, orders=None, files=None, now=None):
     orders = ledgerline.all_orders() if orders is None else orders
     if files is None:
         with carrier.connect() as live:
-            _, news = carrier.newest_rows(live)
+            name, news = carrier.newest_rows(live)
     else:
-        _, news = carrier.newest_rows(files)
+        name, news = carrier.newest_rows(files)
     orders, parcels = build_rows(orders, news)
-    problems = run_checks(orders, parcels, carrier.newest_news(news), db, now)
+    problems = run_checks(orders, parcels, carrier.newest_news(news), db, now, carrier.file_date(name))
     if problems:
         raise PipelineError("; ".join(problems))
     db.save(orders, parcels, finished_at=now)

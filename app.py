@@ -1,5 +1,7 @@
 """The chat service: the widget sends a message, we reply."""
+import logging
 import uuid
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from functools import lru_cache
 from typing import Annotated, Literal
@@ -8,6 +10,7 @@ import uvicorn
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel
 
+import golive
 import handoff
 import pilot
 import policy_answer
@@ -16,6 +19,7 @@ import tools
 import traces
 import verify
 from agent import OFFER_REPLY, answer
+from golive import ASSISTANT, CONTROL, PERSON, GoLiveStore
 from intent import Intent, classify, handoff_reason
 from masking import mask_cards
 from shadow import ShadowStore
@@ -23,7 +27,21 @@ from shadow import ShadowStore
 GREETING = ("Hi, I am DemoStore's AI assistant. "
             "You can ask for a person at any time.")
 
-app = FastAPI(title="DemoStore chat")
+log = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(_app):
+    """Make the go-live tables (CREATE ... IF NOT EXISTS, so a restart changes nothing). If the database is down the
+    service still starts: live_settings() then keeps the assistant off and a person answers."""
+    try:
+        golive_store().create_tables()
+    except Exception:
+        log.exception("could not make the go-live tables")
+    yield
+
+
+app = FastAPI(title="DemoStore chat", lifespan=lifespan)
 SESSIONS: dict[str, dict] = {}
 
 
@@ -31,6 +49,9 @@ class ChatIn(BaseModel):
     session_id: str | None = None
     message: str
     market: str | None = None  # D4: where the customer is, if the site knows; a verified customer's market wins
+    visitor_id: str | None = None  # who is on the site; the group comes from it. Without one, the session id is used
+    simulated: bool = False  # traffic from the go-live simulator: every row it makes is labelled
+    sim_day: int | None = None  # the simulated day, 1-14
 
 
 class ChatOut(BaseModel):
@@ -125,27 +146,119 @@ def erase_check(body: EraseCheckIn) -> EraseOut:
     return EraseOut(erased=True, reply=ERASED_REPLY)
 
 
+@lru_cache
+def golive_store() -> GoLiveStore:
+    return GoLiveStore()
+
+
+record_failures = 0  # go-live rows that could not be written; a failed write never blocks a chat
+
+PASSED_ON = Intent(summary="Passed to a person without the assistant.", intent="other", order_number=None,
+                   needs_human=True, damaged=False, language="en")
+
+
+def live_settings() -> dict:
+    """The launch settings, read now. If they cannot be read, the assistant is off: a person is the safe side."""
+    try:
+        return golive_store().settings()
+    except Exception:  # noqa: BLE001
+        return {"share": 0.0, "intents": [], "on": False}
+
+
 @app.post("/chat")
 def chat(body: ChatIn) -> ChatOut:
-    """One message in, one reply out."""
+    """One message in, one reply out. A new chat is routed first: assistant, control (a person) or a person."""
     session_id, session = get_session(body.session_id)
     token = traces.current_session.set(session_id)  # B22: the model calls of this turn belong to this chat
     owner = traces.current_customer.set(session.get("customer_hash"))
     try:
-        return _chat(body, session_id, session)
+        return _route(body, session_id, session)
     finally:
         traces.current_customer.reset(owner)
         traces.current_session.reset(token)
 
 
-def _chat(body: ChatIn, session_id: str, session: dict) -> ChatOut:
+def _route(body: ChatIn, session_id: str, session: dict) -> ChatOut:
+    settings = live_settings()  # at every message, so the switch works without a deploy
+    new = "group" not in session
+    if new:
+        session["visitor_id"] = body.visitor_id or session_id
+        session["group"] = golive.group_of(session["visitor_id"], settings["share"]) if settings["on"] else PERSON
+        session["usage"] = []  # the model calls of the whole chat
+    group = session["group"]
+    if group == ASSISTANT and not settings["on"]:
+        # B24: switched off while this chat is open: it goes to a person with everything said so far, never dropped.
+        session["group"] = group = PERSON
+        return _to_person(body, session_id, session, "switched_off", "the assistant was switched off", new)
+    if group == CONTROL:
+        return _to_person(body, session_id, session, None, "", new)
+    if group == PERSON:
+        return _to_person(body, session_id, session, "switched_off", "the assistant is not live", new)
+    try:
+        return _chat(body, session_id, session, settings, new)
+    except Exception:
+        # Any failure on the assistant's path (a model call that is refused, out of credit, timed out...) is never the
+        # customer's error: the chat goes to a person with everything said so far. The group stays "assistant", so the
+        # lines count the failure instead of hiding it. The traceback is logged.
+        log.exception("the assistant failed; the chat goes to a person")
+        return _to_person(body, session_id, session, "assistant_failed", "the assistant could not answer", new)
+
+
+def _to_person(body: ChatIn, session_id: str, session: dict, reason: str | None, trigger: str, new: bool) -> ChatOut:
+    """A turn with no assistant: the chat goes to the live queue (control) or becomes a case (reason given)."""
+    message = mask_cards(body.message)
+    chat_so_far = session["history"] + [{"role": "user", "content": message}]
+    ctx = refunds.Context(session.get("customer"), session_id, None, session.get("failed", 0),
+                          session.get("handed_off", False), None)
+    if reason is None:
+        reply = handoff.open_queue(ctx, chat_so_far)
+    else:
+        reply = handoff.open_case(ctx, None, chat_so_far, reason, trigger)
+    session["handed_off"] = ctx.handed_off
+    session["history"] += [{"role": "user", "content": message}, {"role": "assistant", "content": reply}]
+    _record(body, session_id, session, None, "queued" if session["group"] == CONTROL else "handed_off", new)
+    return ChatOut(session_id=session_id, reply=reply, intent=PASSED_ON)
+
+
+def _record(body: ChatIn, session_id: str, session: dict, intent: str | None, outcome: str, new: bool) -> None:
+    """One `golive_chats` row per chat: made at its first message, brought up to date at every later one."""
+    global record_failures
+    tokens = golive_tokens(session["usage"])
+    fields = {"group_name": session["group"], "outcome": outcome, "handed_off": session.get("handed_off", False),
+              **tokens}
+    if intent:
+        fields["intent"] = intent
+    try:
+        store = golive_store()
+        if new:
+            store.save_chat({"visitor_id": session["visitor_id"], "chat_id": session_id, "simulated": body.simulated,
+                             "sim_day": body.sim_day, **fields})
+        else:
+            store.update_chat(session_id, **fields)
+    except Exception:  # noqa: BLE001
+        record_failures += 1
+
+
+def golive_tokens(usage: list) -> dict:
+    """Tokens and cost of the model calls of this chat so far (None when there were none: never 0)."""
+    if not usage:
+        return {"input_tokens": None, "output_tokens": None, "cost": None}
+    tokens_in, tokens_out = sum(u.input_tokens for u in usage), sum(u.output_tokens for u in usage)
+    return {"input_tokens": tokens_in, "output_tokens": tokens_out,
+            "cost": pilot.chat_cost({"input_tokens": tokens_in, "output_tokens": tokens_out})}
+
+
+def _chat(body: ChatIn, session_id: str, session: dict, settings: dict, new: bool) -> ChatOut:
+    usage = session["usage"]
     message = mask_cards(body.message)  # B21: first of all, so no later step can see a card number
     verified = tools.get_store().market_of(session["customer"]) if session["customer"] else None
     market = policy_answer.market_for(verified, body.market, session.get("market"))  # D4
     ctx = refunds.Context(session["customer"], session_id, session.get("offer"),
                           session.get("failed", 0), session.get("handed_off", False), market)
     chat_so_far = session["history"] + [{"role": "user", "content": message}]
+    confirmed, result, asked = False, None, None  # asked: the intent name of this message
     if ctx.offer is not None and ctx.customer is not None and refunds.is_yes(message):
+        confirmed = True
         # B15, B16: only the customer's own yes, checked here, writes a draft - the model never runs.
         intent = Intent(summary="The customer confirmed the refund request.", intent="return_request",
                         order_number=ctx.offer["order"], needs_human=False, damaged=False, language="en")
@@ -155,9 +268,14 @@ def _chat(body: ChatIn, session_id: str, session: dict) -> ChatOut:
         ctx.offer = None  # any other message drops the offer
         if declined:
             ctx.failed += 1  # decision 6: a declined or unclear reply to an offer is a failed try
-        intent = classify(message)
+        intent = classify(message, usage=usage)
+        asked = intent["intent"]
         reason = handoff_reason(intent)
-        if reason:
+        if new and intent["intent"] not in settings["intents"]:
+            # An intent that is not live goes to a person as it did before the assistant (decided from the first message).
+            session["group"] = PERSON
+            reply = handoff.open_case(ctx, intent["summary"], chat_so_far, reason or "not_live", "not live")
+        elif reason:
             # B4, B5: decided here, so no wording of the message can talk the
             # model out of it. Damage on arrival is a person's case (replay C25); agent.answer keeps a
             # keyword rule as a backstop for the turns that get past the flag.
@@ -165,7 +283,7 @@ def _chat(body: ChatIn, session_id: str, session: dict) -> ChatOut:
         elif ctx.failed >= handoff.FAILED_LIMIT:
             reply = handoff.open_case(ctx, None, chat_so_far, "failed_tries", "two failed tries")
         else:
-            result = answer(message, ctx, history=session["history"])
+            result = answer(message, ctx, usage=usage, history=session["history"])
             reply = result.reply
             if intent["intent"] == "policy_question" and result.action == "reply" and not result.policy:
                 reply = OFFER_REPLY  # B18: a policy reply that did not come from the tool is never sent
@@ -178,6 +296,8 @@ def _chat(body: ChatIn, session_id: str, session: dict) -> ChatOut:
         {"role": "user", "content": message},
         {"role": "assistant", "content": reply},
     ]
+    outcome = "handed_off" if ctx.handed_off else "draft" if confirmed else result.action if result else "reply"
+    _record(body, session_id, session, asked if new else None, outcome, new)
     return ChatOut(session_id=session_id, reply=reply,
                    intent=intent)
 
@@ -228,6 +348,41 @@ def pilot_mark(body: MarkIn, store: PilotStore) -> dict:
     except ValueError as err:  # an empty name, sounded_sure without wrong, a number we do not have
         raise HTTPException(status_code=422, detail=str(err)) from err
     return next(m for m in store.marks(body.number) if m["marker"] == body.marker.strip())
+
+
+# ---- the go-live page: the two groups side by side, and the switch -----------------------------------------------
+
+def golive_dep() -> GoLiveStore:
+    return golive_store()  # looked up at the request, so a test that replaces golive_store is seen here too
+
+
+GoLive = Annotated[GoLiveStore, Depends(golive_dep)]
+
+
+class SwitchIn(BaseModel):
+    on: bool | None = None
+    share: float | None = None
+    intents: list[str] | None = None
+
+
+@app.get("/api/golive")
+def golive_numbers(store: GoLive) -> dict:
+    data = golive.numbers(store, datetime.now(UTC))
+    return {**data, "lines": golive.lines(data), "settings": store.settings()}
+
+
+@app.get("/api/golive/switch")
+def golive_switch_state(store: GoLive) -> dict:
+    return store.settings()
+
+
+@app.post("/api/golive/switch")
+def golive_switch(body: SwitchIn, store: GoLive) -> dict:
+    """Change the launch settings now; the next chat reads them, so no deploy. Used by the page and by the drill."""
+    try:
+        return store.set_settings(share=body.share, intents=body.intents, on=body.on)
+    except ValueError as err:
+        raise HTTPException(status_code=422, detail=str(err)) from err
 
 
 if __name__ == "__main__":

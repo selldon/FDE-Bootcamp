@@ -89,7 +89,7 @@ def test_model_inputs_and_history_never_carry_the_digits(fake_model):
 
 
 def test_case_carries_only_the_masked_text(monkeypatch, fake_model, fake_systems):
-    monkeypatch.setattr(app_module, "classify", lambda message: {
+    monkeypatch.setattr(app_module, "classify", lambda message, usage=None: {
         "summary": "s", "intent": "order_status", "order_number": None,
         "needs_human": True, "damaged": False, "language": "en"})
     fake_model()
@@ -102,7 +102,7 @@ def test_case_carries_only_the_masked_text(monkeypatch, fake_model, fake_systems
 def test_classify_gets_the_masked_message(monkeypatch, fake_model):
     seen = []
 
-    def spy(message):
+    def spy(message, usage=None):
         seen.append(message)
         return {"summary": "s", "intent": "other", "order_number": None,
                 "needs_human": False, "damaged": False, "language": "en"}

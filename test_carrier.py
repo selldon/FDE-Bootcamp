@@ -74,3 +74,8 @@ def test_empty_folder_is_an_error():
         carrier.newest_rows(FakeFiles({}))
     with pytest.raises(carrier.CarrierError):
         carrier.newest_rows(FakeFiles({"readme.txt": "x"}))
+
+
+def test_the_date_of_a_file_comes_from_its_name():
+    from datetime import date
+    assert carrier.file_date("carrier-2026-10-22.csv") == date(2026, 10, 22)

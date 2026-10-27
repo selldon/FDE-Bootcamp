@@ -15,7 +15,7 @@ import store
 import tools
 import traces
 
-NOW = datetime(2026, 10, 22, 5, 0, tzinfo=UTC)  # 29h after the start of the news date 2026-10-21 (IT14)
+NOW = datetime(2026, 10, 22, 2, 0, tzinfo=UTC)  # before 03:00 UTC, when the night file of the 22nd is due: the 21st's news is current (IT14, OQ-5)
 
 
 def seed_store(db):
@@ -118,6 +118,21 @@ def fake_systems(monkeypatch):
     monkeypatch.setattr(refunds, "_drafts", systems.drafts)
     monkeypatch.setattr(refunds, "_servicenow", systems.snow)
     return systems
+
+
+@pytest.fixture(autouse=True)
+def fake_golive(monkeypatch):
+    """Every test chats against a FakeGoLiveStore: the switch is on for everybody and every intent, so a chat
+    reaches the assistant as before; tests of the switch change it. The real tables are never reached."""
+    import app
+    import golive
+    fake = golive.FakeGoLiveStore()
+    fake.create_tables()
+    fake.set_settings(share=1.0, on=True, intents=["order_status", "return_request", "policy_question",
+                                                    "product_question", "contract_price", "other"])
+    monkeypatch.setattr(app, "golive_store", lambda: fake)
+    monkeypatch.setattr(app, "record_failures", 0)
+    return fake
 
 
 @pytest.fixture(autouse=True)
