@@ -150,3 +150,15 @@ def test_the_tables_are_new_and_additive():
 def test_the_real_store_names_its_tables_by_parameter():
     store = golive.GoLiveStore(url="postgresql://unused", settings_table="s_x", chats_table="c_x")
     assert store.chats_table == sql.Identifier("c_x") and store.settings_name == "s_x"
+
+
+def test_a_chat_row_can_be_updated_in_its_outcome_columns_only():
+    store = FakeGoLiveStore()
+    store.save_chat(chat("C1"))
+    assert store.update_chat("C1", outcome="handed_off", handed_off=1, group_name="person") is True
+    row = store.chats()[0]
+    assert (row["outcome"], row["handed_off"], row["group_name"]) == ("handed_off", True, "person")
+    assert store.update_chat("nope", outcome="x") is False
+    for bad in ({"simulated": True}, {"sim_day": 2}, {"visitor_id": "x"}, {"group_name": "everyone"}):
+        with pytest.raises(ValueError):
+            store.update_chat("C1", **bad)

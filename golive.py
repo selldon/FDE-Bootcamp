@@ -126,6 +126,17 @@ class GoLiveStore:
         with self._connect() as conn:
             return conn.execute(query, chat_row(row)).rowcount == 1
 
+    def update_chat(self, chat_id, **fields):
+        """Change the outcome columns of a chat as it goes on (a chat is one row, many turns). True if it was there."""
+        fields = check_update(fields)
+        if not fields:
+            return False
+        query = sql.SQL("UPDATE {t} SET {sets} WHERE chat_id = %(chat_id)s").format(
+            t=self.chats_table, sets=sql.SQL(", ").join(
+                sql.SQL("{} = {}").format(sql.Identifier(f), sql.Placeholder(f)) for f in fields))
+        with self._connect() as conn:
+            return conn.execute(query, {**fields, "chat_id": chat_id}).rowcount == 1
+
     def chats(self, simulated=None):
         """Every chat, oldest first (only the simulated or only the real ones if `simulated` is given)."""
         where = sql.SQL("") if simulated is None else sql.SQL("WHERE simulated = %s")
@@ -134,6 +145,19 @@ class GoLiveStore:
                 cols=sql.SQL(", ").join(map(sql.Identifier, CHAT_FIELDS)), t=self.chats_table, w=where),
                 () if simulated is None else (bool(simulated),))
             return [dict(zip(CHAT_FIELDS, r, strict=True)) for r in cur]
+
+
+UPDATABLE = ("group_name", "intent", "outcome", "handed_off", "input_tokens", "output_tokens", "cost")
+
+
+def check_update(fields):
+    """The columns a chat may change later; anything else (visitor, id, simulated, sim_day) is fixed at the start."""
+    unknown = set(fields) - set(UPDATABLE)
+    if unknown:
+        raise ValueError(f"a chat cannot change {sorted(unknown)}")
+    if "group_name" in fields and fields["group_name"] not in (ASSISTANT, CONTROL, PERSON):
+        raise ValueError("a chat needs a group: assistant, control or person")
+    return {k: bool(v) if k == "handed_off" else v for k, v in fields.items()}
 
 
 def chat_row(row):
@@ -180,3 +204,9 @@ class FakeGoLiveStore:
         pool = [r for r in self.rows.values() if simulated is None or r["simulated"] == bool(simulated)]
         return [dict(r) for r in sorted(pool, key=lambda r: (r["created_at"], r["chat_id"]))]
 
+    def update_chat(self, chat_id, **fields):
+        fields = check_update(fields)
+        if chat_id not in self.rows or not fields:
+            return False
+        self.rows[chat_id].update(fields)
+        return True

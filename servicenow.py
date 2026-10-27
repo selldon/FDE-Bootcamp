@@ -81,6 +81,18 @@ def create_case(summary, history, customer, call=send):
     return created
 
 
+QUEUE_SUMMARY = "Website chat for the live queue: the visitor is not talking to the assistant."
+
+
+def queue_chat(history, call=send):
+    """A chat for a person, with no assistant in front: the control group and the chats the switch sends to a person.
+
+    The same `interaction` table as a hand-off (`CASES` is the live queue the stand-in shows on /live), so a person
+    sees both in one place. The summary is fixed text: nothing from the visitor is put in it.
+    """
+    return create_case(QUEUE_SUMMARY, history, None, call)
+
+
 class FakeServiceNow:
     """The same two functions over lists; records every call; `fail` makes the next calls raise."""
 
@@ -105,3 +117,6 @@ class FakeServiceNow:
 
     def create_case(self, summary, history, customer):
         return create_case(summary, history, customer, self.call)
+
+    def queue_chat(self, history):
+        return queue_chat(history, self.call)

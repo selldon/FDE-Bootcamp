@@ -59,7 +59,7 @@ def chat(monkeypatch, tmp_path, fake_systems, fake_traces):
     client = TestClient(app_module.app)
     monkeypatch.setattr(verify, "_default", verify.Verifier(outbox=str(tmp_path / "outbox.jsonl")))
     monkeypatch.setattr(app_module, "SESSIONS", {})
-    monkeypatch.setattr(app_module, "classify", lambda message: dict(INTENT))  # worst case: the message reaches the model
+    monkeypatch.setattr(app_module, "classify", lambda message, usage=None: dict(INTENT))  # worst case: the message reaches the model
 
     def run(mid, verified):
         import llm

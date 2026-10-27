@@ -121,6 +121,21 @@ def fake_systems(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def fake_golive(monkeypatch):
+    """Every test chats against a FakeGoLiveStore: the switch is on for everybody and every intent, so a chat
+    reaches the assistant as before; tests of the switch change it. The real tables are never reached."""
+    import app
+    import golive
+    fake = golive.FakeGoLiveStore()
+    fake.create_tables()
+    fake.set_settings(share=1.0, on=True, intents=["order_status", "return_request", "policy_question",
+                                                    "product_question", "contract_price", "other"])
+    monkeypatch.setattr(app, "golive_store", lambda: fake)
+    monkeypatch.setattr(app, "record_failures", 0)
+    return fake
+
+
+@pytest.fixture(autouse=True)
 def trace_key(monkeypatch):
     """Every test hashes emails with a fixed key of its own: no test needs a secret from .env (CI has none)."""
     monkeypatch.setenv("TRACE_HMAC_KEY", "test-trace-key")

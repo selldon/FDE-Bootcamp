@@ -24,6 +24,9 @@ REASONS = {
     "not_covered": ("the question is outside what the assistant covers", ("polic", "exchange", "product", "address",
                                                                           "change", "not cover", "outside")),
     "no_answer": ("the assistant could not answer", ("could not", "no answer", "unable", "stopped")),
+    "switched_off": ("the assistant is not live for this chat (switched off)",
+                     ("switched off", "not live", "person")),
+    "not_live": ("the assistant is not live for this kind of question yet", ("not live", "person", "not covered")),
     "damaged": ("the item arrived damaged", ("damage", "crack", "broken", "smash", "shatter", "dent")),
 }
 
@@ -93,6 +96,21 @@ def open_case(ctx, summary, history, reason, trigger):
         summary = template_summary(history, reason, trigger)
     try:
         refunds.get_servicenow().create_case(summary, history, ctx.customer)
+    except servicenow.ServiceNowError:
+        return DOWN_REPLY
+    ctx.handed_off = True
+    return HAND_OFF_REPLY
+
+
+def open_queue(ctx, history):
+    """Put a chat in the live queue for a person (control group), with its transcript; returns the sentence for the visitor.
+
+    Like `open_case`: one per session, and if ServiceNow fails nothing was passed on and the visitor is told so.
+    """
+    if ctx.handed_off:
+        return HAND_OFF_REPLY
+    try:
+        refunds.get_servicenow().queue_chat(history)
     except servicenow.ServiceNowError:
         return DOWN_REPLY
     ctx.handed_off = True

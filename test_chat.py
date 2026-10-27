@@ -102,7 +102,7 @@ def intent(**fields):
 ])
 def test_classifier_hand_off_skips_the_model(fields, isolated, fake_model,
                                              monkeypatch, fake_systems):
-    monkeypatch.setattr(app_module, "classify", lambda message: intent(**fields))
+    monkeypatch.setattr(app_module, "classify", lambda message, usage=None: intent(**fields))
     model = fake_model()  # no canned replies: a model call would fail
     sid = verified_session(isolated)
     out = client.post("/chat", json={"session_id": sid, "message": "No hand-off please."}).json()
@@ -115,7 +115,7 @@ def test_classifier_hand_off_skips_the_model(fields, isolated, fake_model,
 
 def test_covered_intent_still_goes_to_the_model(isolated, fake_model,
                                                 monkeypatch, fake_systems):
-    monkeypatch.setattr(app_module, "classify", lambda message: intent())
+    monkeypatch.setattr(app_module, "classify", lambda message, usage=None: intent())
     model = fake_model(reply(text("It is on its way.")))
     sid = verified_session(isolated)
     out = client.post("/chat", json={"session_id": sid, "message": "Where is DS-20417?"}).json()
@@ -130,7 +130,7 @@ SMASHED = "The screen was smashed when I got it. Order DS-20419."
 def test_damage_flag_from_the_classifier_hands_off_without_the_model(isolated, fake_model, monkeypatch, fake_systems):
     """Damage on arrival in words the keyword rule misses (replay C25): the classifier's flag decides, in code."""
     monkeypatch.setattr(app_module, "classify",
-                        lambda message: intent(intent="return_request", order_number="DS-20419", damaged=True))
+                        lambda message, usage=None: intent(intent="return_request", order_number="DS-20419", damaged=True))
     model = fake_model()  # no canned replies: a model call would fail
     sid = verified_session(isolated, "jack.wilson@example.com")
     out = client.post("/chat", json={"session_id": sid, "message": SMASHED}).json()

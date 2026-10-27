@@ -30,11 +30,11 @@ Phases 1-5 run one at a time, stopping after each. Phases 6-8 (the two weeks, th
 - [x] Check: fast tests pass. Tables are new, so no restore point; take a `pg_dump` of `product` first anyway before the first run that writes rows (phase 6).
 
 ## Phase 2 - the chat service routes by group (items 1, Limits)
-- [ ] `ChatIn` gets `visitor_id` (and `simulated`, default false). New chat: switch off or intent not live -> hand off within the request via `handoff.open_case`; control -> the live queue (decide in code whether `create_case` or the interaction POST is right, one helper in `servicenow.py`); assistant group -> today's `_chat`.
-- [ ] Every chat writes one `golive_chats` row (visitor, group, intent, outcome, handed_off, tokens, cost, simulated, sim_day).
-- [ ] Switch off never loses an open chat: a chat already open is handed to a person with its transcript on its next message, never dropped. Tested with a chat open when the switch flips.
-- [ ] No refund is paid by the assistant; at 25 % returns still go only through `refunds` drafts (test that no code path writes except the draft).
-- [ ] Check: fast tests pass, including the off-switch and open-chat tests; `grep -n "client.messages" *.py` still finds only `llm.py`.
+- [x] `ChatIn` gets `visitor_id` (and `simulated`, default false). New chat: switch off or intent not live -> hand off within the request via `handoff.open_case`; control -> the live queue (decide in code whether `create_case` or the interaction POST is right, one helper in `servicenow.py`); assistant group -> today's `_chat`.
+- [x] Every chat writes one `golive_chats` row (visitor, group, intent, outcome, handed_off, tokens, cost, simulated, sim_day).
+- [x] Switch off never loses an open chat: a chat already open is handed to a person with its transcript on its next message, never dropped. Tested with a chat open when the switch flips.
+- [x] No refund is paid by the assistant; at 25 % returns still go only through `refunds` drafts (test that no code path writes except the draft).
+- [x] Check: fast tests pass, including the off-switch and open-chat tests; `grep -n "client.messages" *.py` still finds only `llm.py`.
 
 ## Phase 3 - the simulator and its truth (item 2)
 - [ ] `golive_sim.py` (repo root, imports `config`, no new container): seeded visitors for 14 days, a day, a question and 1-3 follow-ups from the profiles; each carries the true order status. Output carries `simulated: true` on every row.
