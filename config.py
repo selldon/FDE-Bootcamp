@@ -36,6 +36,13 @@ def servicenow():
             "password": setting("SERVICENOW_PASSWORD")}
 
 
+def servicenow_reader():
+    """ServiceNow's read-only reader account: shadow mode reads live chats with it and writes nothing."""
+    return {"url": setting("SERVICENOW_URL").rstrip("/"),
+            "user": setting("SERVICENOW_READER_USER"),
+            "password": setting("SERVICENOW_READER_PASSWORD")}
+
+
 def confluence():
     """Confluence: the policy space POL, read only."""
     return {"url": setting("CONFLUENCE_URL").rstrip("/")}

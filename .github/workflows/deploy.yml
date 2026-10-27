@@ -1,0 +1,231 @@
+# The deploy (docs/plan-deploy.md): a push to main builds both images, makes sure the server exists and is reachable, and
+# deploys that commit over SSM. By hand: `commit` = a full sha to roll back (or forward) to - the images are not rebuilt, they
+# must already be in ECR; `report` = print the shadow report and change nothing.
+# No secret: the AWS role comes from OIDC (the repository VARIABLE AWS_DEPLOY_ROLE_ARN), the Anthropic key is read from SSM
+# by remote-deploy.sh on the server and never reaches GitHub or this log. No port is opened and there is no SSH.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: "Full sha to deploy (rollback or roll forward). Empty = the head of main, which is built first."
+        required: false
+        default: ""
+      report:
+        description: "Only print the shadow report from the running server"
+        type: boolean
+        default: false
+
+permissions:
+  id-token: write
+  contents: read
+
+# a deploy is never cut short: a newer one waits
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  # the commit that is deployed: the one asked for by hand, else the one pushed
+  SHA: ${{ inputs.commit || github.sha }}
+
+jobs:
+  # not on a rollback (the tags are in ECR already) and not on a report
+  images:
+    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || (inputs.commit == '' && !inputs.report)) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build and push both images
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          set -euo pipefail
+          APP="$REGISTRY/fde-course/demostore-app:$SHA"
+          WIDGET="$REGISTRY/fde-course/demostore-widget:$SHA"
+          docker build -t "$APP" .
+          docker build -t "$WIDGET" widget
+          docker push "$APP"
+          docker push "$WIDGET"
+          echo "app digest:    $(docker inspect --format '{{index .RepoDigests 0}}' "$APP")"
+          echo "widget digest: $(docker inspect --format '{{index .RepoDigests 0}}' "$WIDGET")"
+
+  server:
+    needs: images
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && (needs.images.result == 'success' || needs.images.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      instance_id: ${{ steps.instance.outputs.instance_id }}
+    steps:
+      - name: The commit is a full sha
+        run: |
+          [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::commit must be a full 40-character sha"; exit 1; }
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Security-group guard
+        run: |
+          set -euo pipefail
+          VPC="$(aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query 'Vpcs[0].VpcId' --output text)"
+          SG="$(aws ec2 describe-security-groups --filters Name=vpc-id,Values="$VPC" Name=group-name,Values=default \
+                --query 'SecurityGroups[0].GroupId' --output text)"
+          echo "default group: $SG (vpc $VPC)"
+          OPEN="$(aws ec2 describe-security-groups --group-ids "$SG" --output json | jq -r '
+            .SecurityGroups[0].IpPermissions[]
+            | select(any(.IpRanges[]?; .CidrIp == "0.0.0.0/0") or any(.Ipv6Ranges[]?; .CidrIpv6 == "::/0"))
+            | "protocol \(.IpProtocol) ports \(.FromPort // "all")-\(.ToPort // "all")"')"
+          if [ -n "$OPEN" ]; then
+            echo "::error::the default security group has an inbound rule open to the internet:"
+            echo "$OPEN"
+            exit 1
+          fi
+          echo "no inbound rule open to the internet"
+
+      - name: Find, start or create the server
+        id: instance
+        run: |
+          set -euo pipefail
+          FOUND="$(aws ec2 describe-instances \
+            --filters Name=tag:project,Values=fde-course Name=instance-state-name,Values=pending,running,stopping,stopped \
+            --query 'Reservations[].Instances[].[InstanceId,State.Name]' --output text)"
+          COUNT="$(printf '%s' "$FOUND" | grep -c . || true)"
+          if [ "$COUNT" -gt 1 ]; then
+            echo "::error::more than one instance has the tag project=fde-course:"
+            echo "$FOUND"
+            exit 1
+          fi
+          if [ "$COUNT" -eq 1 ]; then
+            ID="$(echo "$FOUND" | awk '{print $1}')"
+            STATE="$(echo "$FOUND" | awk '{print $2}')"
+            echo "found $ID ($STATE)"
+            if [ "$STATE" = stopping ]; then
+              aws ec2 wait instance-stopped --instance-ids "$ID"
+              STATE=stopped
+            fi
+            if [ "$STATE" = stopped ]; then
+              aws ec2 start-instances --instance-ids "$ID" >/dev/null
+            fi
+          else
+            AMI="$(aws ec2 describe-images --owners amazon \
+              --filters 'Name=name,Values=al2023-ami-2023.*-x86_64' Name=state,Values=available Name=architecture,Values=x86_64 \
+              --query "sort_by(Images[?!contains(Name,'minimal')], &CreationDate)[-1].ImageId" --output text)"
+            SUBNET="$(aws ec2 describe-subnets \
+              --filters Name=availability-zone,Values=us-east-1a Name=default-for-az,Values=true \
+              --query 'Subnets[0].SubnetId' --output text)"
+            echo "creating a server: image $AMI, subnet $SUBNET"
+            cat > user-data.sh <<'EOF'
+          #!/bin/bash
+          set -euxo pipefail
+          dnf install -y docker git
+          mkdir -p /usr/local/lib/docker/cli-plugins
+          curl -fsSL https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64 \
+            -o /usr/local/lib/docker/cli-plugins/docker-compose
+          chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+          systemctl enable --now docker
+          EOF
+            ID="$(aws ec2 run-instances \
+              --image-id "$AMI" --instance-type t3.large --subnet-id "$SUBNET" \
+              --iam-instance-profile Name=fde-course-ec2 \
+              --block-device-mappings 'DeviceName=/dev/xvda,Ebs={VolumeSize=30,VolumeType=gp3,DeleteOnTermination=true}' \
+              --metadata-options HttpTokens=required,HttpEndpoint=enabled \
+              --tag-specifications \
+                'ResourceType=instance,Tags=[{Key=project,Value=fde-course}]' \
+                'ResourceType=volume,Tags=[{Key=project,Value=fde-course}]' \
+              --user-data fileb://user-data.sh \
+              --query 'Instances[0].InstanceId' --output text)"
+            echo "created $ID"
+          fi
+          aws ec2 wait instance-running --instance-ids "$ID"
+          echo "instance_id=$ID" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for the instance
+        env:
+          INSTANCE_ID: ${{ steps.instance.outputs.instance_id }}
+        run: |
+          set -euo pipefail
+          aws ec2 wait instance-status-ok --instance-ids "$INSTANCE_ID"
+          aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+            --query 'Reservations[0].Instances[0].[InstanceId,InstanceType,State.Name]' --output text
+          echo "disk (GB): $(aws ec2 describe-volumes --filters Name=attachment.instance-id,Values="$INSTANCE_ID" \
+            --query 'Volumes[].Size' --output text)"
+
+  deploy:
+    needs: [images, server]
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && needs.server.result == 'success' && (needs.images.result == 'success' || needs.images.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Run it on the server through SSM
+        env:
+          INSTANCE_ID: ${{ needs.server.outputs.instance_id }}
+          REPORT: ${{ inputs.report }}
+          REPO_URL: https://github.com/${{ github.repository }}.git
+        run: |
+          set -euo pipefail
+          COMPOSE='docker compose -f compose.yaml -f deploy/compose.server.yaml --profile shadow'
+          if [ "$REPORT" = true ]; then
+            SCRIPT="export HOME=/root; cd /opt/demostore && . ./.deploy.env && $COMPOSE exec -T shadow python shadow.py report"
+          else
+            [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::commit must be a full 40-character sha"; exit 1; }
+            # the first run has no repo yet: fetch the commit, then run its own scripts
+            SCRIPT="set -e
+          export HOME=/root
+          cloud-init status --wait || true
+          [ -d /opt/demostore/.git ] || git clone $REPO_URL /opt/demostore
+          cd /opt/demostore
+          git fetch --prune origin
+          git cat-file -e $SHA^{commit} 2>/dev/null || git fetch origin $SHA
+          git checkout --force --detach $SHA
+          bash deploy/remote-deploy.sh $SHA
+          bash deploy/check.sh"
+          fi
+          jq -n --arg c "$SCRIPT" '{commands: ($c | split("\n")), executionTimeout: ["2400"]}' > params.json
+          # a new server takes a few minutes to register with SSM: until then send-command says InvalidInstanceId
+          CMD_ID=""
+          for _ in $(seq 1 60); do
+            if CMD_ID="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript \
+                --comment "deploy $SHA" --parameters file://params.json --query Command.CommandId --output text 2>send.err)"; then
+              break
+            fi
+            CMD_ID=""
+            grep -qE 'AccessDenied|UnauthorizedOperation' send.err && break
+            sleep 10
+          done
+          if [ -z "$CMD_ID" ]; then
+            echo "::error::SSM did not take the command for $INSTANCE_ID (agent not registered after 10 minutes, or a missing right):"
+            cat send.err
+            exit 1
+          fi
+          echo "SSM command $CMD_ID on $INSTANCE_ID"
+          STATUS=Pending
+          for _ in $(seq 1 280); do
+            sleep 10
+            STATUS="$(aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" \
+              --query Status --output text 2>/dev/null || echo Pending)"
+            case "$STATUS" in Pending|InProgress|Delayed) ;; *) break ;; esac
+          done
+          aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" \
+            --query StandardOutputContent --output text
+          echo "----- stderr -----"
+          aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" \
+            --query StandardErrorContent --output text
+          echo "SSM status: $STATUS"
+          [ "$STATUS" = Success ] || { echo "::error::the command on the server ended as $STATUS"; exit 1; }

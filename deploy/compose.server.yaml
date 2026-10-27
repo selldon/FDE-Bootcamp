@@ -1,0 +1,20 @@
+# The server's overrides of compose.yaml. Use both files, the base first (paths are relative to it):
+#   docker compose -f compose.yaml -f deploy/compose.server.yaml --profile shadow up -d
+# Needs APP_IMAGE and WIDGET_IMAGE (remote-deploy.sh sets them) and, for the chat, ANTHROPIC_API_KEY in the shell.
+x-server: &server
+  image: ${APP_IMAGE:?APP_IMAGE is not set}
+  build: !reset null
+  env_file: !override [deploy/server.env]
+  environment:
+    - ANTHROPIC_API_KEY   # a bare name: the value comes from the shell, it is never written here
+
+services:
+  chat:
+    <<: *server
+  shadow:
+    <<: *server
+  jobs:
+    <<: *server
+  widget:
+    image: ${WIDGET_IMAGE:?WIDGET_IMAGE is not set}
+    build: !reset null
