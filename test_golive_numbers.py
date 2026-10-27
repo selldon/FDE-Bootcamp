@@ -225,3 +225,38 @@ def test_the_numbers_say_why_repeat_contact_is_not_measured_in_one_line():
     note = data["repeat_note"]
     assert note == golive.REPEAT_NOT_MEASURED
     assert "15 customers" in note and "\n" not in note and note.startswith("Not measured")
+
+
+# ---- control chats as the service writes them: queued means handed_off is true, whatever happened after ----------------
+
+@pytest.mark.parametrize(("group", "outcome", "handed_off", "expected"), [
+    (CONTROL, "unanswered", True, "unanswered"),   # reached the queue, then the customer left without an answer
+    (CONTROL, "resolved", True, "resolved"),
+    (CONTROL, "handed_off", True, "handed_off"),
+    (CONTROL, "queued", True, "handed_off"),       # not labelled yet: in the queue
+    (ASSISTANT, "handed_off", True, "handed_off"),
+    (ASSISTANT, "give_status", False, "resolved"),
+    (ASSISTANT, "reply", False, "unanswered"),     # an assistant chat that ended any other way
+    (ASSISTANT, "unanswered", True, "unanswered"),
+])
+def test_classify_reads_the_outcome_before_the_handed_off_flag(group, outcome, handed_off, expected):
+    assert golive.classify({"group_name": group, "outcome": outcome, "handed_off": handed_off}) == expected
+
+
+def test_control_unanswered_chats_are_counted_though_every_queued_chat_is_marked_handed_off():
+    rows = (filler(CONTROL, 6, outcome="resolved", handed_off=True)
+            + filler(CONTROL, 3, outcome="unanswered", handed_off=True)
+            + filler(CONTROL, 1, outcome="handed_off", handed_off=True))
+    data, _ = read(rows)
+    c = data["window"][CONTROL]
+    assert (c["resolved"], c["unanswered"], c["handed_off"], c["decided"]) == (6, 3, 1, 10)
+
+
+def test_the_unanswered_line_sees_the_controls_unanswered_chats_with_the_service_s_rows():
+    rows = (filler(ASSISTANT, 20, outcome="give_status")
+            + filler(CONTROL, 18, outcome="resolved", handed_off=True)
+            + filler(CONTROL, 2, outcome="unanswered", handed_off=True))
+    data, result = read(rows)
+    difference = data["window"]["difference"]["unanswered"][0]
+    assert difference == pytest.approx(-0.1)  # the assistant left nobody without an answer, control left 10 %
+    assert result["window"]["unanswered"]["status"] == "holds"

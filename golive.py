@@ -253,13 +253,18 @@ def day_of(chat):
 
 def classify(chat):
     """"resolved", "handed_off", "unanswered", or None for a control chat still waiting for its outcome (queued).
-    An assistant chat that ended any other way is left without an answer."""
+    An assistant chat that ended any other way is left without an answer.
+
+    The outcome is read before the `handed_off` flag: the service marks every queued control chat handed_off, so a flag
+    that came first made "left without an answer" impossible for control and its line read zero."""
     outcome = chat.get("outcome")
     if outcome in RESOLVED_AS:
         return "resolved"
+    if outcome == "unanswered":
+        return "unanswered"
     if outcome in HANDED_AS or chat.get("handed_off"):
         return "handed_off"
-    if outcome == "unanswered" or chat["group_name"] == ASSISTANT:
+    if chat["group_name"] == ASSISTANT:
         return "unanswered"
     return None
 
