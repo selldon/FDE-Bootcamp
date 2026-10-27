@@ -371,8 +371,8 @@ def test_rescoring_changes_the_labels_from_the_replies_and_keeps_the_old_file_as
     kept = sim.replace_out(out, new)
     assert kept.exists() and not any(r["confidently_wrong"] for r in sim.read_out(kept))  # the old rows, untouched
     assert {r["chat_id"] for r in sim.read_out(out) if r["confidently_wrong"]} == flagged
-    with pytest.raises(SystemExit, match="aside"):
-        sim.replace_out(out, new)  # the first copy is never overwritten
+    second = sim.replace_out(out, new)  # a second rescore keeps its own copy; the first is never overwritten
+    assert second != kept and kept.exists()
 
 
 def test_rescoring_refuses_a_chat_with_no_replies_instead_of_scoring_it_as_right(
@@ -384,3 +384,52 @@ def test_rescoring_refuses_a_chat_with_no_replies_instead_of_scoring_it_as_right
             lambda m: None)
     with pytest.raises(SystemExit, match="no replies"):
         sim.rescore(assumptions, fake_golive, truth, lambda sid: [], out, orders, profiles, SHARE)
+
+
+# ---- a negated status is not a claim ("It isn't still on its way") ---------------------------------------------------
+
+DELIVERED = {"status": "delivered", "dates": ["2026-10-14"], "customer": "x", "all_delivered": True}
+
+
+@pytest.mark.parametrize("reply_text, claims, is_wrong", [
+    # the two replies of week two that were flagged because "on its way" was read through the "n't"
+    ("It shouldn't still be on its way. The carrier shows order DS-20570 as already delivered, on 2026-10-14.",
+     [], False),
+    ("Your order isn't still on its way. The carrier shows it as delivered to your front door on 2026-10-14.",
+     [], False),
+    ("It is not in transit any more; it was delivered on 2026-10-14.", ["delivered"], False),
+    ("It is no longer on the way: delivered on 2026-10-14.", ["delivered"], False),
+    # a negation never hides a claim that is really made
+    ("I can't find a later scan, but it is on its way.", ["on_the_way"], True),
+    ("It is not delivered yet; it is on its way.", ["on_the_way"], True),
+    ("It isn't late. It has been shipped.", ["on_the_way"], True),
+    ("The order is on its way, not delivered.", ["on_the_way"], True),
+])
+def test_a_negated_status_is_not_a_claim_and_a_negation_never_hides_one(reply_text, claims, is_wrong):
+    score = sim.score_reply(reply_text, DELIVERED)
+    assert (score["claims"], score["wrong"]) == (claims, is_wrong)
+
+
+def test_the_partly_shipped_rule_is_unchanged_the_hidden_mismatch_of_week_two_is_still_wrong():
+    day_8 = ("Order DS-20468 shipped in two parcels, and the carrier shows both as delivered to your front door.\n\n"
+             "- The first parcel was delivered on 2026-10-20.\n- The second parcel was delivered on 2026-10-22.\n\n"
+             "Both arrived before the promised date of 2026-10-24. Please check around the door and with neighbors.")
+    truth = partly_truth("delivered", "delivered")
+    truth["dates"] = ["2026-10-20", "2026-10-22", "2026-10-24"]
+    assert sim.score_reply(day_8, truth)["wrong"] is True  # right facts, mismatch not named: wrong, as written
+    named = day_8 + ' The order status still says "part shipped".'
+    assert sim.score_reply(named, truth)["wrong"] is False
+
+
+def test_a_second_rescore_sets_the_log_aside_again_and_never_overwrites_the_first_copy(
+        assumptions, world, isolated, fake_golive, monkeypatch):
+    orders, truth, profiles = world
+    install_model(monkeypatch, truthful)
+    out = isolated / "out.jsonl"
+    sim.run([1], assumptions, Gateway(isolated / "outbox.jsonl"), fake_golive, out, SHARE, orders, truth, profiles,
+            lambda m: None)
+    original = out.read_text()
+    first = sim.replace_out(out, sim.read_out(out)[:3])
+    second = sim.replace_out(out, sim.read_out(out)[:1])
+    assert first != second and first.read_text() == original and len(sim.read_out(second)) == 3
+    assert len(sim.read_out(out)) == 1

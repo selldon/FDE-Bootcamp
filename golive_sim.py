@@ -99,6 +99,10 @@ STATUS_CLAIMS = {
     "processing": re.compile(r"\b(?:is|still|currently)\s+(?:being\s+)?processing\b|\bstatus:?\s+processing\b", re.IGNORECASE),
     "partly": re.compile(r"\bpartly shipped\b|\bpart of your order\b", re.IGNORECASE),
 }
+# A claim that follows a negation within a few words ("isn't still on its way", "not in transit", "no longer on the way")
+# says the opposite. Only a negation just before the phrase counts, so "I can't find a scan, but it is on its way" is
+# still a claim.
+NEGATED = re.compile(r"(?:\b(?:not|never|no longer|cannot)|n['\u2019]t)\s+(?:\w+\s+){0,3}$", re.IGNORECASE)
 # A reply that says the news is old is not a status given as fact.
 HEDGE = re.compile(r"\b(?:old|out of date|outdated|stale|cannot confirm|can't confirm|not sure|may have changed"
                    r"|might have changed|not up to date|no recent)\b", re.IGNORECASE)
@@ -128,7 +132,7 @@ def score_reply(reply, truth):
     """Is this reply a status given as fact that differs from the truth (its status or its date)? Plain data back."""
     if truth is None or HEDGE.search(reply):
         return {"wrong": False, "status_wrong": False, "date_wrong": False, "claims": []}
-    claims = [k for k, rx in STATUS_CLAIMS.items() if rx.search(reply)]
+    claims = [k for k, rx in STATUS_CLAIMS.items() if any(not NEGATED.search(reply[:m.start()]) for m in rx.finditer(reply))]
     allowed = {truth["status"]} | ({"on_the_way", "processing"} if truth["status"] == "partly" else set())
     if truth["status"] == "partly" and truth.get("all_delivered") and PARTLY_NAMED.search(reply):
         allowed.add("delivered")  # every parcel is delivered and the reply says the order still reads part shipped
@@ -449,11 +453,14 @@ def rescore(assumptions, store, truth, replies_of, out, orders, profiles, share=
 
 
 def replace_out(out, rows):
-    """Write the rescored rows over `out`, after copying the old file aside once. Returns the copy's path."""
+    """Write the rescored rows over `out`, after copying the old file aside. Each rescore keeps its own copy
+    (`.before-rescore`, `.before-rescore-2`, ...); a copy is never overwritten. Returns the copy's path."""
     out = Path(out)
     kept = out.with_name(out.name + ".before-rescore")
-    if kept.exists():
-        raise SystemExit(f"{kept} is already set aside: not overwritten")
+    n = 1
+    while kept.exists():
+        n += 1
+        kept = out.with_name(f"{out.name}.before-rescore-{n}")
     shutil.copy2(out, kept)
     out.write_text("".join(json.dumps(r) + "\n" for r in rows))
     return kept
