@@ -119,6 +119,10 @@ Merge the pull request. Open the `deploy` run. **What to look for**, in order:
 - [ ] In ServiceNow's stand-in nothing new appears for these chats (it is not reachable from outside, so this is checked by the worker's tests, not by a look).
 **Stop.**
 
+### Found in Phase 7
+- [x] Four chats were silently dropped after the second deploy: the ServiceNow stand-in counted live chats from the start of its process, so its restart began again at `IMS0005001`, and the worker (one row per `number`) discarded them. Fixed: the stand-in numbers from a fixed epoch (`sim.py`, `EPOCH`), and the worker counts and logs a clash (`clashes`, a warning, `--once` exits 1) and does not answer it.
+- [ ] **Open question (not fixed): why does `docker compose -f sandbox/systems/compose.yaml up -d` recreate `confluence`, `atlas` and `servicenow` on the second deploy** while `ledgerline`, `carrier`, `mail` and `ourdb` stay `Running`? The three are the ones with a `build:` entry and a bind mount of the checkout (`.:/systems:ro`); the first deploy built them, the second found a new commit. Not yet read: the compose logs of that `up`, or `docker compose config --hash` before and after. A recreate still restarts the stand-ins (a few seconds without them for the worker) and will happen at every deploy until this is understood.
+
 ## Phase 8 - rollback (AWS, in Actions; I stop)
 - [ ] Start the workflow by hand with `commit` = the first deploy's sha. **Look for:** no `images` job (the tags already exist in ECR; if a tag is missing the server's pull fails with the tag name, before anything starts - the role may not call `ecr describe-images`); `docker compose ps` shows the images of that sha; the check is green; the shadow table keeps its rows (data is not touched).
 - [ ] Start it again with the newest sha to roll forward.

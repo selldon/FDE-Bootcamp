@@ -76,6 +76,12 @@ class ShadowStore:
         with self._connect() as conn:
             return conn.execute(sql.SQL("SELECT max(opened_at) FROM {t}").format(t=self.table)).fetchone()[0]
 
+    def has(self, number):
+        """True if a chat with this number is stored."""
+        with self._connect() as conn:
+            query = sql.SQL("SELECT 1 FROM {t} WHERE number = %s").format(t=self.table)
+            return conn.execute(query, (number,)).fetchone() is not None
+
     def save(self, row):
         """Store a chat once; a number already there is left as it is. True if the row was new."""
         data = {**row, "would_have": json.dumps(row.get("would_have") or {}, ensure_ascii=False, default=str)}
@@ -118,6 +124,9 @@ class FakeShadowStore:
 
     def watermark(self):
         return max((r["opened_at"] for r in self.rows.values()), default=None)
+
+    def has(self, number):
+        return number in self.rows
 
     def save(self, row):
         if row["number"] in self.rows:
@@ -236,13 +245,13 @@ def shadow_answer(chat, answerer):
 
 
 def poll(client, store, answerer, since=None, sleep=time.sleep):
-    """One tick. Returns {"stored", "closed", "errors"}.
+    """One tick. Returns {"stored", "closed", "errors", "clashes"}.
 
     New chats are those opened after the newest one stored (or `since` for an empty table). They are answered in
     order and the first failure ends the list: the watermark is the newest stored chat, so a chat after a failed
     one must not be stored first. A failure is logged and the same chat is tried again at the next tick.
     """
-    done = {"stored": 0, "closed": 0, "errors": 0}
+    done = {"stored": 0, "closed": 0, "errors": 0, "clashes": 0}
     mark = store.watermark() or since
     if mark is None:
         return done
@@ -254,6 +263,13 @@ def poll(client, store, answerer, since=None, sleep=time.sleep):
         fresh = []
     for chat in fresh:
         try:
+            if store.has(chat["number"]):
+                # opened after everything we hold, yet the number is ours: the source reused a number. Say so; do not
+                # answer it (a model call for a chat we would drop) and do not touch the stored one.
+                log.warning("chat %s opened %s: number already stored (the newest stored chat is from %s); "
+                            "the new chat is NOT stored", chat["number"], chat.get("opened_at"), stamp(mark))
+                done["clashes"] += 1
+                continue
             done["stored"] += store.save(shadow_answer(chat, answerer))
         except Exception:
             log.exception("chat %s failed; it will be tried again", chat.get("number"))
@@ -294,7 +310,7 @@ def start_mark():
 def tick(store):
     done = poll(http_get, store, real_answerer, since=start_mark())
     heartbeat()
-    print(f"stored {done['stored']}, closed {done['closed']}, errors {done['errors']}", flush=True)
+    print(f"stored {done['stored']}, closed {done['closed']}, errors {done['errors']}, clashes {done['clashes']}", flush=True)
     return done
 
 
@@ -321,7 +337,8 @@ def main(argv):
         report(store)
         return 0
     if "--once" in argv:
-        return 1 if tick(store)["errors"] else 0
+        done = tick(store)
+        return 1 if done["errors"] or done["clashes"] else 0
     every = float(os.environ.get("SHADOW_EVERY", "30"))
     while True:
         try:
