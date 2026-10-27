@@ -1,0 +1,482 @@
+[
+ {
+  "name": "Hugo Lambert",
+  "email": "hugo.lambert@example.com",
+  "market": "IT",
+  "message": "I want to return the Desk speakers S2 from order DS-20444. It is too loud.",
+  "intent": "return_request",
+  "reply": "I have opened a return for you. You will get a label by email."
+ },
+ {
+  "name": "Lea Schmidt",
+  "email": "lea.schmidt@example.com",
+  "market": "US",
+  "message": "Hi, where is my order DS-20502? It was due on Friday.",
+  "intent": "order_status",
+  "reply": "Thanks, I checked: the parcel is with the carrier and should arrive within two days."
+ },
+ {
+  "name": "Anna Becker",
+  "email": "anna.becker@example.com",
+  "market": "US",
+  "message": "Can I still return the Vento mini PC? I bought it 5 days ago.",
+  "intent": "return_request",
+  "reply": "I have opened a return for you. You will get a label by email."
+ },
+ {
+  "name": "Ines Dubois",
+  "email": "ines.dubois@example.com",
+  "market": "DE",
+  "message": "The Nova 24 monitor from DS-20481 arrived broken. How do I send it back?",
+  "intent": "return_request",
+  "reply": "I have opened a return for you. You will get a label by email."
+ },
+ {
+  "name": "Marco Bianchi",
+  "email": "marco.bianchi@example.com",
+  "market": "US",
+  "message": "How many days do I have to return something I bought online?",
+  "intent": "policy_question",
+  "reply": "Our policy page has the details, and I have sent you the link."
+ },
+ {
+  "name": "Maya Ross",
+  "email": "maya.ross@example.com",
+  "market": "UK",
+  "message": "Is the Aero 14 laptop in stock?",
+  "intent": "product_question",
+  "reply": "Let me check that with the team and come back to you today."
+ },
+ {
+  "name": "Tom Baker",
+  "email": "tom.baker@example.com",
+  "market": "UK",
+  "message": "Can I still return the Aero 14 laptop? I bought it 27 days ago.",
+  "intent": "return_request",
+  "reply": "I have opened a return for you. You will get a label by email."
+ },
+ {
+  "name": "Louis Petit",
+  "email": "louis.petit@example.com",
+  "market": "IT",
+  "message": "Third time I am writing. I want a real person, now!",
+  "intent": "other",
+  "reply": "I understand. A colleague will take over this chat."
+ },
+ {
+  "name": "Felix Braun",
+  "email": "felix.braun@example.com",
+  "market": "US",
+  "message": "What is the difference between the Aero 14 and the Aero 14 Pro?",
+  "intent": "product_question",
+  "reply": "Let me check that with the team and come back to you today."
+ },
+ {
+  "name": "Olivia Hall",
+  "email": "olivia.hall@example.com",
+  "market": "IT",
+  "message": "We have a company account. What is our price for 5 Smart speaker S1s?",
+  "intent": "contract_price",
+  "reply": "I have passed this to our business sales team, they will send you an offer."
+ },
+ {
+  "name": "Tom Baker",
+  "email": "tom.baker@example.com",
+  "market": "UK",
+  "message": "I want to return the Aero 14 laptop from order DS-20388. It is too loud.",
+  "intent": "return_request",
+  "reply": "I have opened a return for you. You will get a label by email."
+ },
+ {
+  "name": "Luca Ferri",
+  "email": "luca.ferri@example.com",
+  "market": "US",
+  "message": "Is the warranty on a Nova 27 monitor one year or two?",
+  "intent": "policy_question",
+  "reply": "Our policy page has the details, and I have sent you the link."
+ },
+ {
+  "name": "Paul Martin",
+  "email": "paul.martin@example.com",
+  "market": "DE",
+  "message": "Does the Volt 8 graphics card work with a Mac?",
+  "intent": "product_question",
+  "reply": "Let me check that with the team and come back to you today."
+ },
+ {
+  "name": "Lena Fischer",
+  "email": "lena.fischer@example.com",
+  "market": "US",
+  "message": "Can I still return the Volt 8 graphics card? I bought it 31 days ago.",
+  "intent": "return_request",
+  "reply": "I have opened a return for you. You will get a label by email."
+ },
+ {
+  "name": "Sara Conti",
+  "email": "sara.conti@example.com",
+  "market": "DE",
+  "message": "The Webcam W1 from DS-20402 arrived broken. How do I send it back?",
+  "intent": "return_request",
+  "reply": "I have opened a return for you. You will get a label by email."
+ },
+ {
+  "name": "Lea Schmidt",
+  "email": "lea.schmidt@example.com",
+  "market": "US",
+  "message": "Hi, where is my order DS-20502? It was due on Friday.",
+  "intent": "order_status",
+  "reply": "Thanks, I checked: the parcel is with the carrier and should arrive within two days."
+ },
+ {
+  "name": "Mia Wagner",
+  "email": "mia.wagner@example.com",
+  "market": "US",
+  "message": "Can I still return the Vento mini PC? I bought it 25 days ago.",
+  "intent": "return_request",
+  "reply": "I have opened a return for you. You will get a label by email."
+ },
+ {
+  "name": "Nina Koch",
+  "email": "nina.koch@example.com",
+  "market": "US",
+  "message": "When will order DS-20377 arrive?",
+  "intent": "order_status",
+  "reply": "Thanks, I checked: the parcel is with the carrier and should arrive within two days."
+ },
+ {
+  "name": "Louis Petit",
+  "email": "louis.petit@example.com",
+  "market": "IT",
+  "message": "Order DS-20521 still says processing. When will it ship?",
+  "intent": "order_status",
+  "reply": "Thanks, I checked: the parcel is with the carrier and should arrive within two days."
+ },
+ {
+  "name": "Hanna Meyer",
+  "email": "hanna.meyer@example.com",
+  "market": "IT",
+  "message": "Tracking for DS-20536 has not moved for three days.",
+  "intent": "order_status",
+  "reply": "Thanks, I checked: the parcel is with the carrier and should arrive within two days."
+ },
+ {
+  "name": "Paul Martin",
+  "email": "paul.martin@example.com",
+  "market": "DE",
+  "message": "Can I still return the Volt 8 graphics card? I bought it 27 days ago.",
+  "intent": "return_request",
+  "reply": "I have opened a return for you. You will get a label by email."
+ },
+ {
+  "name": "Ben Taylor",
+  "email": "ben.taylor@example.com",
+  "market": "FR",
+  "message": "Do you buy back old laptops?",
+  "intent": "other",
+  "reply": "I understand. A colleague will take over this chat."
+ },
+ {
+  "name": "Jonas Weber",
+  "email": "jonas.weber@example.com",
+  "market": "DE",
+  "message": "What is the difference between the Aero 14 and the Aero 14 Pro?",
+  "intent": "product_question",
+  "reply": "Let me check that with the team and come back to you today."
+ },
+ {
+  "name": "Lena Fischer",
+  "email": "lena.fischer@example.com",
+  "market": "US",
+  "message": "I want to return the Volt 8 graphics card from order DS-20561. It is too loud.",
+  "intent": "return_request",
+  "reply": "I have opened a return for you. You will get a label by email."
+ },
+ {
+  "name": "Mia Wagner",
+  "email": "mia.wagner@example.com",
+  "market": "US",
+  "message": "Please change the email on my account to new.mia.wagner@example.com.",
+  "intent": "other",
+  "reply": "I understand. A colleague will take over this chat."
+ },
+ {
+  "name": "Giulia Romano",
+  "email": "giulia.romano@example.com",
+  "market": "IT",
+  "message": "Does the Keyboard K2 work with a Mac?",
+  "intent": "product_question",
+  "reply": "Let me check that with the team and come back to you today."
+ },
+ {
+  "name": "Marta Costa",
+  "email": "marta.costa@example.com",
+  "market": "DE",
+  "message": "I want to return the Gaming headset H3 from order DS-20570. It is too loud.",
+  "intent": "return_request",
+  "reply": "I have opened a return for you. You will get a label by email."
+ },
+ {
+  "name": "Jules Garnier",
+  "email": "jules.garnier@example.com",
+  "market": "UK",
+  "message": "Do you deliver to UK on Saturdays?",
+  "intent": "policy_question",
+  "reply": "Our policy page has the details, and I have sent you the link."
+ },
+ {
+  "name": "Sofia Marino",
+  "email": "sofia.marino@example.com",
+  "market": "DE",
+  "message": "Hi, where is my order DS-20575? It was due on Friday.",
+  "intent": "order_status",
+  "reply": "Thanks, I checked: the parcel is with the carrier and should arrive within two days."
+ },
+ {
+  "name": "Olivia Hall",
+  "email": "olivia.hall@example.com",
+  "market": "IT",
+  "message": "I buy for my small office. Do you give a discount if I order 5 monitors?",
+  "intent": "contract_price",
+  "reply": "I have passed this to our business sales team, they will send you an offer."
+ },
+ {
+  "name": "Noah White",
+  "email": "noah.white@example.com",
+  "market": "IT",
+  "message": "I want to return the Wi-Fi router R6 from order DS-20557. It is too loud.",
+  "intent": "return_request",
+  "reply": "I have opened a return for you. You will get a label by email."
+ },
+ {
+  "name": "Jules Garnier",
+  "email": "jules.garnier@example.com",
+  "market": "UK",
+  "message": "Order DS-20566 still says processing. When will it ship?",
+  "intent": "order_status",
+  "reply": "Thanks, I checked: the parcel is with the carrier and should arrive within two days."
+ },
+ {
+  "name": "Maya Ross",
+  "email": "maya.ross@example.com",
+  "market": "UK",
+  "message": "Can I still return the Aero 14 laptop? I bought it 12 days ago.",
+  "intent": "return_request",
+  "reply": "I have opened a return for you. You will get a label by email."
+ },
+ {
+  "name": "Elena Greco",
+  "email": "elena.greco@example.com",
+  "market": "UK",
+  "message": "How many days do I have to return something I bought online?",
+  "intent": "policy_question",
+  "reply": "Our policy page has the details, and I have sent you the link."
+ },
+ {
+  "name": "Mia Wagner",
+  "email": "mia.wagner@example.com",
+  "market": "US",
+  "message": "I want to return the Vento mini PC from order DS-20544. It is too loud.",
+  "intent": "return_request",
+  "reply": "I have opened a return for you. You will get a label by email."
+ },
+ {
+  "name": "Paul Martin",
+  "email": "paul.martin@example.com",
+  "market": "DE",
+  "message": "We have a company account. What is our price for 5 Volt 8 graphics cards?",
+  "intent": "contract_price",
+  "reply": "I have passed this to our business sales team, they will send you an offer."
+ },
+ {
+  "name": "Maya Ross",
+  "email": "maya.ross@example.com",
+  "market": "UK",
+  "message": "Order DS-20417 still says processing. When will it ship?",
+  "intent": "order_status",
+  "reply": "Thanks, I checked: the parcel is with the carrier and should arrive within two days."
+ },
+ {
+  "name": "Hugo Lambert",
+  "email": "hugo.lambert@example.com",
+  "market": "IT",
+  "message": "Is the Desk speakers S2 in stock?",
+  "intent": "product_question",
+  "reply": "Let me check that with the team and come back to you today."
+ },
+ {
+  "name": "Olivia Hall",
+  "email": "olivia.hall@example.com",
+  "market": "IT",
+  "message": "When will order DS-20462 arrive?",
+  "intent": "order_status",
+  "reply": "Thanks, I checked: the parcel is with the carrier and should arrive within two days."
+ },
+ {
+  "name": "Giulia Romano",
+  "email": "giulia.romano@example.com",
+  "market": "IT",
+  "message": "I buy for my small office. Do you give a discount if I order 10 monitors?",
+  "intent": "contract_price",
+  "reply": "I have passed this to our business sales team, they will send you an offer."
+ },
+ {
+  "name": "Ines Dubois",
+  "email": "ines.dubois@example.com",
+  "market": "DE",
+  "message": "Is the warranty on a Nova 24 monitor one year or two?",
+  "intent": "policy_question",
+  "reply": "Our policy page has the details, and I have sent you the link."
+ },
+ {
+  "name": "Mia Wagner",
+  "email": "mia.wagner@example.com",
+  "market": "US",
+  "message": "What is the difference between the Aero 14 and the Aero 14 Pro?",
+  "intent": "product_question",
+  "reply": "Let me check that with the team and come back to you today."
+ },
+ {
+  "name": "Sofia Marino",
+  "email": "sofia.marino@example.com",
+  "market": "DE",
+  "message": "Can I still return the Nova 32 monitor? I bought it 31 days ago.",
+  "intent": "return_request",
+  "reply": "I have opened a return for you. You will get a label by email."
+ },
+ {
+  "name": "Louis Petit",
+  "email": "louis.petit@example.com",
+  "market": "IT",
+  "message": "Do you deliver to IT on Saturdays?",
+  "intent": "policy_question",
+  "reply": "Our policy page has the details, and I have sent you the link."
+ },
+ {
+  "name": "Giulia Romano",
+  "email": "giulia.romano@example.com",
+  "market": "IT",
+  "message": "Third time I am writing. I want a real person, now!",
+  "intent": "other",
+  "reply": "I understand. A colleague will take over this chat."
+ },
+ {
+  "name": "Chloe Moreau",
+  "email": "chloe.moreau@example.com",
+  "market": "FR",
+  "message": "Third time I am writing. I want a real person, now!",
+  "intent": "other",
+  "reply": "I understand. A colleague will take over this chat."
+ },
+ {
+  "name": "Elena Greco",
+  "email": "elena.greco@example.com",
+  "market": "UK",
+  "message": "Hi, where is my order DS-20512? It was due on Friday.",
+  "intent": "order_status",
+  "reply": "Thanks, I checked: the parcel is with the carrier and should arrive within two days."
+ },
+ {
+  "name": "Marta Costa",
+  "email": "marta.costa@example.com",
+  "market": "DE",
+  "message": "Third time I am writing. I want a real person, now!",
+  "intent": "other",
+  "reply": "I understand. A colleague will take over this chat."
+ },
+ {
+  "name": "Sofia Marino",
+  "email": "sofia.marino@example.com",
+  "market": "DE",
+  "message": "Please change the email on my account to new.sofia.marino@example.com.",
+  "intent": "other",
+  "reply": "I understand. A colleague will take over this chat."
+ },
+ {
+  "name": "Luca Ferri",
+  "email": "luca.ferri@example.com",
+  "market": "US",
+  "message": "Is the warranty on a Nova 27 monitor one year or two?",
+  "intent": "policy_question",
+  "reply": "Our policy page has the details, and I have sent you the link."
+ },
+ {
+  "name": "Leo Bernard",
+  "email": "leo.bernard@example.com",
+  "market": "FR",
+  "message": "Order DS-20540 still says processing. When will it ship?",
+  "intent": "order_status",
+  "reply": "Thanks, I checked: the parcel is with the carrier and should arrive within two days."
+ },
+ {
+  "name": "Nina Koch",
+  "email": "nina.koch@example.com",
+  "market": "US",
+  "message": "The Inkjet printer P2 from DS-20377 arrived broken. How do I send it back?",
+  "intent": "return_request",
+  "reply": "I have opened a return for you. You will get a label by email."
+ },
+ {
+  "name": "Jonas Weber",
+  "email": "jonas.weber@example.com",
+  "market": "DE",
+  "message": "The Gaming headset H3 from DS-20447 arrived broken. How do I send it back?",
+  "intent": "return_request",
+  "reply": "I have opened a return for you. You will get a label by email."
+ },
+ {
+  "name": "Hanna Meyer",
+  "email": "hanna.meyer@example.com",
+  "market": "IT",
+  "message": "Hi, where is my order DS-20536? It was due on Tuesday.",
+  "intent": "order_status",
+  "reply": "Thanks, I checked: the parcel is with the carrier and should arrive within two days."
+ },
+ {
+  "name": "Sam Lee",
+  "email": "sam.lee@example.com",
+  "market": "UK",
+  "message": "Do you buy back old laptops?",
+  "intent": "other",
+  "reply": "I understand. A colleague will take over this chat."
+ },
+ {
+  "name": "Jonas Weber",
+  "email": "jonas.weber@example.com",
+  "market": "DE",
+  "message": "What is the difference between the Aero 14 and the Aero 14 Pro?",
+  "intent": "product_question",
+  "reply": "Let me check that with the team and come back to you today."
+ },
+ {
+  "name": "Luca Ferri",
+  "email": "luca.ferri@example.com",
+  "market": "US",
+  "message": "I buy for my small office. Do you give a discount if I order 10 monitors?",
+  "intent": "contract_price",
+  "reply": "I have passed this to our business sales team, they will send you an offer."
+ },
+ {
+  "name": "Hugo Lambert",
+  "email": "hugo.lambert@example.com",
+  "market": "IT",
+  "message": "Does the Desk speakers S2 work with a Mac?",
+  "intent": "product_question",
+  "reply": "Let me check that with the team and come back to you today."
+ },
+ {
+  "name": "Ben Taylor",
+  "email": "ben.taylor@example.com",
+  "market": "FR",
+  "message": "When will order DS-20498 arrive?",
+  "intent": "order_status",
+  "reply": "Thanks, I checked: the parcel is with the carrier and should arrive within two days."
+ },
+ {
+  "name": "Hanna Meyer",
+  "email": "hanna.meyer@example.com",
+  "market": "IT",
+  "message": "The Laser printer P5 from DS-20536 arrived broken. How do I send it back?",
+  "intent": "return_request",
+  "reply": "I have opened a return for you. You will get a label by email."
+ }
+]

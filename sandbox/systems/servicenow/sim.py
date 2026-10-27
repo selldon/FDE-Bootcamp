@@ -19,14 +19,23 @@ approves or rejects them on the page /tasks. Tasks live in memory only.
 
 Live chat (FDE 1-11-2): POST /api/now/table/interaction (same account) puts a chat the website hands to a person into
 the support team's queue, one waiting chat per conversation; the page /live shows the queue. In memory only.
+
+Incoming live chats (FDE 1-9-12, shadow mode): with SNOW_INCOMING_EVERY=<seconds> (0, the default, turns it off) a
+customer opens a new chat with the support team every so many seconds, from the 60 in incoming.json (DemoStore's real
+orders and their owners). After SNOW_INCOMING_OPEN seconds (default 240) an agent has answered and the chat is closed,
+with the reply in the transcript. They come with the old chats from the Table API; a poller asks for the new ones with
+sysparm_query=opened_at>YYYY-MM-DD HH:MM:SS^ORDERBYopened_at (UTC), and for one chat with number=IMS...
 """
 import csv
+import json
+import os
 import sys
 import hashlib
 import random
 import secrets
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
@@ -133,11 +142,49 @@ def interactions(request: Request, response: Response, sysparm_limit: int = 100,
     if len(calls) > PER_SECOND:
         raise HTTPException(429, "Too Many Requests: rate limit exceeded", headers={"Retry-After": "1"})
     limit = max(1, min(sysparm_limit, LIMIT_MAX))
-    rows = CHATS
-    if sysparm_query.startswith("ORDERBY"):            # ORDERBYopened_at, the only query the sandbox knows
-        rows = sorted(CHATS, key=lambda c: c.get(sysparm_query[7:], ""))
+    rows = CHATS + incoming()
+    for part in sysparm_query.split("^"):              # a small part of ServiceNow's encoded queries
+        if part.startswith("ORDERBY"):
+            rows = sorted(rows, key=lambda c: c.get(part[7:], ""))
+        elif ">" in part:
+            field, value = part.split(">", 1)
+            rows = [c for c in rows if c.get(field, "") > value]
+        elif "=" in part:
+            field, value = part.split("=", 1)
+            rows = [c for c in rows if c.get(field, "") == value]
     response.headers["X-Total-Count"] = str(len(rows))
     return {"result": rows[sysparm_offset:sysparm_offset + limit]}
+
+
+EVERY = int(os.environ.get("SNOW_INCOMING_EVERY", "0"))
+OPEN_FOR = int(os.environ.get("SNOW_INCOMING_OPEN", "240"))
+POOL = json.loads(Path(__file__).with_name("incoming.json").read_text())
+STARTED = datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0)
+
+
+def incoming():
+    """The live chats opened since the stand-in started, one every EVERY seconds; closed with the agent's reply after
+    OPEN_FOR seconds. Made up from the clock on every request, so they are the same however often a poller asks."""
+    if not EVERY:
+        return []
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    rows = []
+    for k in range(int((now - STARTED).total_seconds() // EVERY)):
+        chat = POOL[k % len(POOL)]
+        opened = STARTED + timedelta(seconds=EVERY * (k + 1))
+        closed = now >= opened + timedelta(seconds=OPEN_FOR)
+        rows.append({
+            "sys_id": hashlib.md5(f"incoming-{k}".encode()).hexdigest(),
+            "number": f"IMS{5001 + k:07d}",
+            "opened_at": opened.strftime("%Y-%m-%d %H:%M:%S"),
+            "channel": "chat",
+            "state": "closed_complete" if closed else "work_in_progress",
+            "u_market": chat["market"],
+            "opened_for": chat["email"],
+            "short_description": chat["message"][:80],
+            "transcript": f"{chat['name']}: {chat['message']}" + (f"\nAgent: {chat['reply']}" if closed else ""),
+        })
+    return rows
 
 
 BUSINESS = [("Ines Dubois", "DE"), ("Jonas Weber", "DE"), ("Felix Braun", "US")]
