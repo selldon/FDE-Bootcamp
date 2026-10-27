@@ -4,6 +4,8 @@
     python golive_sim.py --days 1-7                run sim days 1..7 against the service (live: assistant visitors call Claude)
     python golive_sim.py --refresh-repeat          compute the control group's repeat-contact rate from the old ServiceNow chats
     python golive_sim.py --rescore                 score the stored chats again from the replies in `traces` (no model call)
+    python golive_sim.py --drill-day 15            the night with no carrier file (live; --dry-run shows the plan); 15, then 16
+    python golive_sim.py --write-drill-night       write the hidden carrier file of the 23rd (the world moved on; never on the SFTP)
 
 Each visitor has an id, a day, a question and (for "where is my order") 1-3 follow-ups, taken from the profiles in
 `data/` and the sandbox's hard profiles. The simulation knows the true status of every order. Only the assistant
@@ -13,6 +15,7 @@ its outcome is drawn from `sim_assumptions.json`. Every row written carries `"si
 At most `assistant_cap` assistant conversations in all: a day that would pass the cap is not run, and the runner says so.
 """
 import argparse
+import csv
 import json
 import random
 import re
@@ -33,6 +36,7 @@ HERE = Path(__file__).parent
 ASSUMPTIONS = HERE / "sim_assumptions.json"
 OUT = HERE / "data" / "golive_sim.jsonl"
 CARRIER_FOLDER = HERE / "sandbox" / "systems" / "carrier" / "upload"  # the carrier's nightly files, as on its SFTP server
+DRILL_FILE = HERE / "sandbox" / "systems" / "carrier" / "drill" / "carrier-2026-10-23.csv"  # beside upload/, never served
 SHARE = 0.05
 ORDER_STATUS = "order_status"
 RESOLVED_OUTCOMES = ("give_status", "start_return")
@@ -481,6 +485,139 @@ def trace_replies(url):
     return lambda sid: by_chat.get(sid, [])
 
 
+# ---- the drill: the night the carrier's file does not come ----------------------------------------------------------------
+# The service keeps the load of the 22nd and is pinned to the morning of the 23rd. The hidden file of the 23rd is what the
+# carrier would have sent: it is only used to score the replies, and is not in the folder the SFTP server serves.
+
+def drill_night(rows):
+    """The 22nd's rows moved one night on: out for delivery -> delivered at the front door, in transit -> out for delivery,
+    delivered stays. Every moved parcel carries the date of the 23rd."""
+    night = []
+    for r in rows:
+        r = dict(r)
+        if r["status"] == "out for delivery":
+            r.update(status="delivered", place="front door", date="2026-10-23")
+        elif r["status"] == "in transit":
+            r.update(status="out for delivery", date="2026-10-23")
+        night.append(r)
+    return night
+
+
+def write_drill_night(path=DRILL_FILE):
+    """Write the hidden file of the 23rd from the newest file on the SFTP folder (the 22nd)."""
+    _, rows = newest_carrier()
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["tracking", "status", "place", "date"], extrasaction="ignore",
+                                lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(drill_night(rows))
+    return path
+
+
+def load_drill_truth(orders_path=HERE / "data" / "orders.json", path=DRILL_FILE):
+    """(orders, truth of the night of the 23rd): what is really the matter with each order after the missing night."""
+    with open(orders_path) as f:
+        orders = json.load(f)
+    rows = carrier.parse(Path(path).read_bytes(), str(path))
+    return orders, build_truth(orders, [{**r, "date": r["date"].isoformat()} for r in rows])
+
+
+def drill_orders(orders, rows22):
+    """(exposed, final): orders with a parcel that is not delivered in the 22nd's file (the news the service holds, a day old
+    on the 23rd), and orders that were delivered already (final: the guard must leave them alone)."""
+    news = {r["tracking"]: r["status"] for r in rows22}
+    exposed = [o for o in orders if any(news.get(t, "delivered") != "delivered" for t in o["tracking"])]
+    truth = build_truth(orders, rows22)
+    final = [o for o in orders if o["tracking"] and truth[o["number"]]["status"] == "delivered"]
+    return exposed, final
+
+
+def drill_config(assumptions, day):
+    days = assumptions["drill"]["days"]
+    if str(day) not in days:
+        raise SystemExit(f"no drill day {day}: the planned drill days are {', '.join(days)}")
+    return days[str(day)]
+
+
+def make_drill_visitors(day, assumptions, orders, rows22, share=SHARE, seed=None):
+    """The assistant conversations of a drill day, all order status, `delivered` of them on delivered orders. Every visitor
+    id hashes into the assistant group at `share`, so the service routes them as the assistant's."""
+    seed = assumptions["seed"] if seed is None else seed
+    config = drill_config(assumptions, day)
+    exposed, final = drill_orders(orders, rows22)
+    rng = random.Random(f"{seed}-drill-{day}")
+    low, high = assumptions["followups"]
+    picks = ([rng.choice(exposed) for _ in range(config["conversations"] - config["delivered"])]
+             + [rng.choice(final) for _ in range(config["delivered"])])
+    rng.shuffle(picks)
+    visitors, k = [], 0
+    for order in picks:
+        while golive.group_of(vid := f"drill-{seed}-d{day:02d}-{k:04d}", share) != ASSISTANT:
+            k += 1
+        k += 1
+        messages = [rng.choice(FIRST).format(order=order["number"], weekday=rng.choice(["Monday", "Friday"]))]
+        messages += rng.sample(FOLLOW, rng.randint(low, high))
+        visitors.append(Visitor(vid, day, ASSISTANT, ORDER_STATUS, order["customer"], order["number"], messages, False,
+                                "drill"))
+    return visitors
+
+
+def drill_ceiling(assumptions):
+    return assumptions["assistant_cap"] + assumptions["drill"]["extra_cap"]
+
+
+def plan_drill(assumptions, day, share=SHARE, already=0, orders=None, rows22=None):
+    """What a drill day would do, without doing it."""
+    if orders is None:
+        orders, _ = load_truth()
+    rows22 = newest_carrier()[1] if rows22 is None else rows22
+    visitors = make_drill_visitors(day, assumptions, orders, rows22, share)
+    est, truth22 = assumptions["estimate"], build_truth(orders, rows22)
+    calls = sum(calls_for(v, est) for v in visitors)
+    price_in, price_out = llm.PRICES[llm.MODEL]
+    cost = (calls * est["input_tokens_per_call"] * price_in + calls * est["output_tokens_per_call"] * price_out) / 1_000_000
+    return {"day": day, "assistant": len(visitors), "used": already, "ceiling": drill_ceiling(assumptions),
+            "cap": assumptions["assistant_cap"], "extra": assumptions["drill"]["extra_cap"], "calls": calls, "cost": cost,
+            "exposed": sum(1 for v in visitors if truth22[v.order]["status"] != "delivered"),
+            "final": sum(1 for v in visitors if truth22[v.order]["status"] == "delivered"), "model": llm.MODEL}
+
+
+def describe_drill(p):
+    lines = [f"SIMULATED drill day {p['day']} - the night with no carrier file",
+             (f"assistant conversations: {p['assistant']} ({p['used']} used so far; {p['used'] + p['assistant']} of at most "
+              f"{p['ceiling']}: the cap {p['cap']} plus {p['extra']} for the drill)"),
+             f"on orders with an undelivered parcel: {p['exposed']}; on delivered orders (control): {p['final']}",
+             "no control traffic: a drill day sends only the assistant's conversations",
+             f"expected model calls: {p['calls']} ({p['model']})",
+             f"cost estimate: ${p['cost']:.2f} (from llm.PRICES and the token estimates in sim_assumptions.json)"]
+    if p["used"] + p["assistant"] > p["ceiling"]:
+        lines.append(f"STOPPED: this day would pass {p['ceiling']} assistant conversations; it is not run")
+    return "\n".join(lines)
+
+
+def run_drill(day, assumptions, gateway, store, out, share, orders, night_truth, rows22, say=print):
+    """Run one drill day against the service, scored against the hidden truth of the night. The ceiling is the cap plus the
+    drill allowance; a day that would pass it is not run. Returns the rows (none when it stopped)."""
+    drill_config(assumptions, day)
+    done = read_out(out)
+    if day in {r["sim_day"] for r in done}:
+        raise SystemExit(f"sim day {day} is already in {out}: not run again")
+    used = sum(1 for r in done if r["group"] == ASSISTANT)
+    visitors = make_drill_visitors(day, assumptions, orders, rows22, share)
+    ceiling = drill_ceiling(assumptions)
+    if used + len(visitors) > ceiling:
+        say(f"STOPPED: drill day {day} would pass the ceiling of {ceiling} assistant conversations "
+            f"({used} used, {len(visitors)} more); it is not run")
+        return []
+    rows = run_day(day, visitors, gateway, store, night_truth, assumptions, assumptions["seed"])
+    append_out(out, rows)
+    lost = write_labels(store, rows)
+    say(f"drill day {day}: {len(rows)} assistant conversations ({used + len(rows)} of {ceiling}), confidently wrong "
+        f"{sum(r['confidently_wrong'] for r in rows)}" + (f"; {lost} chats are not in the service table" if lost else ""))
+    return rows
+
+
 def run(days, assumptions, gateway, store, out=OUT, share=SHARE, orders=None, truth=None, profiles=None, say=print):
     """Run sim days one at a time. A day already in `out` is refused; a day that would pass the cap stops the run."""
     if assumptions["control_repeat_rate"] is None:
@@ -540,12 +677,27 @@ def main(argv=None):
     ap.add_argument("--out", default=str(OUT))
     ap.add_argument("--refresh-repeat", action="store_true")
     ap.add_argument("--rescore", action="store_true", help="score the stored chats again from the traces; no model call")
+    ap.add_argument("--drill-day", type=int, default=None, help="run a drill day (15, then 16): the night with no carrier file")
+    ap.add_argument("--write-drill-night", action="store_true", help="write the hidden carrier file of the 23rd")
     args = ap.parse_args(argv)
     if args.refresh_repeat:
         rate, n = refresh_repeat()
         print(f"control repeat rate within 7 days: {rate:.3f} of {n} old chats (written to sim_assumptions.json)")
         return 0
+    if args.write_drill_night:
+        print(f"wrote {write_drill_night()}")
+        return 0
     assumptions = load_assumptions()
+    if args.drill_day is not None:
+        orders, _ = load_truth()
+        rows22 = newest_carrier()[1]
+        already = sum(1 for r in read_out(args.out) if r["group"] == ASSISTANT)
+        if args.dry_run:
+            print(describe_drill(plan_drill(assumptions, args.drill_day, args.share, already, orders, rows22)))
+            return 0
+        run_drill(args.drill_day, assumptions, HttpGateway(args.url, args.outbox), golive.GoLiveStore(), args.out, args.share,
+                  orders, load_drill_truth()[1], rows22)
+        return 0
     if args.rescore:
         import config
         orders, truth = load_truth()

@@ -115,5 +115,19 @@
     "hand_off_min": 0.95,
     "unanswered_points": 0.03,
     "rating": 0.2
+  },
+  "drill": {
+    "first_day": 15,
+    "extra_cap": 15,
+    "days": {
+      "15": {
+        "conversations": 12,
+        "delivered": 3
+      },
+      "16": {
+        "conversations": 10,
+        "delivered": 3
+      }
+    }
   }
 }

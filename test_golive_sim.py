@@ -7,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import app as app_module
+import golive
 import golive_sim as sim
 import llm
 import verify
@@ -433,3 +434,144 @@ def test_a_second_rescore_sets_the_log_aside_again_and_never_overwrites_the_firs
     second = sim.replace_out(out, sim.read_out(out)[:1])
     assert first != second and first.read_text() == original and len(sim.read_out(second)) == 3
     assert len(sim.read_out(out)) == 1
+
+
+# ---- the drill: the night the carrier's file does not come ----------------------------------------------------------------
+
+def stale_model(result):
+    return "Your parcel is out for delivery today."  # yesterday's news given as today's
+
+
+def hedged_model(result):
+    return "The carrier's news is old, so I cannot confirm the status. I can pass you to a person."
+
+
+@pytest.fixture
+def night():
+    """(orders, the service's truth of the 22nd, the hidden truth of the 23rd, the 22nd's rows)."""
+    orders, truth22 = sim.load_truth()
+    _, night23 = sim.load_drill_truth()
+    return orders, truth22, night23, sim.newest_carrier()[1]
+
+
+def test_the_drill_settings_are_pinned(assumptions):
+    drill = sim.load_assumptions()["drill"]
+    assert drill["extra_cap"] == 15 and drill["first_day"] == 15
+    assert drill["days"] == {"15": {"conversations": 12, "delivered": 3}, "16": {"conversations": 10, "delivered": 3}}
+    assert 150 + drill["extra_cap"] - 143 == 22 == sum(d["conversations"] for d in drill["days"].values())
+
+
+def test_the_hidden_night_moves_every_undelivered_parcel_on_and_leaves_delivered_ones_alone(night):
+    rows22 = night[3]
+    rows23 = sim.drill_night(rows22)
+    assert [r["tracking"] for r in rows23] == [r["tracking"] for r in rows22]
+    for before, after in zip(rows22, rows23, strict=True):
+        if before["status"] == "delivered":
+            assert after == before
+        elif before["status"] == "out for delivery":
+            assert (after["status"], after["place"], after["date"]) == ("delivered", "front door", "2026-10-23")
+        else:
+            assert (after["status"], after["place"], after["date"]) == ("out for delivery", before["place"], "2026-10-23")
+
+
+def test_the_hidden_night_file_is_the_rule_applied_to_the_22nd_and_is_not_on_the_sftp_folder(night):
+    on_disk = sim.carrier.parse(sim.DRILL_FILE.read_bytes(), "drill night")
+    expected = sim.drill_night(night[3])
+    assert [{**r, "date": r["date"].isoformat()} for r in on_disk] == [
+        {k: r[k] for k in ("tracking", "status", "place", "date")} | {"pickup_point": ""} for r in expected]
+    assert sim.DRILL_FILE.parent != sim.CARRIER_FOLDER and sim.CARRIER_FOLDER not in sim.DRILL_FILE.parents
+    assert sim.newest_carrier()[0] == "carrier-2026-10-22.csv"  # the service still sees no file for the 23rd
+
+
+def test_the_night_truth_says_the_world_moved_on(night):
+    _, truth22, night23, _ = night
+    assert truth22["DS-20489"]["status"] == "on_the_way" and night23["DS-20489"]["status"] == "delivered"
+    assert "2026-10-23" in night23["DS-20489"]["dates"]
+    assert night23["DS-20476"]["status"] == "on_the_way" and "2026-10-22" not in night23["DS-20476"]["dates"]
+    assert night23["DS-20570"] == truth22["DS-20570"]  # delivered before: final
+
+
+def test_the_drill_day_has_the_planned_traffic_and_every_visitor_reaches_the_assistant(night, assumptions):
+    orders, truth22, _, rows22 = night
+    a = sim.load_assumptions()
+    visitors = sim.make_drill_visitors(15, a, orders, rows22, SHARE_REAL)
+    assert len(visitors) == 12 and all(v.group == ASSISTANT and v.intent == "order_status" for v in visitors)
+    assert all(golive.group_of(v.id, SHARE_REAL) == ASSISTANT for v in visitors)  # the service routes by the hash
+    exposed = [v for v in visitors if truth22[v.order]["status"] != "delivered"]
+    final = [v for v in visitors if truth22[v.order]["status"] == "delivered"]
+    assert (len(exposed), len(final)) == (9, 3)
+    owner = {o["number"]: o["customer"] for o in orders}
+    assert all(v.customer == owner[v.order] for v in visitors) and all(1 <= v.turns for v in visitors)
+    assert len({v.id for v in visitors}) == 12
+    assert [v.id for v in visitors] == [v.id for v in sim.make_drill_visitors(15, a, orders, rows22, SHARE_REAL)]
+    assert len(sim.make_drill_visitors(16, a, orders, rows22, SHARE_REAL)) == 10
+
+
+SHARE_REAL = 0.05  # the share the service runs at; the drill's visitor ids must hash into the assistant group at it
+
+
+def run_drill(night, assumptions, isolated, fake_golive, monkeypatch, says, day=15, used=0, out=None):
+    orders, _, night23, rows22 = night
+    install_model(monkeypatch, says)
+    fake_golive.set_settings(share=SHARE_REAL)
+    out = out or isolated / "out.jsonl"
+    if used:
+        sim.append_out(out, [{"sim_day": 1, "group": ASSISTANT, "visitor_id": f"x{i}", "chat_id": f"x{i}"} for i in range(used)])
+    rows = sim.run_drill(day, assumptions, Gateway(isolated / "outbox.jsonl"), fake_golive, out, SHARE_REAL, orders,
+                         night23, rows22, lambda m: None)
+    return rows, out
+
+
+def test_a_drill_day_scores_yesterdays_news_as_wrong_and_a_hedge_as_right(night, assumptions, isolated, fake_golive,
+                                                                          monkeypatch):
+    _, _, night23, _ = night
+    a = sim.load_assumptions()
+    rows, _ = run_drill(night, a, isolated, fake_golive, monkeypatch, stale_model)
+    assert len(rows) == 12 and {r["group"] for r in rows} == {ASSISTANT} and {r["sim_day"] for r in rows} == {15}
+    assert all(r["simulated"] for r in rows)
+    flagged = {r["chat_id"] for r in rows if r["confidently_wrong"]}
+    delivered_that_night = {r["chat_id"] for r in rows if night23[r["order"]]["status"] == "delivered"}
+    assert flagged == delivered_that_night and flagged  # "out for delivery today" for a parcel the carrier delivered
+    assert {c["chat_id"] for c in fake_golive.chats() if c["confidently_wrong"]} == flagged  # the table has the labels
+    assert not any(c["group_name"] == CONTROL for c in fake_golive.chats())  # no control traffic on a drill day
+
+
+def test_a_hedged_drill_day_has_no_confidently_wrong(night, assumptions, isolated, fake_golive, monkeypatch):
+    rows, _ = run_drill(night, sim.load_assumptions(), isolated, fake_golive, monkeypatch, hedged_model)
+    assert rows and not any(r["confidently_wrong"] for r in rows)
+
+
+def test_the_two_drill_days_fit_exactly_under_the_cap_plus_the_drill_allowance(night, assumptions, isolated,
+                                                                              fake_golive, monkeypatch):
+    a = sim.load_assumptions()
+    _, out = run_drill(night, a, isolated, fake_golive, monkeypatch, hedged_model, day=15, used=143)  # 155 of 165
+    run_drill(night, a, isolated, fake_golive, monkeypatch, hedged_model, day=16, out=out)  # 165 of 165
+    assert sum(r["group"] == ASSISTANT for r in sim.read_out(out)) == 165 == a["assistant_cap"] + a["drill"]["extra_cap"]
+    with pytest.raises(SystemExit, match="already"):
+        run_drill(night, a, isolated, fake_golive, monkeypatch, hedged_model, day=15, out=out)  # a day runs once
+
+
+def test_a_drill_day_that_would_pass_the_ceiling_is_not_run_and_says_so(night, assumptions, isolated, fake_golive,
+                                                                       monkeypatch):
+    a = sim.load_assumptions()
+    out = isolated / "out.jsonl"
+    install_model(monkeypatch, hedged_model)
+    sim.append_out(out, [{"sim_day": 1, "group": ASSISTANT, "visitor_id": f"x{i}", "chat_id": f"x{i}"} for i in range(154)])
+    said = []
+    rows = sim.run_drill(15, a, Gateway(isolated / "outbox.jsonl"), fake_golive, out, SHARE_REAL, night[0], night[2], night[3],
+                         said.append)
+    assert rows == [] and any("STOPPED" in m and "165" in m for m in said)
+    assert not fake_golive.chats()  # nothing was sent
+
+
+@pytest.mark.parametrize("day", [14, 17, 3])
+def test_only_the_planned_drill_days_can_run(night, assumptions, isolated, fake_golive, monkeypatch, day):
+    with pytest.raises(SystemExit, match="drill day"):
+        run_drill(night, sim.load_assumptions(), isolated, fake_golive, monkeypatch, hedged_model, day=day)
+
+
+def test_the_drill_dry_run_shows_the_ceiling_and_writes_nothing(isolated, monkeypatch, capsys):
+    assert sim.main(["--dry-run", "--drill-day", "15", "--out", str(isolated / "none.jsonl")]) == 0
+    printed = capsys.readouterr().out
+    assert "drill day 15" in printed and "12" in printed and "165" in printed and "no carrier file" in printed
+    assert not (isolated / "none.jsonl").exists()

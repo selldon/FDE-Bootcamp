@@ -260,3 +260,41 @@ def test_the_unanswered_line_sees_the_controls_unanswered_chats_with_the_service
     difference = data["window"]["difference"]["unanswered"][0]
     assert difference == pytest.approx(-0.1)  # the assistant left nobody without an answer, control left 10 %
     assert result["window"]["unanswered"]["status"] == "holds"
+
+
+# ---- drill days (after day 14): the latest-day alert sees them, the week and the two weeks do not ----------------------
+
+def two_real_weeks():
+    rows = []
+    for day in range(1, 15):
+        rows += [chat(ASSISTANT, "give_status", day=day, confidently_wrong=False) for _ in range(2)]
+        rows += [chat(CONTROL, "resolved", day=day, handed_off=True) for _ in range(3)]
+    return rows
+
+
+def drill_rows(day, wrong=0, n=4):
+    return [chat(ASSISTANT, "give_status", day=day, confidently_wrong=i < wrong) for i in range(n)]
+
+
+def test_drill_days_are_not_in_the_week_or_the_two_weeks_so_the_decision_numbers_stay_days_1_to_14():
+    before, _ = read(two_real_weeks())
+    after, _ = read(two_real_weeks() + drill_rows(15, wrong=2))
+    assert after["week"] == before["week"] and after["window"] == before["window"]
+    assert after["days_with_chats"] == before["days_with_chats"] == 14
+    assert after["drill_days"] == [15] and before["drill_days"] == []
+
+
+def test_the_latest_day_alert_reads_the_drill_day_and_clears_on_the_clearing_day():
+    _, during = read(two_real_weeks() + drill_rows(15, wrong=2))
+    assert during["day"]["alert"] is True and during["alert_days"] == [15]
+    data, after = read(two_real_weeks() + drill_rows(15, wrong=2) + drill_rows(16))
+    assert data["last_day"] == 16 and data["drill_days"] == [15, 16]
+    assert after["day"]["alert"] is False  # the latest day is clean again
+    assert after["alert_days"] == [15]     # the drill day stays on the record
+    assert after["two_weeks"]["days"] == 14 and after["window"]["confidently_wrong"]["n"] == 28  # days 1-14 only
+
+
+def test_a_calendar_day_chat_is_never_a_drill_day():
+    real = chat(ASSISTANT, "give_status", simulated=False, sim_day=None)
+    data, _ = read(two_real_weeks() + [real])
+    assert data["drill_days"] == []

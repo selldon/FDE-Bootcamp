@@ -336,23 +336,35 @@ def window_numbers(chats):
             "difference": compare(assistant, control)}
 
 
+def is_drill(chat):
+    """A simulated chat of a day after the two weeks: the drill day and the clearing day. They are broken on purpose, so
+    the latest-day alert reads them, but they are never counted in the week or the two weeks."""
+    day = chat.get("sim_day")
+    return bool(chat.get("simulated")) and day is not None and day > TWO_WEEKS
+
+
 def numbers(store, now):
     """Everything the page shows for the go-live, as plain data. `now` is only stamped on the result.
 
-    The "day" is the latest day with chats (its sample is what the alert looks at); the "week" is that day and the six
-    before it; "window" is the two weeks the decision is made on. Each is the same `window_numbers`."""
+    The "day" is the latest day with chats (its sample is what the alert looks at; a drill day counts as a day); the "week"
+    is the latest real day and the six before it; "window" is the two weeks the decision is made on. Drill days (after
+    day 14) are in `by_day` and `drill_days` only, so the week and the window stay the real days. Each is the same
+    `window_numbers`."""
     chats = store.chats()
+    real = [c for c in chats if not is_drill(c)]
     last = max((day_of(c) for c in chats), default=None)
+    last_real = max((day_of(c) for c in real), default=None)
     days = sorted({day_of(c) for c in chats})
 
     def within(first):
-        return [c for c in chats if first <= day_of(c) <= last] if chats else []
+        return [c for c in real if first <= day_of(c) <= last_real] if real else []
 
     return {"as_of": now, "repeat_note": REPEAT_NOT_MEASURED, "total": len(chats), "simulated": sum(1 for c in chats if c.get("simulated")),
-            "last_day": last, "days_with_chats": len(days),
+            "last_day": last, "days_with_chats": len({day_of(c) for c in real}),
+            "drill_days": sorted({day_of(c) for c in chats if is_drill(c)}),
             "day": window_numbers([c for c in chats if day_of(c) == last]),
-            "week": window_numbers(within(last - WEEK + 1) if chats else []),
-            "window": window_numbers(within(last - TWO_WEEKS + 1) if chats else []),
+            "week": window_numbers(within(last_real - WEEK + 1) if real else []),
+            "window": window_numbers(within(last_real - TWO_WEEKS + 1) if real else []),
             "by_day": {d: window_numbers([c for c in chats if day_of(c) == d]) for d in days},
             "margins": margins()}
 

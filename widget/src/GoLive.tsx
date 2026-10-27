@@ -52,6 +52,7 @@ interface Settings {
 
 interface Data {
   repeat_note?: string;
+  drill_days?: number[];
   total: number;
   simulated: number;
   last_day: number | null;
@@ -241,6 +242,13 @@ export default function GoLive() {
         Two weeks: <strong>{two.status === "holds" ? "holds" : two.status === "does not hold" ? "does not hold" : NO_DATA}</strong>
         {" "}({two.days} of {two.needed} days with chats).
       </p>
+      {(data.drill_days ?? []).length > 0 && (
+        <p className="estimate">
+          Day{(data.drill_days ?? []).length > 1 ? "s" : ""} {(data.drill_days ?? []).join(", ")} {(data.drill_days ?? []).length > 1 ? "are" : "is a"}
+          {" "}drill {(data.drill_days ?? []).length > 1 ? "days" : "day"} (a night with no carrier file). {(data.drill_days ?? []).length > 1 ? "They are" : "It is"}
+          {" "}read by the latest-day alert and left out of the week and the two weeks.
+        </p>
+      )}
       <Lines title="Latest day (the alert)" lines={[l.day.confidently_wrong]} />
       <Lines title="Week so far" lines={Object.values(l.week)} />
       <Lines title="Whole window" lines={Object.values(l.window)} />
