@@ -37,11 +37,11 @@ Phases 1-5 run one at a time, stopping after each. Phases 6-8 (the two weeks, th
 - [x] Check: fast tests pass, including the off-switch and open-chat tests; `grep -n "client.messages" *.py` still finds only `llm.py`.
 
 ## Phase 3 - the simulator and its truth (item 2)
-- [ ] `golive_sim.py` (repo root, imports `config`, no new container): seeded visitors for 14 days, a day, a question and 1-3 follow-ups from the profiles; each carries the true order status. Output carries `simulated: true` on every row.
-- [ ] `sim_assumptions.json`: control resolve/hand-off/unanswered/rating rates per intent, assistant rating rule, repeat-contact window (7 days). Control repeat contacts computed from the old chats.
-- [ ] Cap: at most 150 assistant conversations; the runner stops and says so. A `--dry-run` prints the plan (visitors, groups, expected model calls, cost estimate from `llm.PRICES`) and writes nothing.
-- [ ] Scoring: "confidently wrong" = a status given as fact that differs from the true status or its date, counted by code against the truth.
-- [ ] Check: fast tests with a fake model: same seed gives the same traffic; the cap holds; a wrong status is counted; every row is labelled simulated; `python golive_sim.py --dry-run` runs without Claude.
+- [x] `golive_sim.py` (repo root, imports `config`, no new container): seeded visitors for 14 days, a day, a question and 1-3 follow-ups from the profiles; each carries the true order status. Output carries `simulated: true` on every row.
+- [x] `sim_assumptions.json`: control resolve/hand-off/unanswered/rating rates per intent, assistant rating rule, repeat-contact window (7 days). Control repeat contacts computed from the old chats.
+- [x] Cap: at most 150 assistant conversations; the runner stops and says so. A `--dry-run` prints the plan (visitors, groups, expected model calls, cost estimate from `llm.PRICES`) and writes nothing.
+- [x] Scoring: "confidently wrong" = a status given as fact that differs from the true status or its date, counted by code against the truth.
+- [x] Check: fast tests with a fake model: same seed gives the same traffic; the cap holds; a wrong status is counted; every row is labelled simulated; `python golive_sim.py --dry-run` runs without Claude.
 
 ## Phase 4 - the numbers and the rollback lines (items 3, signed lines)
 - [ ] `golive.numbers(store, now)` in the style of `pilot.numbers`: per group resolved, handed off, left without an answer, repeat contacts in 7 days, rating, cost per contact; the difference with its 95 % interval (reuse `pilot.wilson`; difference interval for two proportions; a mean difference for rating) and both sample sizes.
