@@ -27,12 +27,13 @@ def clock():
 
 
 def _stale(news_date, carrier_status=None):
-    """True when the carrier's last news is more than 30 hours old (IT14). No news is not stale.
+    """True when the carrier's last news is old (IT14, the 03:00 rule): dated before the night file due by now. No news is
+    not stale.
 
     A delivered parcel's news is final, so the rule applies only to parcels that are not delivered."""
     if not news_date or carrier_status == "delivered":
         return False
-    return checks.news_age(date.fromisoformat(news_date), clock()) > checks.MAX_NEWS_AGE
+    return checks.news_is_old(date.fromisoformat(news_date), clock())
 
 
 def find_order(number, customer):

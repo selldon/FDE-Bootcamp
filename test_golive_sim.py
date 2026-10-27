@@ -575,3 +575,25 @@ def test_the_drill_dry_run_shows_the_ceiling_and_writes_nothing(isolated, monkey
     printed = capsys.readouterr().out
     assert "drill day 15" in printed and "12" in printed and "165" in printed and "no carrier file" in printed
     assert not (isolated / "none.jsonl").exists()
+
+
+# ---- replaying the drill day's chats in this process: nothing reaches the real tables or systems ---------------------------
+
+def test_a_drill_replay_runs_the_chats_in_this_process_and_writes_nothing_real(night, isolated, fake_golive, monkeypatch):
+    orders, _, night23, rows22 = night
+    install_model(monkeypatch, stale_model)
+    a = sim.load_assumptions()
+    before = (app_module.golive_store, app_module.SESSIONS, verify._default)
+    rows = sim.replay_drill(15, a, orders, night23, rows22, SHARE_REAL, isolated / "outbox.jsonl")
+    assert len(rows) == 12 and {r["group"] for r in rows} == {ASSISTANT} and {r["sim_day"] for r in rows} == {15}
+    assert any(r["confidently_wrong"] for r in rows)  # scored against the hidden night, as the live day was
+    assert fake_golive.chats() == []  # the replay used its own table; the real one was never reached
+    assert (app_module.golive_store, app_module.SESSIONS, verify._default) == before  # everything put back
+    assert not (isolated / "out.jsonl").exists()
+
+
+def test_a_drill_replay_with_a_model_that_hedges_has_no_confidently_wrong(night, isolated, monkeypatch):
+    orders, _, night23, rows22 = night
+    install_model(monkeypatch, hedged_model)
+    rows = sim.replay_drill(15, sim.load_assumptions(), orders, night23, rows22, SHARE_REAL, isolated / "outbox.jsonl")
+    assert rows and not any(r["confidently_wrong"] for r in rows)

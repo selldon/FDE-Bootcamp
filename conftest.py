@@ -15,7 +15,7 @@ import store
 import tools
 import traces
 
-NOW = datetime(2026, 10, 22, 5, 0, tzinfo=UTC)  # 29h after the start of the news date 2026-10-21 (IT14)
+NOW = datetime(2026, 10, 22, 2, 0, tzinfo=UTC)  # before 03:00 UTC, when the night file of the 22nd is due: the 21st's news is current (IT14, OQ-5)
 
 
 def seed_store(db):

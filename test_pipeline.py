@@ -148,3 +148,24 @@ def test_the_pipeline_uses_the_pinned_clock(monkeypatch):
     db = store.FakeStore()
     assert pipeline.run(db, orders()[:1], files(old)) == (1, 1)
     assert db.watermark() == datetime(2020, 1, 1, 10, 0, tzinfo=UTC)
+
+
+# ---- the hourly check says the night file is missing (OQ-5: due by 03:00 UTC) -------------------------------------------
+
+AFTER_THREE = datetime(2026, 10, 23, 3, 0, 1, tzinfo=UTC)
+FILE_23 = FILE.replace("2026-10-22", "2026-10-23")
+
+
+def test_a_missing_night_file_stops_the_hourly_run_and_says_so_and_nothing_is_written():
+    db = store.FakeStore()
+    with pytest.raises(pipeline.PipelineError) as stopped:
+        pipeline.run(db, orders(), files(), now=AFTER_THREE)
+    message = str(stopped.value)
+    assert "check 'file arrived' failed" in message and "carrier-2026-10-23.csv is missing" in message
+    assert db.orders == {} and db.parcels == {} and db.watermark() is None
+
+
+def test_the_run_at_03_00_sharp_still_loads_and_so_does_a_run_with_the_file_of_the_day():
+    assert pipeline.run(store.FakeStore(), orders(), files(), now=LATER) == (2, 2)
+    both = FakeFiles({"carrier-2026-10-22.csv": FILE, "carrier-2026-10-23.csv": FILE_23})
+    assert pipeline.run(store.FakeStore(), orders(), both, now=datetime(2026, 10, 23, 4, 0, tzinfo=UTC)) == (2, 2)

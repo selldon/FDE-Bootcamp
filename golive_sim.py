@@ -6,6 +6,8 @@
     python golive_sim.py --rescore                 score the stored chats again from the replies in `traces` (no model call)
     python golive_sim.py --drill-day 15            the night with no carrier file (live; --dry-run shows the plan); 15, then 16
     python golive_sim.py --write-drill-night       write the hidden carrier file of the 23rd (the world moved on; never on the SFTP)
+    python golive_sim.py --replay-drill 15         the drill day's chats again, in this process, on today's code (live model;
+                                                   writes no row and reaches no real system)
 
 Each visitor has an id, a day, a question and (for "where is my order") 1-3 follow-ups, taken from the profiles in
 `data/` and the sandbox's hard profiles. The simulation knows the true status of every order. Only the assistant
@@ -618,6 +620,54 @@ def run_drill(day, assumptions, gateway, store, out, share, orders, night_truth,
     return rows
 
 
+class LocalGateway(HttpGateway):
+    """The chat service in this process (FastAPI's test client) instead of over HTTP, for a replay."""
+
+    def __init__(self, client, outbox):
+        super().__init__("http://local", outbox)
+        self.client = client
+
+    def post(self, path, body):
+        response = self.client.post(path, json=body)
+        response.raise_for_status()
+        return response.json()
+
+
+def replay_drill(day, assumptions, orders, night_truth, rows22, share=SHARE, outbox="data/outbox-replay.jsonl", say=print):
+    """The drill day's chats again, through the chat service in this process, on the code as it is now and with the model
+    live. Nothing real is touched: its own go-live table, a fake ServiceNow and drafts, a fake traces sink, its own sessions
+    and outbox. Scored against the hidden truth of the night; returns the rows."""
+    from fastapi.testclient import TestClient
+
+    import app as chat_app
+    import drafts
+    import refunds
+    import servicenow
+    import traces
+    import verify
+
+    kept = (chat_app.golive_store, chat_app.SESSIONS, verify._default, traces._sink, refunds._drafts, refunds._servicenow)
+    local = golive.FakeGoLiveStore()
+    local.create_tables()
+    local.set_settings(share=share, intents=["order_status"], on=True)
+    Path(outbox).unlink(missing_ok=True)
+    try:
+        chat_app.golive_store = lambda: local
+        chat_app.SESSIONS = {}
+        verify._default = verify.Verifier(outbox=str(outbox))
+        traces._sink = traces.FakeTraces()
+        refunds._drafts, refunds._servicenow = drafts.FakeDrafts(), servicenow.FakeServiceNow()
+        visitors = make_drill_visitors(day, assumptions, orders, rows22, share)
+        rows = run_day(day, visitors, LocalGateway(TestClient(chat_app.app), outbox), local, night_truth, assumptions,
+                       assumptions["seed"])
+    finally:
+        chat_app.golive_store, chat_app.SESSIONS, verify._default, traces._sink, refunds._drafts, refunds._servicenow = kept
+        Path(outbox).unlink(missing_ok=True)
+    say(f"replay of drill day {day}: {len(rows)} assistant conversations, confidently wrong "
+        f"{sum(r['confidently_wrong'] for r in rows)}")
+    return rows
+
+
 def run(days, assumptions, gateway, store, out=OUT, share=SHARE, orders=None, truth=None, profiles=None, say=print):
     """Run sim days one at a time. A day already in `out` is refused; a day that would pass the cap stops the run."""
     if assumptions["control_repeat_rate"] is None:
@@ -679,6 +729,7 @@ def main(argv=None):
     ap.add_argument("--rescore", action="store_true", help="score the stored chats again from the traces; no model call")
     ap.add_argument("--drill-day", type=int, default=None, help="run a drill day (15, then 16): the night with no carrier file")
     ap.add_argument("--write-drill-night", action="store_true", help="write the hidden carrier file of the 23rd")
+    ap.add_argument("--replay-drill", type=int, default=None, help="replay a drill day's chats in this process (live model)")
     args = ap.parse_args(argv)
     if args.refresh_repeat:
         rate, n = refresh_repeat()
@@ -688,6 +739,13 @@ def main(argv=None):
         print(f"wrote {write_drill_night()}")
         return 0
     assumptions = load_assumptions()
+    if args.replay_drill is not None:
+        orders, _ = load_truth()
+        rows = replay_drill(args.replay_drill, assumptions, orders, load_drill_truth()[1], newest_carrier()[1], args.share)
+        for r in rows:
+            print(f"{'WRONG' if r['confidently_wrong'] else 'ok   '} {r['order']} night truth {r['true_status']} "
+                  f"outcome {r['outcome']} | {(r['last_reply'] or '')[:150]!r}")
+        return 0
     if args.drill_day is not None:
         orders, _ = load_truth()
         rows22 = newest_carrier()[1]
