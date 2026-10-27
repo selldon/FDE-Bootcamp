@@ -20,7 +20,21 @@ git cat-file -e "$SHA^{commit}" 2>/dev/null || git fetch origin "$SHA"
 git checkout --force --detach "$SHA"
 echo "repo at $(git rev-parse HEAD)"
 
-# 2. DemoStore's systems (their own project; a second deploy leaves running ones alone)
+# 2. images of this commit from ECR (the instance role logs in); first, so a missing tag stops the deploy before anything starts
+ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
+REGISTRY="$ACCOUNT.dkr.ecr.$REGION.amazonaws.com"
+aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "$REGISTRY"
+export APP_IMAGE="$REGISTRY/fde-course/demostore-app:$SHA"
+export WIDGET_IMAGE="$REGISTRY/fde-course/demostore-widget:$SHA"
+# what runs, for check.sh (names and tags only, no key)
+COMPOSE=(docker compose -f compose.yaml -f deploy/compose.server.yaml --profile shadow)
+printf 'export SHA=%s\nexport APP_IMAGE=%s\nexport WIDGET_IMAGE=%s\n' "$SHA" "$APP_IMAGE" "$WIDGET_IMAGE" > "$DIR/.deploy.env"
+if ! "${COMPOSE[@]}" pull chat widget shadow; then
+  echo "cannot pull the images of $SHA - deploy that commit from main first, so that its images are built" >&2
+  exit 1
+fi
+
+# 3. DemoStore's systems (their own project; a second deploy leaves running ones alone)
 SNOW_INCOMING_EVERY=120 docker compose -f sandbox/systems/compose.yaml up -d --wait
 # the PostgreSQL container starts twice (init, then the real server): wait for the end of init, then for a connection
 for _ in $(seq 1 60); do
@@ -32,23 +46,11 @@ for _ in $(seq 1 60); do
 done
 docker compose -f sandbox/systems/compose.yaml exec -T ourdb pg_isready -h 127.0.0.1 -U demostore -d product
 
-# 3. images of this commit from ECR (the instance role logs in)
-ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
-REGISTRY="$ACCOUNT.dkr.ecr.$REGION.amazonaws.com"
-aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "$REGISTRY"
-export APP_IMAGE="$REGISTRY/fde-course/demostore-app:$SHA"
-export WIDGET_IMAGE="$REGISTRY/fde-course/demostore-widget:$SHA"
-# what runs, for check.sh (names and tags only, no key)
-printf 'export SHA=%s\nexport APP_IMAGE=%s\nexport WIDGET_IMAGE=%s\n' "$SHA" "$APP_IMAGE" "$WIDGET_IMAGE" > "$DIR/.deploy.env"
-
 # 4. the Anthropic key: SSM -> a shell variable -> compose passes it by name. Never printed, never in a file.
 set +x
 ANTHROPIC_API_KEY="$(aws ssm get-parameter --name /fde-course/anthropic-api-key --with-decryption \
   --query Parameter.Value --output text --region "$REGION")"
 export ANTHROPIC_API_KEY
-
-COMPOSE=(docker compose -f compose.yaml -f deploy/compose.server.yaml)
-"${COMPOSE[@]}" --profile shadow pull chat widget shadow
 
 # 5. the jobs create the tables and fill the store; all are safe to run again
 "${COMPOSE[@]}" run --rm jobs python pipeline.py
@@ -56,6 +58,6 @@ COMPOSE=(docker compose -f compose.yaml -f deploy/compose.server.yaml)
 "${COMPOSE[@]}" run --rm jobs python retention.py
 
 # 6. the pilot and the shadow worker
-"${COMPOSE[@]}" --profile shadow up -d --remove-orphans
+"${COMPOSE[@]}" up -d --remove-orphans
 unset ANTHROPIC_API_KEY
 echo "deployed $SHA"

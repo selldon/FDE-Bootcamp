@@ -77,19 +77,6 @@ jobs:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # a rollback needs the images of that commit in ECR; say which tag is missing
-      - name: The images of this commit exist
-        if: ${{ needs.images.result == 'skipped' && !inputs.report }}
-        run: |
-          set -euo pipefail
-          for repo in fde-course/demostore-app fde-course/demostore-widget; do
-            if ! aws ecr describe-images --repository-name "$repo" --image-ids imageTag="$SHA" >/dev/null 2>&1; then
-              echo "::error::missing image tag $repo:$SHA - deploy that commit from main first, so its images are built"
-              exit 1
-            fi
-            echo "found $repo:$SHA"
-          done
-
       - name: Security-group guard
         run: |
           set -euo pipefail
@@ -156,8 +143,8 @@ jobs:
               --block-device-mappings 'DeviceName=/dev/xvda,Ebs={VolumeSize=30,VolumeType=gp3,DeleteOnTermination=true}' \
               --metadata-options HttpTokens=required,HttpEndpoint=enabled \
               --tag-specifications \
-                'ResourceType=instance,Tags=[{Key=project,Value=fde-course},{Key=Name,Value=fde-course}]' \
-                'ResourceType=volume,Tags=[{Key=project,Value=fde-course},{Key=Name,Value=fde-course}]' \
+                'ResourceType=instance,Tags=[{Key=project,Value=fde-course}]' \
+                'ResourceType=volume,Tags=[{Key=project,Value=fde-course}]' \
               --user-data fileb://user-data.sh \
               --query 'Instances[0].InstanceId' --output text)"
             echo "created $ID"
@@ -165,28 +152,16 @@ jobs:
           aws ec2 wait instance-running --instance-ids "$ID"
           echo "instance_id=$ID" >> "$GITHUB_OUTPUT"
 
-      - name: Wait for the SSM agent
+      - name: Wait for the instance
         env:
           INSTANCE_ID: ${{ steps.instance.outputs.instance_id }}
         run: |
           set -euo pipefail
-          for _ in $(seq 1 60); do
-            PING="$(aws ec2 describe-instance-information --filters Key=InstanceIds,Values="$INSTANCE_ID" \
-              --query 'InstanceInformationList[0].PingStatus' --output text 2>/dev/null || true)"
-            [ "$PING" = Online ] && break
-            sleep 10
-          done
-          if [ "$PING" != Online ]; then
-            echo "::error::the SSM agent on $INSTANCE_ID is not Online after 10 minutes; what SSM reports:"
-            aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].IamInstanceProfile' || true
-            aws ssm describe-instance-information --filters Key=InstanceIds,Values="$INSTANCE_ID" || true
-            exit 1
-          fi
+          aws ec2 wait instance-status-ok --instance-ids "$INSTANCE_ID"
           aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
             --query 'Reservations[0].Instances[0].[InstanceId,InstanceType,State.Name]' --output text
           echo "disk (GB): $(aws ec2 describe-volumes --filters Name=attachment.instance-id,Values="$INSTANCE_ID" \
             --query 'Volumes[].Size' --output text)"
-          echo "SSM agent: $PING"
 
   deploy:
     needs: [images, server]
@@ -207,11 +182,12 @@ jobs:
           set -euo pipefail
           COMPOSE='docker compose -f compose.yaml -f deploy/compose.server.yaml --profile shadow'
           if [ "$REPORT" = true ]; then
-            SCRIPT="cd /opt/demostore && . ./.deploy.env && $COMPOSE exec -T shadow python shadow.py report"
+            SCRIPT="export HOME=/root; cd /opt/demostore && . ./.deploy.env && $COMPOSE exec -T shadow python shadow.py report"
           else
             [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::commit must be a full 40-character sha"; exit 1; }
             # the first run has no repo yet: fetch the commit, then run its own scripts
             SCRIPT="set -e
+          export HOME=/root
           cloud-init status --wait || true
           [ -d /opt/demostore/.git ] || git clone $REPO_URL /opt/demostore
           cd /opt/demostore
@@ -222,8 +198,22 @@ jobs:
           bash deploy/check.sh"
           fi
           jq -n --arg c "$SCRIPT" '{commands: ($c | split("\n")), executionTimeout: ["2400"]}' > params.json
-          CMD_ID="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript \
-            --comment "deploy $SHA" --parameters file://params.json --query Command.CommandId --output text)"
+          # a new server takes a few minutes to register with SSM: until then send-command says InvalidInstanceId
+          CMD_ID=""
+          for _ in $(seq 1 60); do
+            if CMD_ID="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript \
+                --comment "deploy $SHA" --parameters file://params.json --query Command.CommandId --output text 2>send.err)"; then
+              break
+            fi
+            CMD_ID=""
+            grep -qE 'AccessDenied|UnauthorizedOperation' send.err && break
+            sleep 10
+          done
+          if [ -z "$CMD_ID" ]; then
+            echo "::error::SSM did not take the command for $INSTANCE_ID (agent not registered after 10 minutes, or a missing right):"
+            cat send.err
+            exit 1
+          fi
           echo "SSM command $CMD_ID on $INSTANCE_ID"
           STATUS=Pending
           for _ in $(seq 1 280); do

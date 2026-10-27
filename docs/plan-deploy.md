@@ -107,7 +107,7 @@ python against them and the laptop's PostgreSQL. No container is started or chan
 Merge the pull request. Open the `deploy` run. **What to look for**, in order:
 - [ ] `images`: "Configure AWS credentials" names the assumed role (no access key in the log); both pushes end with a digest and the tag is the 40-character commit; in ECR both repositories show that tag.
 - [ ] `server`: the guard prints the group id and "no inbound rule open to the internet". Instance step prints one id, `t3.large`, 30 GB, tag `project=fde-course`. **If `run-instances` says `UnauthorizedOperation`** (likely `iam:PassRole`, or a tag condition), the log names the action: that is a person's job; I write the exact IAM statement and stop.
-- [ ] SSM wait: the instance shows "Online" within about 5 minutes. If it never does, the instance profile or the agent is wrong; look at the `describe-instance-information` output the step prints.
+- [ ] SSM wait: `send-command` is retried for up to 10 minutes until the agent has registered (the role may not call `ssm describe-instance-information`). If it never is taken, the step prints the error: the instance profile or the agent is wrong.
 - [ ] `deploy`: systems `--wait` finishes (Oracle takes a few minutes); `pipeline ok: N orders, M parcels`; `policy_index.py` stored 47 sections; `chat`, `widget`, `shadow` healthy; the check prints a reply with a source link.
 - [ ] The whole log contains no `sk-ant` and no key; the run is green; total time written down (Oracle's first start is the slow part).
 - [ ] If red: I read the log you paste, fix one cause per pull request.
@@ -120,7 +120,7 @@ Merge the pull request. Open the `deploy` run. **What to look for**, in order:
 **Stop.**
 
 ## Phase 8 - rollback (AWS, in Actions; I stop)
-- [ ] Start the workflow by hand with `commit` = the first deploy's sha. **Look for:** no `images` job (the tags already exist in ECR; if a tag is missing the run fails with the tag name); `docker compose ps` shows the images of that sha; the check is green; the shadow table keeps its rows (data is not touched).
+- [ ] Start the workflow by hand with `commit` = the first deploy's sha. **Look for:** no `images` job (the tags already exist in ECR; if a tag is missing the server's pull fails with the tag name, before anything starts - the role may not call `ecr describe-images`); `docker compose ps` shows the images of that sha; the check is green; the shadow table keeps its rows (data is not touched).
 - [ ] Start it again with the newest sha to roll forward.
 **Stop.**
 
