@@ -70,7 +70,7 @@ My defaults (tell me if wrong):
 ## Phase 3 - the worker against the stand-in, on the laptop (python, no Docker; for you)
 On this laptop the ServiceNow and Confluence stand-ins run outside Docker, on ports 8021 and 8041 (the values already in `.env`), so the worker runs with
 python against them and the laptop's PostgreSQL. No container is started or changed.
-- [ ] **Check for you.** Add `SERVICENOW_READER_USER=fde_reader` and `SERVICENOW_READER_PASSWORD=reader` to your `.env` if they are not there; restart the ServiceNow stand-in
+- [x] **Check for you.** Add `SERVICENOW_READER_USER=fde_reader` and `SERVICENOW_READER_PASSWORD=reader` to your `.env` if they are not there; restart the ServiceNow stand-in
       with `SNOW_INCOMING_EVERY=10` (your command; it is the author's copy). Wait about 60 seconds for a few chats, then:
   ```
   python shadow.py --once                      # one tick: reads the new chats, answers them, stores them; prints how many
@@ -81,6 +81,9 @@ python against them and the laptop's PostgreSQL. No container is started or chan
   Look for: every row has an answer; the row count only grows by chats that are really new; no new task at `localhost:8021/tasks` and no new case at `/live`;
   the first tick of an empty table stores nothing from the history. Then restart the stand-in with `SNOW_INCOMING_EVERY=0`.
   **Stop.**
+- Result (27.10): first tick on the empty table stored 0 (history skipped); the next ticks stored 35 and 62 new chats, 0 errors; all 97 rows have
+  an answer and, once closed, the agent's reply; no task at /tasks, no chat at /live. Actions: 52 hand_off, 21 give_status, 13 reply, 11 start_return.
+  The stand-in is back on `SNOW_INCOMING_EVERY=0`.
 
 ## Phase 4 - what runs on the server (offline)
 - [ ] `deploy/server.env`: hosts by service name (`ledgerline`, `carrier:22`, `ourdb`, `servicenow:8020`, `confluence:8040`), the sandbox test values, the reader account, `DEMOSTORE_NOW=2026-10-22T05:00:00+00:00`, `TRACE_HMAC_KEY` (a test value, labelled), no key.
