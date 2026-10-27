@@ -101,3 +101,39 @@ def test_the_numbers_are_identical_on_two_calls():
     store = mixed()
     store.mark("INT1", "marco", "same", now=T0)
     assert pilot.numbers(store, NOW) == pilot.numbers(store, NOW)
+
+
+def test_wilson_interval():
+    low, high = pilot.wilson(8, 10)
+    assert (round(low, 3), round(high, 3)) == (0.490, 0.943)
+    assert pilot.wilson(0, 0) is None
+    assert pilot.wilson(10, 10)[1] == 1.0
+
+
+def test_sentences_for_a_small_fixed_case():
+    store = store_with(chat("INT1"), chat("INT2", action="hand_off"), chat("INT3", intent=None))
+    store.mark("INT1", "Marco", "same")
+    assert pilot.sentences(pilot.numbers(store, NOW)) == [
+        ("Where we are: the assistant would have resolved 1 of 2 \"where is my order\" chats (50%), against the aim of 50%. "
+        "1 chats without an intent are not in this count. This is an estimate: no customer reacted in shadow mode."),
+        ("Cost: a chat the assistant would have resolved costs $0.0030 in model calls (from 2 priced), against $7.00 and 4 "
+        "minutes for a person and $0.99 for the ready-made product."),
+        ("How sure: only 1 chats checked so far, too few to give a range (20 are needed); 1 of them were marked the same "
+        "as the agent or better.")]
+
+
+def test_sentences_for_an_empty_store():
+    assert pilot.sentences(pilot.numbers(FakeShadowStore(), NOW)) == [
+        ("Where we are: not enough yet - no \"where is my order\" chat has been classified, so there is no rate to compare "
+        "with the 50% aim. This is an estimate: no customer reacted in shadow mode."),
+        "Cost: not enough yet - no resolved chat has a price, so there is nothing to set against $7.00 for a person.",
+        "How sure: not enough yet - no chat has been checked by a person."]
+
+
+def test_sentence_with_a_big_enough_sample_gives_the_range():
+    store = store_with(*[chat(f"INT{i}") for i in range(20)])
+    for i in range(20):
+        store.mark(f"INT{i}", "Marco", "same" if i < 16 else "wrong")
+    third = pilot.sentences(pilot.numbers(store, NOW))[2]
+    assert third == ("How sure: of 20 checked chats, 16 (80%) were marked the same as the agent or better; "
+                     "with 95% confidence the true share is between 58% and 92%.")

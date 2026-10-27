@@ -105,3 +105,71 @@ def numbers(store, now):
         "cost": costs(chats),
         "baseline": dict(BASELINE),
     }
+
+
+# How sure we are: below this many checked chats no range is given.
+MIN_SAMPLE = 20
+Z95 = 1.96
+
+
+def wilson(good, n, z=Z95):
+    """The 95% Wilson interval for good/n as (low, high); None when n is 0."""
+    if not n:
+        return None
+    p = good / n
+    centre = (p + z * z / (2 * n)) / (1 + z * z / n)
+    half = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5) / (1 + z * z / n)
+    return max(0.0, centre - half), min(1.0, centre + half)
+
+
+def pct(x):
+    return f"{round(x * 100)}%"
+
+
+def dollars(x):
+    return f"${x:.2f}" if x >= 0.1 else f"${x:.4f}"
+
+
+def sentences(data):
+    """The three plain sentences under the numbers, from fixed templates. No model."""
+    return [_where_we_are(data), _cost(data), _how_sure(data)]
+
+
+def _where_we_are(data):
+    c = data["criterion"]
+    estimate = "This is an estimate: no customer reacted in shadow mode."
+    if not c["chats"]:
+        return (f"Where we are: not enough yet - no \"where is my order\" chat has been classified, so there is no rate "
+                f"to compare with the {pct(c['target'])} aim. {estimate}")
+    text = (f"Where we are: the assistant would have resolved {c['resolved']} of {c['chats']} \"where is my order\" chats "
+            f"({pct(c['rate'])}), against the aim of {pct(c['target'])}.")
+    if c["unclassified"]:
+        text += f" {c['unclassified']} chats without an intent are not in this count."
+    return f"{text} {estimate}"
+
+
+def _cost(data):
+    c, b = data["cost"], data["baseline"]
+    if c["per_resolved_chat"] is None:
+        return ("Cost: not enough yet - no resolved chat has a price, so there is nothing to set against "
+                f"{dollars(b['person_cost'])} for a person.")
+    text = (f"Cost: a chat the assistant would have resolved costs {dollars(c['per_resolved_chat'])} in model calls "
+            f"(from {c['priced_resolved']} priced), against {dollars(b['person_cost'])} and {b['person_minutes']} minutes "
+            f"for a person and {dollars(b['product_cost'])} for the ready-made product.")
+    if c["unpriced"]:
+        text += f" {c['unpriced']} chats have no stored tokens and are not priced."
+    return text
+
+
+def _how_sure(data):
+    ch = data["checked"]
+    n = ch["sample"]
+    if not n:
+        return "How sure: not enough yet - no chat has been checked by a person."
+    good = ch["verdicts"]["same"] + ch["verdicts"]["better"]
+    if n < MIN_SAMPLE:
+        return (f"How sure: only {n} chats checked so far, too few to give a range ({MIN_SAMPLE} are needed); "
+                f"{good} of them were marked the same as the agent or better.")
+    low, high = wilson(good, n)
+    return (f"How sure: of {n} checked chats, {good} ({pct(good / n)}) were marked the same as the agent or better; "
+            f"with 95% confidence the true share is between {pct(low)} and {pct(high)}.")

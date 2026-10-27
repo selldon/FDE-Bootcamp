@@ -56,8 +56,8 @@ and a way to mark answers. Reading the code showed four things the brief only hi
 **Check:** fast tests, ruff, mypy. **Stop.**
 
 ## Phase 5 - the words for Lena (offline)
-- [ ] `sentences(numbers) -> list[str]`, three fixed templates: (1) where we are against the criterion, with the base and the line "an estimate: no customer reacted in shadow mode"; (2) cost per resolved chat against $7 / $0.99; (3) how sure, from the Wilson interval and the checked sample. Plain wording when the base is 0 ("not enough yet", never a percentage of nothing).
-- [ ] Tests: exact strings for a small fixed case, the empty case, and a case where the sample is too small to say.
+- [x] `sentences(numbers) -> list[str]`, three fixed templates: (1) where we are against the criterion, with the base and the line "an estimate: no customer reacted in shadow mode"; (2) cost per resolved chat against $7 / $0.99; (3) how sure, from the Wilson interval and the checked sample. Plain wording when the base is 0 ("not enough yet", never a percentage of nothing).
+- [x] Tests: exact strings for a small fixed case, the empty case, and a case where the sample is too small to say.
 **Check:** fast tests, ruff, mypy. **Stop.**
 
 ## Phase 6 - the API (offline)
