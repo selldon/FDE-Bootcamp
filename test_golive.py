@@ -142,8 +142,10 @@ def test_a_chat_needs_a_known_group():
 
 def test_the_tables_are_new_and_additive():
     statements = [s.as_string() for s in golive.tables("t_settings", "t_chats")]
-    assert all(s.startswith("CREATE TABLE IF NOT EXISTS") for s in statements)
-    assert not any(word in s.upper() for s in statements for word in ("DROP", "ALTER", "DELETE", "TRUNCATE"))
+    # the one ALTER adds the outcome columns to a table made before they existed; it never changes or removes anything
+    assert all(s.startswith(("CREATE TABLE IF NOT EXISTS", "ALTER TABLE")) for s in statements)
+    assert all("ADD COLUMN IF NOT EXISTS" in s for s in statements if s.startswith("ALTER"))
+    assert not any(word in s.upper() for s in statements for word in ("DROP", "DELETE", "TRUNCATE", "RENAME"))
     assert "simulated" in statements[1] and "sim_day" in statements[1]
 
 
