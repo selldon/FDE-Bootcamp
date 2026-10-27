@@ -13,6 +13,7 @@ ServiceNow, Ledgerline or the real trace table: the real writers are never wired
     python shadow.py report     the last 20 rows
 """
 import base64
+import hashlib
 import json
 import logging
 import os
@@ -60,13 +61,46 @@ def tables(name="shadow_chats"):
               for c in ("input_tokens", "output_tokens")]]
 
 
+VERDICTS = ("same", "better", "worse", "wrong")
+MARK_FIELDS = ("number", "marker", "marked_at", "verdict", "sounded_sure")
+
+
+def marks_tables(name="shadow_marks"):
+    """The CREATE for the marks: one per (chat, person); `sounded_sure` only goes with `wrong`."""
+    return [sql.SQL("""CREATE TABLE IF NOT EXISTS {t} (
+        number text NOT NULL, marker text NOT NULL, marked_at timestamptz NOT NULL,
+        verdict text NOT NULL CHECK (verdict IN ('same', 'better', 'worse', 'wrong')),
+        sounded_sure boolean NOT NULL DEFAULT false,
+        PRIMARY KEY (number, marker),
+        CHECK (verdict = 'wrong' OR NOT sounded_sure))""").format(t=sql.Identifier(name))]
+
+
+def check_mark(marker, verdict, sounded_sure):
+    """The name stripped; ValueError for an empty name, an unknown verdict, or `sounded_sure` without `wrong`."""
+    marker = (marker or "").strip()
+    if not marker:
+        raise ValueError("a mark needs the name of the person who made it")
+    if verdict not in VERDICTS:
+        raise ValueError(f"verdict must be one of {', '.join(VERDICTS)}")
+    if sounded_sure and verdict != "wrong":
+        raise ValueError("sounded_sure goes only with the verdict wrong")
+    return marker
+
+
+def sample_key(number, day):
+    """Random across days, stable within one: the same ordering the SQL gets from md5(number || day)."""
+    return hashlib.md5(f"{number}{day.isoformat()}".encode()).hexdigest()
+
+
 class ShadowStore:
     """The real table in the `product` database."""
 
-    def __init__(self, url=None, table="shadow_chats", **connect_args):
+    def __init__(self, url=None, table="shadow_chats", marks_table="shadow_marks", **connect_args):
         self.url = url or config.store_url()
         self.name = table
         self.table = sql.Identifier(table)
+        self.marks_name = marks_table
+        self.marks_table = sql.Identifier(marks_table)
         self.connect_args = connect_args
 
     def _connect(self):
@@ -74,7 +108,7 @@ class ShadowStore:
 
     def create_tables(self):
         with self._connect() as conn:
-            for statement in tables(self.name):
+            for statement in [*tables(self.name), *marks_tables(self.marks_name)]:
                 conn.execute(statement)
 
     def watermark(self):
@@ -118,12 +152,45 @@ class ShadowStore:
                 cols=sql.SQL(", ").join(map(sql.Identifier, FIELDS)), t=self.table), (n,))
             return [dict(zip(FIELDS, r, strict=True)) for r in cur]
 
+    def mark(self, number, marker, verdict, sounded_sure=False, now=None):
+        """A person's verdict on a chat; marking again replaces it and moves `marked_at`. ValueError if rejected."""
+        marker = check_mark(marker, verdict, sounded_sure)
+        query = sql.SQL("""INSERT INTO {m} (number, marker, marked_at, verdict, sounded_sure)
+            SELECT number, %s, %s, %s, %s FROM {t} WHERE number = %s
+            ON CONFLICT (number, marker) DO UPDATE
+            SET marked_at = EXCLUDED.marked_at, verdict = EXCLUDED.verdict, sounded_sure = EXCLUDED.sounded_sure""").format(
+            m=self.marks_table, t=self.table)
+        with self._connect() as conn:
+            if conn.execute(query, (marker, now or datetime.now(UTC), verdict, bool(sounded_sure), number)).rowcount != 1:
+                raise ValueError(f"no chat {number}")
+
+    def marks(self, number=None):
+        """All marks (of one chat if given), oldest first, as dicts."""
+        where = sql.SQL("WHERE number = %s") if number is not None else sql.SQL("")
+        with self._connect() as conn:
+            cur = conn.execute(sql.SQL("SELECT {cols} FROM {m} {w} ORDER BY marked_at, number, marker").format(
+                cols=sql.SQL(", ").join(map(sql.Identifier, MARK_FIELDS)), m=self.marks_table, w=where),
+                (number,) if number is not None else ())
+            return [dict(zip(MARK_FIELDS, r, strict=True)) for r in cur]
+
+    def sample(self, n, day):
+        """Up to n unmarked chats that have an agent reply, in the order of md5(number || day)."""
+        with self._connect() as conn:
+            cur = conn.execute(sql.SQL("""SELECT {cols} FROM {t} c
+                WHERE c.agent_reply IS NOT NULL
+                  AND NOT EXISTS (SELECT 1 FROM {m} k WHERE k.number = c.number)
+                ORDER BY md5(c.number || %s), c.number LIMIT %s""").format(
+                cols=sql.SQL(", ").join(sql.SQL("c.") + sql.Identifier(f) for f in FIELDS),
+                t=self.table, m=self.marks_table), (day.isoformat(), n))
+            return [dict(zip(FIELDS, r, strict=True)) for r in cur]
+
 
 class FakeShadowStore:
     """The same interface in memory."""
 
     def __init__(self):
         self.rows = {}
+        self.mark_rows = {}  # (number, marker) -> mark
 
     def create_tables(self):
         pass
@@ -152,6 +219,22 @@ class FakeShadowStore:
 
     def last(self, n=20):
         return [dict(r) for r in sorted(self.rows.values(), key=lambda r: (r["opened_at"], r["number"]), reverse=True)[:n]]
+
+    def mark(self, number, marker, verdict, sounded_sure=False, now=None):
+        marker = check_mark(marker, verdict, sounded_sure)
+        if number not in self.rows:
+            raise ValueError(f"no chat {number}")
+        self.mark_rows[(number, marker)] = {"number": number, "marker": marker, "marked_at": now or datetime.now(UTC),
+                                            "verdict": verdict, "sounded_sure": bool(sounded_sure)}
+
+    def marks(self, number=None):
+        found = [dict(m) for m in self.mark_rows.values() if number is None or m["number"] == number]
+        return sorted(found, key=lambda m: (m["marked_at"], m["number"], m["marker"]))
+
+    def sample(self, n, day):
+        marked = {m["number"] for m in self.mark_rows.values()}
+        pool = [r for r in self.rows.values() if r["agent_reply"] is not None and r["number"] not in marked]
+        return [dict(r) for r in sorted(pool, key=lambda r: (sample_key(r["number"], day), r["number"]))[:n]]
 
 
 class ReadError(RuntimeError):

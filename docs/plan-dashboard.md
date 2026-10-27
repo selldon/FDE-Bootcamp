@@ -46,8 +46,8 @@ and a way to mark answers. Reading the code showed four things the brief only hi
 **Check:** fast tests, ruff, mypy. Then you run `python shadow.py --once` against the sandbox (it calls Claude and the ServiceNow reader; I do not start systems) and I look at `python shadow.py report` for one new row with intent and tokens. **Stop.**
 
 ## Phase 3 - marks and the sample (offline)
-- [ ] `shadow_marks(number text, marker text, marked_at timestamptz, verdict text CHECK in same|better|worse|wrong, sounded_sure boolean, PRIMARY KEY (number, marker))`. `sounded_sure` only with `wrong` (CHECK). Store methods `mark`, `marks`, `sample(n, day)`; same on `FakeShadowStore`. Rejected marks: unknown number, empty name, bad verdict.
-- [ ] Tests: upsert keeps one mark per (chat, person) and moves `marked_at`; `sounded_sure` refused with other verdicts; sample excludes chats without an agent reply and already-marked ones; same day same list, next day another.
+- [x] `shadow_marks(number text, marker text, marked_at timestamptz, verdict text CHECK in same|better|worse|wrong, sounded_sure boolean, PRIMARY KEY (number, marker))`. `sounded_sure` only with `wrong` (CHECK). Store methods `mark`, `marks`, `sample(n, day)`; same on `FakeShadowStore`. Rejected marks: unknown number, empty name, bad verdict.
+- [x] Tests: upsert keeps one mark per (chat, person) and moves `marked_at`; `sounded_sure` refused with other verdicts; sample excludes chats without an agent reply and already-marked ones; same day same list, next day another.
 **Check:** fast tests, ruff, mypy. **Stop.**
 
 ## Phase 4 - the numbers (`pilot.py`, offline)
