@@ -209,6 +209,9 @@ starts the systems; then run:
 Codespaces is free for a number of core-hours a month on a personal account; this environment uses 2 cores (or 4 if you
 choose a bigger machine, which uses the hours twice as fast). Stop the codespace when you take a break.
 
+Your first commit in the codespace may ask to point it at your own fork of this repository (you cannot push to this
+one). Say yes, then add your fork to the secret's repository access too, so new codespaces of your fork get the key.
+
 **Path B - your own computer.** You need Python 3.12 or newer, Node 22, Docker and git. Then:
 
     python -m venv .venv && . .venv/bin/activate
