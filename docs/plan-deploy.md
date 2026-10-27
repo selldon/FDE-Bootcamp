@@ -59,12 +59,12 @@ My defaults (tell me if wrong):
 - [x] Check (I run): fast tests, ruff, mypy pass.
 
 ## Phase 2 - the worker and the report (offline)
-- [ ] `shadow.py`, run part: `poll(client, store, answerer)` - read new chats with the reader account (`opened_at>watermark`, ordered, paged), for each run `answer()` as a verified `refunds.Context(opened_for, f"shadow-{number}", market=u_market)` with `FakeDrafts`, `FakeServiceNow`,
+- [x] `shadow.py`, run part: `poll(client, store, answerer)` - read new chats with the reader account (`opened_at>watermark`, ordered, paged), for each run `answer()` as a verified `refunds.Context(opened_for, f"shadow-{number}", market=u_market)` with `FakeDrafts`, `FakeServiceNow`,
       `FakeTraces` set; store action, answer, and what the fakes recorded (`ctx.offer`, drafts, tasks, cases); then read stored rows still without a reply whose chat is `closed_complete` and store the text after `Agent:`.
       One bad chat or a ServiceNow error (429 with `Retry-After`, timeout, 5xx) is logged and retried next tick; it never stops the loop.
-- [ ] `python shadow.py` loops every `SHADOW_EVERY` seconds (default 30) and touches a heartbeat file each tick; `python shadow.py --once` does exactly one tick and exits (non-zero if the tick failed); `python shadow.py report` prints the last 20 rows (message, action, answer, agent reply).
-- [ ] Tests: a fake ServiceNow client with new, old and closed chats; **the real `servicenow.send`, `drafts.create` and the writer account are never called** (they are patched to raise); a verified `opened_for` reaches the order tools; 429 is retried; a chat answered twice is stored once; the report prints 20 rows.
-- [ ] `compose.yaml`: service `shadow` (same image and env as `chat`, `command: python shadow.py`, `restart: unless-stopped`, profile `shadow`, healthcheck = heartbeat younger than 90 s, no ports).
+- [x] `python shadow.py` loops every `SHADOW_EVERY` seconds (default 30) and touches a heartbeat file each tick; `python shadow.py --once` does exactly one tick and exits (non-zero if the tick failed); `python shadow.py report` prints the last 20 rows (message, action, answer, agent reply).
+- [x] Tests: a fake ServiceNow client with new, old and closed chats; **the real `servicenow.send`, `drafts.create` and the writer account are never called** (they are patched to raise); a verified `opened_for` reaches the order tools; 429 is retried; a chat answered twice is stored once; the report prints 20 rows.
+- [x] `compose.yaml`: service `shadow` (same image and env as `chat`, `command: python shadow.py`, `restart: unless-stopped`, profile `shadow`, healthcheck = heartbeat younger than 90 s, no ports).
 - [ ] Check (I run): fast tests, ruff, mypy, YAML parses, `shadow` shares `chat`'s image, no secret in the file.
 
 ## Phase 3 - the worker against the stand-in, on the laptop (python, no Docker; for you)

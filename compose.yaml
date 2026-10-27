@@ -35,6 +35,20 @@ services:
     <<: *python
     profiles: [jobs]
 
+  # shadow mode (Day 9): answers live chats on the side and writes only into our own database; the server starts it with
+  # `--profile shadow`. Healthy while the heartbeat file is younger than 90 seconds.
+  shadow:
+    <<: *python
+    command: python shadow.py
+    profiles: [shadow]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os, sys, time; sys.exit(time.time() - os.path.getmtime('/tmp/shadow-heartbeat') > 90)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
 networks:
   systems:
     name: systems_default
