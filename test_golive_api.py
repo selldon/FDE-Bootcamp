@@ -91,3 +91,9 @@ def test_the_service_still_starts_when_the_database_is_down(monkeypatch, caplog)
     with TestClient(chat_app.app) as client, caplog.at_level("ERROR"):
         assert client.get("/openapi.json").status_code == 200
     assert "go-live tables" in caplog.text
+
+
+def test_the_page_data_carries_the_repeat_contact_note_and_no_repeat_difference(client):
+    body = client.get("/api/golive").json()
+    assert body["repeat_note"].startswith("Not measured") and "15 customers" in body["repeat_note"]
+    assert body["window"]["difference"]["repeat"] is None

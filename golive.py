@@ -236,6 +236,11 @@ NOT_ENOUGH = "not enough yet"
 HOLDS, BREACH = "holds", "does not hold"
 
 
+# The old ServiceNow chats (2,040) come from 15 customers, so "the same customer wrote again within 7 days" is true of
+# nearly every chat (0.99), and "the same customer about the same order" of almost none (0.003): neither is a baseline.
+REPEAT_NOT_MEASURED = "Not measured: the old chats come from 15 customers, so they give no repeat-contact baseline."
+
+
 def margins(path=ASSUMPTIONS):
     with open(path) as f:
         return json.load(f)["margins"]
@@ -303,15 +308,14 @@ def mean_diff_interval(a, b, z=pilot.Z95):
 
 
 def compare(assistant, control):
-    """The assistant group against control: differences (assistant - control) with 95 % intervals and both sample sizes."""
+    """The assistant group against control: differences (assistant - control) with 95 % intervals and both sample sizes.
+
+    `repeat` stays None: there is no control baseline to compare with (see REPEAT_NOT_MEASURED)."""
     out = {"n_assistant": assistant["decided"], "n_control": control["decided"], "resolved": None, "handed_off": None,
            "unanswered": None, "repeat": None, "rating": None, "cost_per_contact": None}
     if assistant["decided"] and control["decided"]:
         for key in ("resolved", "handed_off", "unanswered"):
             out[key] = diff_interval(assistant[key], assistant["decided"], control[key], control["decided"])
-        if assistant["repeat_known"] and control["repeat_known"]:
-            out["repeat"] = diff_interval(assistant["repeat_contacts"], assistant["repeat_known"],
-                                          control["repeat_contacts"], control["repeat_known"])
         if assistant["cost_per_contact"] is not None and control["cost_per_contact"] is not None:
             out["cost_per_contact"] = assistant["cost_per_contact"] - control["cost_per_contact"]
     out["rating"] = mean_diff_interval(assistant["rating_values"], control["rating_values"])
@@ -339,7 +343,7 @@ def numbers(store, now):
     def within(first):
         return [c for c in chats if first <= day_of(c) <= last] if chats else []
 
-    return {"as_of": now, "total": len(chats), "simulated": sum(1 for c in chats if c.get("simulated")),
+    return {"as_of": now, "repeat_note": REPEAT_NOT_MEASURED, "total": len(chats), "simulated": sum(1 for c in chats if c.get("simulated")),
             "last_day": last, "days_with_chats": len(days),
             "day": window_numbers([c for c in chats if day_of(c) == last]),
             "week": window_numbers(within(last - WEEK + 1) if chats else []),

@@ -208,3 +208,20 @@ def test_the_margins_come_from_the_assumptions_file(tmp_path):
     path = tmp_path / "a.json"
     path.write_text(json.dumps({"margins": {"rating": 0.5}}))
     assert golive.margins(path) == {"rating": 0.5}
+
+
+# ---- repeat contact: not measured (the old chats are 15 customers, so no baseline can be taken from them) -----------
+
+def test_repeat_contact_is_not_compared_even_when_both_groups_carry_the_values():
+    rows = [chat(ASSISTANT, "give_status", repeat_contact=True), chat(ASSISTANT, "give_status", repeat_contact=False),
+            chat(CONTROL, "resolved", repeat_contact=True), chat(CONTROL, "resolved", repeat_contact=True)]
+    data, _ = read(rows)
+    assert data["window"]["difference"]["repeat"] is None  # no number, no interval: nothing was measured
+    assert data["window"][CONTROL]["repeat_known"] == 2  # the stored values are not touched, only not compared
+
+
+def test_the_numbers_say_why_repeat_contact_is_not_measured_in_one_line():
+    data, _ = read([chat(ASSISTANT), chat(CONTROL)])
+    note = data["repeat_note"]
+    assert note == golive.REPEAT_NOT_MEASURED
+    assert "15 customers" in note and "\n" not in note and note.startswith("Not measured")

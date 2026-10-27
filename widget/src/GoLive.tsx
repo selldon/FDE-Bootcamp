@@ -51,6 +51,7 @@ interface Settings {
 }
 
 interface Data {
+  repeat_note?: string;
   total: number;
   simulated: number;
   last_day: number | null;
@@ -128,7 +129,7 @@ function Lines({ title, lines }: { title: string; lines: Line[] }) {
   );
 }
 
-function Compare({ title, w }: { title: string; w: Window }) {
+function Compare({ title, w, repeatNote }: { title: string; w: Window; repeatNote?: string }) {
   const a = w.assistant;
   const c = w.control;
   const d = w.difference;
@@ -143,7 +144,7 @@ function Compare({ title, w }: { title: string; w: Window }) {
           <tr><th>Resolved</th><td>{rate(a.resolved, a.decided)}</td><td>{rate(c.resolved, c.decided)}</td><td>{points(d.resolved)}</td></tr>
           <tr><th>Handed off</th><td>{rate(a.handed_off, a.decided)}</td><td>{rate(c.handed_off, c.decided)}</td><td>{points(d.handed_off)}</td></tr>
           <tr><th>Left without an answer</th><td>{rate(a.unanswered, a.decided)}</td><td>{rate(c.unanswered, c.decided)}</td><td>{points(d.unanswered)}</td></tr>
-          <tr><th>Repeat contact in 7 days</th><td>{rate(a.repeat_contacts, a.repeat_known)}</td><td>{rate(c.repeat_contacts, c.repeat_known)}</td><td>{points(d.repeat)}</td></tr>
+          <tr><th>Repeat contact in 7 days</th><td>not measured</td><td>not measured</td><td>{repeatNote ?? "not measured"}</td></tr>
           <tr>
             <th>Rating (1-5)</th>
             <td>{a.rating === null ? "-" : a.rating.toFixed(2)} (n = {a.rating_n})</td>
@@ -245,9 +246,9 @@ export default function GoLive() {
       <Lines title="Whole window" lines={Object.values(l.window)} />
 
       <h2>The two groups</h2>
-      <Compare title="Latest day" w={data.day} />
-      <Compare title="Week so far" w={data.week} />
-      <Compare title="Whole window" w={data.window} />
+      <Compare title="Latest day" w={data.day} repeatNote={data.repeat_note} />
+      <Compare title="Week so far" w={data.week} repeatNote={data.repeat_note} />
+      <Compare title="Whole window" w={data.window} repeatNote={data.repeat_note} />
     </main>
   );
 }
