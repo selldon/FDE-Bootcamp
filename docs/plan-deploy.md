@@ -86,12 +86,12 @@ python against them and the laptop's PostgreSQL. No container is started or chan
   The stand-in is back on `SNOW_INCOMING_EVERY=0`.
 
 ## Phase 4 - what runs on the server (offline)
-- [ ] `deploy/server.env`: hosts by service name (`ledgerline`, `carrier:22`, `ourdb`, `servicenow:8020`, `confluence:8040`), the sandbox test values, the reader account, `DEMOSTORE_NOW=2026-10-22T05:00:00+00:00`, `TRACE_HMAC_KEY` (a test value, labelled), no key.
-- [ ] `deploy/compose.server.yaml`: overrides `chat`/`shadow`/`jobs` to `image: ${APP_IMAGE}` (no build), `widget` to `${WIDGET_IMAGE}`, `env_file: [deploy/server.env]`, `environment: [ANTHROPIC_API_KEY]`.
-- [ ] `deploy/remote-deploy.sh <sha>` (runs on the server as root through SSM): `git clone` / `fetch` and `checkout <sha>`; `SNOW_INCOMING_EVERY=120 docker compose -f sandbox/systems/compose.yaml up -d --wait`; wait for PostgreSQL's "init process complete";
+- [x] `deploy/server.env`: hosts by service name (`ledgerline`, `carrier:22`, `ourdb`, `servicenow:8020`, `confluence:8040`), the sandbox test values, the reader account, `DEMOSTORE_NOW=2026-10-22T05:00:00+00:00`, `TRACE_HMAC_KEY` (a test value, labelled), no key.
+- [x] `deploy/compose.server.yaml`: overrides `chat`/`shadow`/`jobs` to `image: ${APP_IMAGE}` (no build), `widget` to `${WIDGET_IMAGE}`, `env_file: [deploy/server.env]`, `environment: [ANTHROPIC_API_KEY]`.
+- [x] `deploy/remote-deploy.sh <sha>` (runs on the server as root through SSM): `git clone` / `fetch` and `checkout <sha>`; `SNOW_INCOMING_EVERY=120 docker compose -f sandbox/systems/compose.yaml up -d --wait`; wait for PostgreSQL's "init process complete";
       ECR login (instance role); read `/fde-course/anthropic-api-key` into a shell variable (never echoed, `set +x`); `docker compose ... pull`; `jobs pipeline.py`, `policy_index.py`, `retention.py` (create tables; idempotent upserts); `up -d --profile shadow`.
-- [ ] `deploy/check.sh`: `curl` one real chat to `localhost:8080/chat` (a policy question: the reply has the source link, and a non-200 or an empty reply fails), `docker compose ps` shows `chat`, `widget`, `shadow` healthy; prints the commit and the image tags that run.
-- [ ] `docs/quick-fixes.md`: frozen clock; test passwords on the server; the key is read at start (rotation needs a redeploy); no HTTPS and no public port until day 11; sessions in memory are lost at each deploy.
+- [x] `deploy/check.sh`: `curl` one real chat to `localhost:8080/chat` (a policy question: the reply has the source link, and a non-200 or an empty reply fails), `docker compose ps` shows `chat`, `widget`, `shadow` healthy; prints the commit and the image tags that run.
+- [x] `docs/quick-fixes.md`: frozen clock; test passwords on the server; the key is read at start (rotation needs a redeploy); no HTTPS and no public port until day 11; sessions in memory are lost at each deploy.
 - [ ] Check (I run): `bash -n`, `shellcheck` if present, YAML parses, `grep` finds no key or password that is not a labelled test value, no `set -x` near the key, fast tests pass.
 
 ## Phase 5 - `.github/workflows/deploy.yml` (offline)
