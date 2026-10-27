@@ -166,3 +166,25 @@ input {
 .pilot button {
   margin-right: 6px;
 }
+
+/* The go-live page: the simulated-traffic banner, the alert and a line that does not hold. */
+.pilot .banner-sim {
+  border-left: 6px solid #b7791f;
+}
+
+.pilot .alert {
+  background: #b42318;
+  color: white;
+  padding: 10px 12px;
+  font-weight: bold;
+}
+
+.pilot tr.breach td {
+  background: #fde8e6;
+  font-weight: bold;
+}
+
+.pilot button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

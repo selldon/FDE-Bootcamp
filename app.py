@@ -327,5 +327,40 @@ def pilot_mark(body: MarkIn, store: PilotStore) -> dict:
     return next(m for m in store.marks(body.number) if m["marker"] == body.marker.strip())
 
 
+# ---- the go-live page: the two groups side by side, and the switch -----------------------------------------------
+
+def golive_dep() -> GoLiveStore:
+    return golive_store()  # looked up at the request, so a test that replaces golive_store is seen here too
+
+
+GoLive = Annotated[GoLiveStore, Depends(golive_dep)]
+
+
+class SwitchIn(BaseModel):
+    on: bool | None = None
+    share: float | None = None
+    intents: list[str] | None = None
+
+
+@app.get("/api/golive")
+def golive_numbers(store: GoLive) -> dict:
+    data = golive.numbers(store, datetime.now(UTC))
+    return {**data, "lines": golive.lines(data), "settings": store.settings()}
+
+
+@app.get("/api/golive/switch")
+def golive_switch_state(store: GoLive) -> dict:
+    return store.settings()
+
+
+@app.post("/api/golive/switch")
+def golive_switch(body: SwitchIn, store: GoLive) -> dict:
+    """Change the launch settings now; the next chat reads them, so no deploy. Used by the page and by the drill."""
+    try:
+        return store.set_settings(share=body.share, intents=body.intents, on=body.on)
+    except ValueError as err:
+        raise HTTPException(status_code=422, detail=str(err)) from err
+
+
 if __name__ == "__main__":
     uvicorn.run(app, port=8000)

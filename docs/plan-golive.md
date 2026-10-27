@@ -50,8 +50,8 @@ Phases 1-5 run one at a time, stopping after each. Phases 6-8 (the two weeks, th
 - [x] Check: fast tests pass.
 
 ## Phase 5 - the comparison on the pilot page (item 3)
-- [ ] `GET /api/golive` and the switch (`GET/POST /api/golive/switch`, for the page and for the drill); `widget/src/GoLive.tsx` next to `Pilot.tsx`: both groups side by side, difference, interval, n, "holds / does not hold", an alert banner, and a banner "Simulated traffic" on the page.
-- [ ] Check: fast tests of the API with the fake store, `tsc` clean, and one look at the page in the browser with seeded fake rows.
+- [x] `GET /api/golive` and the switch (`GET/POST /api/golive/switch`, for the page and for the drill); `widget/src/GoLive.tsx` next to `Pilot.tsx`: both groups side by side, difference, interval, n, "holds / does not hold", an alert banner, and a banner "Simulated traffic" on the page.
+- [x] Check: fast tests of the API with the fake store, `tsc` clean, and one look at the page in the browser with seeded fake rows.
 
 ## Phase 6 - the two simulated weeks (item 2) - asks before it spends
 - [ ] Restore point first: `pg_dump` of `product` to `backups/` and say so. Then show the dry-run cost and wait for a yes.
