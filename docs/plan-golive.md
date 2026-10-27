@@ -24,10 +24,10 @@ mypy, tsc) or a named command. Tick boxes as tasks are done. One phase at a time
 Phases 1-5 run one at a time, stopping after each. Phases 6-8 (the two weeks, the drill, the report) we run together.
 
 ## Phase 1 - the launch switch and the group (brief item 1)
-- [ ] `golive.py`: tables `golive_settings` (one row: `share`, `intents[]`, `on`, `changed_at`) and `golive_chats`; `group_of(visitor_id, share)` from a keyed hash of the visitor id into 10,000 buckets, so the group never changes, and widening 5 % -> 25 % only adds visitors to the assistant group, never removes one.
-- [ ] `FakeGoLiveStore` with the same interface (as `FakeShadowStore`); `GoLiveStore` over PostgreSQL. Every row has a `simulated` flag and `sim_day`.
-- [ ] Fast tests: same id -> same group every time; about 5 % of 10,000 ids; 25 % is a superset of 5 %; off or an intent not live -> "person"; settings read at every request (no cache, so no deploy).
-- [ ] Check: fast tests pass. Tables are new, so no restore point; take a `pg_dump` of `product` first anyway before the first run that writes rows (phase 6).
+- [x] `golive.py`: tables `golive_settings` (one row: `share`, `intents[]`, `on`, `changed_at`) and `golive_chats`; `group_of(visitor_id, share)` from a keyed hash of the visitor id into 10,000 buckets, so the group never changes, and widening 5 % -> 25 % only adds visitors to the assistant group, never removes one.
+- [x] `FakeGoLiveStore` with the same interface (as `FakeShadowStore`); `GoLiveStore` over PostgreSQL. Every row has a `simulated` flag and `sim_day`.
+- [x] Fast tests: same id -> same group every time; about 5 % of 10,000 ids; 25 % is a superset of 5 %; off or an intent not live -> "person"; settings read at every request (no cache, so no deploy).
+- [x] Check: fast tests pass. Tables are new, so no restore point; take a `pg_dump` of `product` first anyway before the first run that writes rows (phase 6).
 
 ## Phase 2 - the chat service routes by group (items 1, Limits)
 - [ ] `ChatIn` gets `visitor_id` (and `simulated`, default false). New chat: switch off or intent not live -> hand off within the request via `handoff.open_case`; control -> the live queue (decide in code whether `create_case` or the interaction POST is right, one helper in `servicenow.py`); assistant group -> today's `_chat`.
