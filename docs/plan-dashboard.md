@@ -72,10 +72,11 @@ and a way to mark answers. Reading the code showed four things the brief only hi
 **Check:** `cd widget && npx tsc -b` and `npm run build`. I open the page in the browser against the local chat service with the fake data, screenshot it, and mark one chat. **Stop.**
 
 ## Phase 8 - retention, notes, ticks (offline)
-- [ ] `retention.py`: the 90-day purge also covers `shadow_chats` and the marks of the purged numbers (read `retention.py` first; a test with the fake store). The first real run deletes rows, so before it I stop and you take a `pg_dump` of the `product` database; the code itself deletes nothing until run.
-- [ ] `docs/quick-fixes.md`: self-declared names on marks; sample cost of the extra `classify` call per shadow chat; old rows stay unclassified.
-- [ ] README: a "Pilot page" section (address, what it shows, who may open it).
-- [ ] Tick this plan with what was seen.
+- [x] `retention.py`: the 90-day purge also covers `shadow_chats` and the marks of the purged numbers (read `retention.py` first; a test with the fake store). The first real run deletes rows, so before it I stop and you take a `pg_dump` of the `product` database; the code itself deletes nothing until run.
+- [x] `docs/quick-fixes.md`: self-declared names on marks; sample cost of the extra `classify` call per shadow chat; old rows stay unclassified.
+- [x] README: a "Pilot page" section (address, what it shows, who may open it).
+- [x] Tick this plan with what was seen.
+- Seen: `ShadowStore.delete_before` / `FakeShadowStore.delete_before` and `retention.purge_shadow` (same 90-day rule on `opened_at`, marks deleted first); `python retention.py` now calls both. Fast tests 836 passed. Nothing was run against PostgreSQL: the first real run waits for your `pg_dump`.
 **Check:** `python -m pytest -q -m "not live"`, ruff, mypy, `npx tsc -b`; pre-commit is not skipped. **Stop.**
 
 ## Rules for the whole plan

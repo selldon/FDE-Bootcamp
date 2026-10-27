@@ -150,3 +150,21 @@ def test_after_a_restart_her_rows_are_still_found_by_hash(outbox, fake_traces, s
     client.post("/erase/start", json={"email": MAYA})
     client.post("/erase/check", json={"email": MAYA, "code": code_for(outbox)})
     assert fake_traces.rows == [] and fake_traces.erasures[0]["rows_deleted"] == 1
+
+
+def shadow_chat(number, days_old):
+    return {"number": number, "opened_at": NOW - timedelta(days=days_old), "opened_for": "x", "message": "m",
+            "agent_reply": "r", "answered_at": NOW}
+
+
+def test_shadow_chats_follow_the_same_rule_and_take_their_marks_with_them():
+    from shadow import FakeShadowStore
+    store = FakeShadowStore()
+    for number, days in (("a", 89), ("b", 90), ("c", 91)):
+        store.save(shadow_chat(number, days))
+        store.mark(number, "Lena", "same")
+    store.mark("c", "Marco", "worse")
+    assert retention.purge_shadow(now=NOW, store=store) == 1
+    assert sorted(store.rows) == ["a", "b"]
+    assert sorted(m["number"] for m in store.marks()) == ["a", "b"]
+    assert retention.purge_shadow(now=NOW, store=store) == 0

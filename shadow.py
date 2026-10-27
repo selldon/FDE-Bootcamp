@@ -180,6 +180,13 @@ class ShadowStore:
                 (number,) if number is not None else ())
             return [dict(zip(MARK_FIELDS, r, strict=True)) for r in cur]
 
+    def delete_before(self, cutoff):
+        """Delete the chats opened before `cutoff` and the marks of those chats; return the number of chats."""
+        with self._connect() as conn:
+            conn.execute(sql.SQL("DELETE FROM {m} WHERE number IN (SELECT number FROM {t} WHERE opened_at < %s)").format(
+                m=self.marks_table, t=self.table), (cutoff,))
+            return conn.execute(sql.SQL("DELETE FROM {t} WHERE opened_at < %s").format(t=self.table), (cutoff,)).rowcount
+
     def sample(self, n, day):
         """Up to n unmarked chats that have an agent reply, in the order of md5(number || day)."""
         with self._connect() as conn:
@@ -240,6 +247,12 @@ class FakeShadowStore:
     def marks(self, number=None):
         found = [dict(m) for m in self.mark_rows.values() if number is None or m["number"] == number]
         return sorted(found, key=lambda m: (m["marked_at"], m["number"], m["marker"]))
+
+    def delete_before(self, cutoff):
+        gone = {n for n, r in self.rows.items() if r["opened_at"] < cutoff}
+        self.rows = {n: r for n, r in self.rows.items() if n not in gone}
+        self.mark_rows = {k: m for k, m in self.mark_rows.items() if k[0] not in gone}
+        return len(gone)
 
     def sample(self, n, day):
         marked = {m["number"] for m in self.mark_rows.values()}

@@ -132,6 +132,21 @@ in a log. No port is open to the internet and there is no SSH: commands go throu
 - **Cost:** the server runs only while we work on it, a few cents an hour. A person ends it: [`docs/teardown.md`](docs/teardown.md) lists the
   commands in order and what each removes.
 
+## Pilot page
+
+Shadow mode answers every new live chat into `shadow_chats`; the pilot page is where Lena and Marco read the result.
+
+- **Address:** `/pilot` on the widget. Locally `http://localhost:5173/pilot`; on the server port 8080, reached from the server
+  itself (there is no public address yet).
+- **What it shows:** the totals split by intent, market and action (every table adds up to one total; chats without an intent
+  or tokens are listed as "unclassified" / "unpriced", never dropped), the cost per chat, three plain sentences (where we are
+  against the 50% goal, what it costs, how sure we are), and a sample of chats to mark: same, better, worse or wrong (and
+  whether a wrong answer sounded sure). The numbers come from code and SQL; the page makes no model call.
+- **Who may open it:** anyone on DemoStore's internal network. There is no login; the name typed on the page is stored with each
+  mark but is not checked. Customer emails never reach the page and card numbers are masked.
+- **Retention:** the daily `python retention.py` also deletes `shadow_chats` older than 90 days and the marks of those chats.
+  Before the first real run take a `pg_dump` of the `product` database.
+
 ## Checks on every pull request
 
 Every change reaches `main` through a pull request, and GitHub runs the checks itself (`.github/workflows/`). A hook skipped on
