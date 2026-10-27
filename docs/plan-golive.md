@@ -9,6 +9,7 @@ mypy, tsc) or a named command. Tick boxes as tasks are done. One phase at a time
 - **Table**: a new `golive_chats` table (additive, `CREATE TABLE IF NOT EXISTS`, like `shadow.tables()`). `shadow_chats` and the shadow pilot page stay as they are.
 - **Drill**: run the real code first on the night with no carrier file. No planted fault. If it gives yesterday's status, the alert fires and we do the full off -> test-first fix -> replay -> on cycle. If it holds, we record that and still time an off/on switch drill.
 - **Outcomes**: control outcomes and ratings come from seeded rules in one `sim_assumptions.json` (repeat contacts are computed from the old ServiceNow chats). No extra model calls.
+- **Signed margins (Lena)**: unanswered at most 3 points worse than control; rating at most 0.2 lower (1-5 scale).
 - **Customers**: seeded scripts from the profiles (a question + 1-3 follow-ups, true order status known). Only the assistant group's turns call Claude, through `/chat` and `llm.py`.
 
 ## Where we start (read)
@@ -44,7 +45,7 @@ Phases 1-5 run one at a time, stopping after each. Phases 6-8 (the two weeks, th
 
 ## Phase 4 - the numbers and the rollback lines (items 3, signed lines)
 - [ ] `golive.numbers(store, now)` in the style of `pilot.numbers`: per group resolved, handed off, left without an answer, repeat contacts in 7 days, rating, cost per contact; the difference with its 95 % interval (reuse `pilot.wilson`; difference interval for two proportions; a mean difference for rating) and both sample sizes.
-- [ ] `lines(data)`: confidently wrong > 1/100, judged on the day's sample (the alert) and also over the whole week so far (a day of ~10 chats cannot measure 1 in 100; both are shown on the page, the week with its interval and n); hand-off < 95/100 of chats that need a person; unanswered and rating worse than control by more than the margin (margin in `sim_assumptions.json`, to confirm with Lena before the run); "all hold for two weeks" check. No model call.
+- [ ] `lines(data)`: confidently wrong > 1/100, judged on the day's sample (the alert) and also over the whole week so far (a day of ~10 chats cannot measure 1 in 100; both are shown on the page, the week with its interval and n); hand-off < 95/100 of chats that need a person; chats left without an answer more than 3 percentage points worse than control, or the rating more than 0.2 lower than control on the 1-5 scale (margins signed by Lena; kept as constants in `sim_assumptions.json`, tests pin them); "all hold for two weeks" check. No model call.
 - [ ] Fast tests: each line at, just below and just above its limit; a group with 0 chats gives "not enough yet", never a division error.
 - [ ] Check: fast tests pass.
 
