@@ -1,6 +1,7 @@
 # Pilot demo for the steering committee (5 minutes)
 
-Who watches: Lena Brandt (sponsor), Marco Rossi (support), Ravi Menon (systems), Hannah Weber (business customers).
+Who watches: Lena Brandt (sponsor), Marco Rossi (support), the Finance and Returns Controller (money), Ravi Menon
+(systems), Hannah Weber (business customers).
 What they decide after it: whether the pilot goes live for a small share of visitors.
 
 ## Before the meeting
@@ -15,7 +16,7 @@ What they decide after it: whether the pilot goes live for a small share of visi
 1. **Where is my order (Lena: fewer waiting customers).** Maya asks about DS-20417. The assistant asks for the
    one-time code first, then gives the status and the date from the carrier. Say: the date comes from a tool, never
    from the model; with old carrier news it would not give a date at all.
-2. **A return (Marco: the same answer for the same case, no money moves alone).** Ethan wants to return his headset
+2. **A return (Marco: the same answer for the same case; the Controller: no money moves alone).** Ethan wants to return his headset
    from DS-20531. The assistant checks the window and the item, shows the amount and asks. He says yes. A refund
    draft appears as a task on the approvals page. Say: nothing is paid; a person approves.
 3. **A person, at once (Marco: no angry customer stuck with a bot).** "Third time I am writing. I want a real
