@@ -35,8 +35,8 @@ and a way to mark answers. Reading the code showed four things the brief only hi
 **Check:** `git status` is clean and the commit holds only that file.
 
 ## Phase 1 - one gate for both (offline)
-- [ ] `intent.py`: move `COVERED` here and add `handoff_reason(intent) -> str | None` returning `needs_human`, `damaged`, `not_covered` or None. `app.py` calls it (same order, same reason strings, same `open_case` labels).
-- [ ] Test: each reason, the order when several apply, None for a covered intent. The existing `test_chat.py` passes unchanged.
+- [x] `intent.py`: move `COVERED` here and add `handoff_reason(intent) -> str | None` returning `needs_human`, `damaged`, `not_covered` or None. `app.py` calls it (same order, same reason strings, same `open_case` labels).
+- [x] Test: each reason, the order when several apply, None for a covered intent. The existing `test_chat.py` passes unchanged.
 **Check:** `python -m pytest -q -m "not live"`, ruff, mypy. **Stop.**
 
 ## Phase 2 - the worker stores what the page needs (offline)

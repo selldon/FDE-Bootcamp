@@ -33,3 +33,22 @@ Message: """
 def classify(message, model=MODEL, usage=None):
     """Ask Claude what one customer message is about."""
     return ask(PROMPT + message, SCHEMA, model, usage)
+
+
+# The only intents this build answers; "other" (greetings, follow-ups) still
+# goes to the model, which hands off by itself when it must.
+COVERED = {"order_status", "return_request", "policy_question", "other"}
+
+
+def handoff_reason(intent) -> str | None:
+    """Why a person must take this message (needs_human, damaged, not_covered), or None.
+
+    One gate for the chat service and the shadow worker; the order is fixed.
+    """
+    if intent["needs_human"]:
+        return "needs_human"
+    if intent["damaged"]:
+        return "damaged"
+    if intent["intent"] not in COVERED:
+        return "not_covered"
+    return None

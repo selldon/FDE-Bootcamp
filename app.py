@@ -13,15 +13,11 @@ import tools
 import traces
 import verify
 from agent import OFFER_REPLY, answer
-from intent import Intent, classify
+from intent import Intent, classify, handoff_reason
 from masking import mask_cards
 
 GREETING = ("Hi, I am DemoStore's AI assistant. "
             "You can ask for a person at any time.")
-
-# The only intent this build answers; "other" (greetings, follow-ups) still
-# goes to the model, which hands off by itself when it must.
-COVERED = {"order_status", "return_request", "policy_question", "other"}
 
 app = FastAPI(title="DemoStore chat")
 SESSIONS: dict[str, dict] = {}
@@ -156,12 +152,11 @@ def _chat(body: ChatIn, session_id: str, session: dict) -> ChatOut:
         if declined:
             ctx.failed += 1  # decision 6: a declined or unclear reply to an offer is a failed try
         intent = classify(message)
-        damaged = intent["damaged"]
-        if intent["needs_human"] or damaged or intent["intent"] not in COVERED:
+        reason = handoff_reason(intent)
+        if reason:
             # B4, B5: decided here, so no wording of the message can talk the
             # model out of it. Damage on arrival is a person's case (replay C25); agent.answer keeps a
             # keyword rule as a backstop for the turns that get past the flag.
-            reason = "needs_human" if intent["needs_human"] else "damaged" if damaged else "not_covered"
             reply = handoff.open_case(ctx, intent["summary"], chat_so_far, reason, reason.replace("_", " "))
         elif ctx.failed >= handoff.FAILED_LIMIT:
             reply = handoff.open_case(ctx, None, chat_so_far, "failed_tries", "two failed tries")
