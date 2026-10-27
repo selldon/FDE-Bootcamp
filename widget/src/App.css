@@ -125,3 +125,44 @@ input {
   color: white;
   cursor: pointer;
 }
+
+/* The pilot page: plain tables. */
+.pilot {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 16px 20px 60px;
+  background: white;
+  line-height: 1.4;
+}
+
+.pilot table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0 20px;
+}
+
+.pilot th,
+.pilot td {
+  border: 1px solid #ccd3dc;
+  padding: 5px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.pilot caption {
+  display: none;
+}
+
+.pilot .estimate {
+  background: #fff6d6;
+  padding: 8px 10px;
+}
+
+.pilot .pair {
+  border-top: 2px solid #1f3a5f;
+  margin-top: 18px;
+}
+
+.pilot button {
+  margin-right: 6px;
+}

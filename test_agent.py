@@ -1,9 +1,11 @@
 """Fast tests of the agent loop with a scripted fake model."""
 import json
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
 import refunds
+import tools
 from agent import MAX_ROUNDS, answer
 from conftest import reply, text, tool_use, unwrap
 from handoff import HAND_OFF_REPLY
@@ -25,6 +27,45 @@ def test_tool_use_then_final_text(fake_model):
     assert (result.action, result.rounds) == ("give_status", 2)
     assert len(model.calls) == 2
     assert tool_result(model, 1)["status"] == "shipped"
+
+
+def stale(monkeypatch):
+    """30h01m after the start of the news date 2026-10-21: the tools drop the date and set offer_person."""
+    monkeypatch.setattr(tools, "clock", lambda: datetime(2026, 10, 21, tzinfo=UTC) + timedelta(hours=30, minutes=1))
+
+
+def test_a_status_without_a_date_is_flagged_from_the_tool_result(fake_model, monkeypatch):
+    stale(monkeypatch)
+    model = fake_model(
+        reply(tool_use("find_order", {"number": "DS-20417"})),
+        reply(text("Your order has shipped.")))  # the words say nothing about a date or a person: the tool decides
+    result = answer("Where is DS-20417?", refunds.Context(MAYA))
+    assert tool_result(model, 1)["offer_person"] is True
+    assert (result.action, result.no_date) == ("give_status", True)
+
+
+def test_the_parcel_tool_without_a_date_flags_it_too(fake_model, monkeypatch):
+    stale(monkeypatch)
+    fake_model(
+        reply(tool_use("delivery_status", {"tracking": "EP-7718204"})),
+        reply(text("It is at the Leeds depot.")))
+    assert answer("Where is the parcel?", refunds.Context(MAYA)).no_date is True
+
+
+def test_a_dated_status_is_not_flagged_whatever_the_reply_says(fake_model):
+    fake_model(
+        reply(tool_use("find_order", {"number": "DS-20417"})),
+        reply(text("It shipped. I can pass this chat to a person if you like.")))  # offering a person is only words
+    result = answer("Where is DS-20417?", refunds.Context(MAYA))
+    assert (result.action, result.no_date) == ("give_status", False)
+
+
+def test_a_failed_lookup_is_not_a_status_and_not_flagged(fake_model):
+    fake_model(
+        reply(tool_use("find_order", {"number": "DS-20417"})),
+        reply(text("Please enter your one-time code first.")))
+    result = answer("Where is DS-20417?", refunds.Context(None))
+    assert (result.action, result.no_date) == ("reply", False)
 
 
 def test_usage_is_collected_per_call(fake_model):

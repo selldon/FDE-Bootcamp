@@ -1,6 +1,5 @@
 """The middleware gives an order only to the customer who owns it."""
 from fastapi.testclient import TestClient
-
 from middleware import app
 
 client = TestClient(app)

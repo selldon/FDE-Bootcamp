@@ -1,27 +1,27 @@
 """The chat service: the widget sends a message, we reply."""
 import uuid
 from datetime import UTC, datetime
+from functools import lru_cache
+from typing import Annotated, Literal
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel
 
 import handoff
+import pilot
 import policy_answer
 import refunds
 import tools
 import traces
 import verify
 from agent import OFFER_REPLY, answer
-from intent import Intent, classify
+from intent import Intent, classify, handoff_reason
 from masking import mask_cards
+from shadow import ShadowStore
 
 GREETING = ("Hi, I am DemoStore's AI assistant. "
             "You can ask for a person at any time.")
-
-# The only intent this build answers; "other" (greetings, follow-ups) still
-# goes to the model, which hands off by itself when it must.
-COVERED = {"order_status", "return_request", "policy_question", "other"}
 
 app = FastAPI(title="DemoStore chat")
 SESSIONS: dict[str, dict] = {}
@@ -156,12 +156,11 @@ def _chat(body: ChatIn, session_id: str, session: dict) -> ChatOut:
         if declined:
             ctx.failed += 1  # decision 6: a declined or unclear reply to an offer is a failed try
         intent = classify(message)
-        damaged = intent["damaged"]
-        if intent["needs_human"] or damaged or intent["intent"] not in COVERED:
+        reason = handoff_reason(intent)
+        if reason:
             # B4, B5: decided here, so no wording of the message can talk the
             # model out of it. Damage on arrival is a person's case (replay C25); agent.answer keeps a
             # keyword rule as a backstop for the turns that get past the flag.
-            reason = "needs_human" if intent["needs_human"] else "damaged" if damaged else "not_covered"
             reply = handoff.open_case(ctx, intent["summary"], chat_so_far, reason, reason.replace("_", " "))
         elif ctx.failed >= handoff.FAILED_LIMIT:
             reply = handoff.open_case(ctx, None, chat_so_far, "failed_tries", "two failed tries")
@@ -181,6 +180,54 @@ def _chat(body: ChatIn, session_id: str, session: dict) -> ChatOut:
     ]
     return ChatOut(session_id=session_id, reply=reply,
                    intent=intent)
+
+
+# ---- the pilot page: reads the shadow store, writes only marks -------------------------------------------------
+
+SAMPLE_SIZE = 10
+PUBLIC_FIELDS = ("number", "opened_at", "market", "intent", "action")  # never `opened_for`: that is the customer's email
+MASKED_FIELDS = ("message", "answer", "agent_reply")  # masked again here: rows from before the masking may hold a card
+
+
+@lru_cache
+def pilot_store() -> ShadowStore:
+    return ShadowStore()
+
+
+PilotStore = Annotated[ShadowStore, Depends(pilot_store)]  # tests replace pilot_store with a FakeShadowStore
+
+
+class MarkIn(BaseModel):
+    number: str
+    marker: str
+    verdict: Literal["same", "better", "worse", "wrong"]
+    sounded_sure: bool = False
+
+
+def public_chat(row: dict) -> dict:
+    """A stored chat as the page may see it: the listed fields only, texts masked."""
+    return {**{f: row.get(f) for f in PUBLIC_FIELDS},
+            **{f: mask_cards(row[f]) if row.get(f) else row.get(f) for f in MASKED_FIELDS}}
+
+
+@app.get("/api/pilot")
+def pilot_numbers(store: PilotStore) -> dict:
+    data = pilot.numbers(store, datetime.now(UTC))
+    return {**data, "sentences": pilot.sentences(data)}
+
+
+@app.get("/api/pilot/sample")
+def pilot_sample(store: PilotStore) -> list[dict]:
+    return [public_chat(r) for r in store.sample(SAMPLE_SIZE, datetime.now(UTC).date())]
+
+
+@app.post("/api/pilot/mark")
+def pilot_mark(body: MarkIn, store: PilotStore) -> dict:
+    try:
+        store.mark(body.number, body.marker, body.verdict, body.sounded_sure)
+    except ValueError as err:  # an empty name, sounded_sure without wrong, a number we do not have
+        raise HTTPException(status_code=422, detail=str(err)) from err
+    return next(m for m in store.marks(body.number) if m["marker"] == body.marker.strip())
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 """Fast tests of the shadow store: no network, no database."""
+import hashlib
 import re
 import urllib.parse
 from datetime import UTC, datetime, timedelta
@@ -8,6 +9,7 @@ from psycopg import sql
 
 import config
 import drafts
+import handoff
 import refunds
 import servicenow
 import shadow
@@ -62,13 +64,92 @@ def test_last_is_newest_first_and_limited():
 def test_the_table_holds_only_the_chat():
     # no session id, customer hash or other customer data: the columns are exactly these
     assert shadow.FIELDS == ("number", "opened_at", "opened_for", "market", "message", "intent", "action", "answer",
-                             "would_have", "state", "agent_reply", "answered_at")
-    [statement] = shadow.tables("shadow_chats")
-    text = statement.as_string(None) if isinstance(statement, sql.Composable) else str(statement)
-    assert set(re.findall(r"^\s*(?:\(|)\s*(\w+) (?:text|timestamptz|jsonb)", text.replace(", ", ",\n"), re.MULTILINE)) == set(shadow.FIELDS)
+                             "would_have", "state", "agent_reply", "answered_at", "input_tokens", "output_tokens")
+    create, *alters = shadow.tables("shadow_chats")
+    text = create.as_string(None) if isinstance(create, sql.Composable) else str(create)
+    columns = set(re.findall(r"^\s*(?:\(|)\s*(\w+) (?:text|timestamptz|jsonb)", text.replace(", ", ",\n"), re.MULTILINE))
+    added = {re.search(r"ADD COLUMN IF NOT EXISTS \"?(\w+)\"? int", a.as_string(None)).group(1) for a in alters}
+    assert columns | added == set(shadow.FIELDS) and added == {"input_tokens", "output_tokens"}
     row = FakeShadowStore()
     row.save(chat("INT001", session_id="s1", customer_hash="abc"))
     assert set(row.rows["INT001"]) == set(shadow.FIELDS)
+
+
+# ---- marks and the sample ---------------------------------------------------------------------------------------
+
+
+def store_with(*numbers, replied=True):
+    store = FakeShadowStore()
+    for i, number in enumerate(numbers):
+        store.save(chat(number, minutes=i, **({"agent_reply": "Sent today."} if replied else {})))
+    return store
+
+
+def test_a_person_has_one_mark_per_chat_and_marking_again_moves_the_time():
+    store = store_with("INT001")
+    store.mark("INT001", "Lena", "same", now=T0)
+    store.mark("INT001", "Lena", "worse", now=T0 + timedelta(hours=1))
+    store.mark("INT001", "Marco", "better", now=T0 + timedelta(hours=2))
+    marks = store.marks("INT001")
+    assert [(m["marker"], m["verdict"]) for m in marks] == [("Lena", "worse"), ("Marco", "better")]
+    assert marks[0]["marked_at"] == T0 + timedelta(hours=1)
+    assert store.marks("INT002") == [] and len(store.marks()) == 2
+
+
+def test_sounded_sure_goes_only_with_wrong():
+    store = store_with("INT001")
+    for verdict in ("same", "better", "worse"):
+        with pytest.raises(ValueError, match="sounded_sure"):
+            store.mark("INT001", "Lena", verdict, sounded_sure=True)
+    store.mark("INT001", "Lena", "wrong", sounded_sure=True)
+    assert store.marks("INT001")[0]["sounded_sure"] is True
+    store.mark("INT001", "Lena", "wrong")  # re-marked without the tick: the tick goes
+    assert store.marks("INT001")[0]["sounded_sure"] is False
+
+
+def test_rejected_marks_store_nothing():
+    store = store_with("INT001")
+    with pytest.raises(ValueError, match="no chat"):
+        store.mark("INT999", "Lena", "same")
+    for name in ("", "   ", None):
+        with pytest.raises(ValueError, match="name"):
+            store.mark("INT001", name, "same")
+    with pytest.raises(ValueError, match="verdict"):
+        store.mark("INT001", "Lena", "great")
+    assert store.marks() == []
+
+
+def test_the_name_is_stored_without_surrounding_spaces():
+    store = store_with("INT001")
+    store.mark("INT001", "  Lena ", "same")
+    store.mark("INT001", "Lena", "better")
+    assert [(m["marker"], m["verdict"]) for m in store.marks()] == [("Lena", "better")]
+
+
+def test_sample_leaves_out_chats_without_an_agent_reply_and_marked_ones():
+    store = store_with("INT001", "INT002", "INT003")
+    store.save(chat("INT004", minutes=9))  # no agent reply yet
+    store.mark("INT002", "Lena", "same")
+    numbers = {r["number"] for r in store.sample(10, T0.date())}
+    assert numbers == {"INT001", "INT003"}
+    assert len(store.sample(1, T0.date())) == 1
+
+
+def test_sample_is_the_same_within_a_day_and_another_the_next():
+    store = store_with(*[f"INT{i:03}" for i in range(30)])
+    today, tomorrow = T0.date(), T0.date() + timedelta(days=1)
+    first = [r["number"] for r in store.sample(10, today)]
+    assert first == [r["number"] for r in store.sample(10, today)]
+    assert first != [r["number"] for r in store.sample(10, tomorrow)]
+    assert first == [r["number"] for r in store.sample(30, today)][:10]
+
+
+def test_the_marks_table_sql():
+    (create,) = shadow.marks_tables("shadow_marks")
+    text = create.as_string(None)
+    assert "PRIMARY KEY (number, marker)" in text and "CHECK (verdict = 'wrong' OR NOT sounded_sure)" in text
+    assert "'same', 'better', 'worse', 'wrong'" in text
+    assert shadow.sample_key("INT001", T0.date()) == hashlib.md5(b"INT0012026-10-26").hexdigest()
 
 
 # ---- the worker -------------------------------------------------------------------------------------------------
@@ -129,6 +210,19 @@ def nothing_real(monkeypatch):
     yield
     refunds.set_systems()
     traces.set_sink(None)
+
+
+COVERED_INTENT = {"summary": "Where is the order", "intent": "order_status", "order_number": "DS-1",
+                  "needs_human": False, "damaged": False, "language": "en"}
+
+
+@pytest.fixture(autouse=True)
+def fake_classifier(monkeypatch):
+    """No test here calls Claude: the worker's classifier is replaced, and it records a trace like `llm.ask` does."""
+    def classify(message):
+        traces.record("ask", "m", message, "{}", type("U", (), {"input_tokens": 100, "output_tokens": 10})(), None)
+        return dict(COVERED_INTENT)
+    monkeypatch.setattr(shadow, "real_classifier", classify)
 
 
 def noop_sleep(_):
@@ -236,3 +330,65 @@ def test_the_message_and_the_reply_are_cut_from_the_transcript():
     assert shadow.customer_message("Maya Ross: Where is it?\nAgent: Soon.") == "Where is it?"
     assert shadow.agent_reply("Maya Ross: Where is it?\nAgent: Soon.") == "Soon."
     assert shadow.agent_reply("Maya Ross: Where is it?") is None
+
+
+# ---- the gate and what is stored ----------------------------------------------------------------------------------
+
+
+def answer_one(message, classifier=None, answerer=None):
+    chat_row = snow_chat(1, 5)
+    chat_row["transcript"] = f"Maya Ross: {message}"
+    answerer = answerer or Answerer()
+    return shadow.shadow_answer(chat_row, answerer, classifier), answerer
+
+
+def test_the_row_records_whether_the_tools_left_the_date_out():
+    row, _ = answer_one("Where is DS-20417?")
+    assert row["would_have"]["no_date"] is False  # recorded, so the page can tell it from a row stored before
+    dateless = lambda message, ctx: Result("Shipped.", "give_status", 2, no_date=True)
+    row, _ = answer_one("Where is DS-20417?", answerer=dateless)
+    assert row["action"] == "give_status" and row["would_have"]["no_date"] is True
+
+
+def test_a_covered_chat_stores_its_intent_and_the_tokens_of_every_call():
+    class Both(Answerer):
+        def __call__(self, message, ctx):
+            traces.record("chat", "m", message, "r", type("U", (), {"input_tokens": 50, "output_tokens": 5})(), None)
+            return super().__call__(message, ctx)
+
+    row, answerer = answer_one("Where is DS-1?", answerer=Both())
+    assert row["intent"] == "order_status" and row["action"] == "reply" and row["answer"] == "It ships Monday."
+    assert (row["input_tokens"], row["output_tokens"]) == (150, 15)  # the classify call and the answer call
+    assert len(answerer.seen) == 1
+
+
+@pytest.mark.parametrize("flags, reason", [({"needs_human": True}, "needs_human"), ({"damaged": True}, "damaged"),
+                                           ({"intent": "product_question"}, "not_covered")])
+def test_a_gated_chat_is_a_hand_off_and_answer_is_not_called(flags, reason):
+    intent = {**COVERED_INTENT, **flags}
+    row, answerer = answer_one("I want a person", classifier=lambda m: intent)
+    assert answerer.seen == [] and row["action"] == "hand_off" and row["intent"] == intent["intent"]
+    assert row["answer"] == handoff.HAND_OFF_REPLY  # the live text, from open_case against the fake ServiceNow
+    assert len(row["would_have"]["cases"]) == 1
+
+
+def test_a_card_number_is_stored_masked_and_never_reaches_the_model():
+    seen = []
+
+    def classifier(message):
+        seen.append(message)
+        return dict(COVERED_INTENT)
+
+    class Echo(Answerer):
+        def __call__(self, message, ctx):
+            super().__call__(message, ctx)
+            return Result(f"You wrote {message}", "reply", 1)
+
+    row, answerer = answer_one("Charge 4111 1111 1111 1111 please", classifier, Echo())
+    assert "4111" not in row["message"] and "4111" not in row["answer"]
+    assert "4111" not in seen[0] and "4111" not in answerer.seen[0][0]
+
+
+def test_a_chat_without_any_model_call_has_no_tokens_not_zero():
+    row, _ = answer_one("hi", classifier=lambda m: dict(COVERED_INTENT))  # a fake that records no trace
+    assert row["input_tokens"] is None and row["output_tokens"] is None

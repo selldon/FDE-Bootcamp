@@ -86,6 +86,7 @@ class Result:
     action: str  # "hand_off", "give_status" or "reply"
     rounds: int
     policy: bool = False  # policy_answer ran in this turn
+    no_date: bool = False  # a status tool left the date out (offer_person): decided from the tool result, not the words
 
 
 def run_tool(name, args, ctx):
@@ -110,6 +111,7 @@ def answer(message, ctx, usage=None, history=()):
     # The case holds the chat as the customer saw it, not tool traffic.
     chat_so_far = [m for m in messages if isinstance(m["content"], str)]
     gave_status = False
+    no_date = False
     policy_results = []
     if handoff.damaged_on_arrival(chat_so_far):  # decided here, before the model: it must never offer money for damage
         ctx.offer = None
@@ -122,7 +124,7 @@ def answer(message, ctx, usage=None, history=()):
             reply = response.content[-1].text
             if policy_results:
                 reply = check_policy_reply(reply, policy_results)
-            return Result(reply, action, rounds, bool(policy_results))
+            return Result(reply, action, rounds, bool(policy_results), no_date)
         messages.append({"role": "assistant",
                          "content": response.content})
         results = []
@@ -140,6 +142,7 @@ def answer(message, ctx, usage=None, history=()):
                 ctx.failed += 1
             if block.name not in ("prepare_return", "policy_answer"):
                 gave_status = gave_status or "error" not in result
+                no_date = no_date or bool(result.get("offer_person"))
             results.append({"type": "tool_result",
                             "tool_use_id": block.id,
                             "content": data_block(result)})

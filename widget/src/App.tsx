@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Pilot from "./Pilot";
 
 interface Message {
   from: "customer" | "assistant" | "error";
@@ -18,6 +19,11 @@ interface VerifyReply {
 type Step = "email" | "code" | "done";
 
 export default function App() {
+  if (location.pathname === "/pilot") return <Pilot />;
+  return <Chat />;
+}
+
+function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [sessionId, setSessionId] = useState<string | null>(null);

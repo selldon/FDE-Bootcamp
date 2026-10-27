@@ -2,9 +2,8 @@
 import os
 
 import psycopg
-from dotenv import load_dotenv
-
 from approvals import decided_tasks
+from dotenv import load_dotenv
 
 load_dotenv()
 TABLE = """CREATE TABLE IF NOT EXISTS events (

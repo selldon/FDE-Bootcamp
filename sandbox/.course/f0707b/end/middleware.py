@@ -3,12 +3,12 @@ from datetime import date
 from decimal import Decimal
 
 import uvicorn
+from approvals import open_task
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
-
-from approvals import open_task
-from ledgerline import connection
 from staging import write_draft
+
+from ledgerline import connection
 
 app = FastAPI(title="Ledgerline middleware")
 connection.call_timeout = 2000
