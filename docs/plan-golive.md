@@ -81,6 +81,26 @@ Phases 1-5 run one at a time, stopping after each. Phases 6-8 (the two weeks, th
 - [ ] Write down how long the assistant was off, in `docs/drill-notes.md` (times, cause, test, replay result).
 - [ ] Check: the new test fails before the fix and passes after; fast tests pass; `python replay.py` result recorded; the page shows the alert, then clears.
 
+### Phase 7 - the night with no carrier file, planned (27 Oct 2026) - PROPOSED, decisions D1-D4 to confirm before the run
+**Restore point (done):** `backups/product-2026-10-27-before-drill/` - all 10 tables of `product` (row counts checked: `golive_chats` 2,453, `traces` 1,007, `orders` 33, `parcels` 33, ...), `CLOCK_AND_STATE.json`, and copies of the simulator log, `cases.jsonl`, `outbox.jsonl`. Noted there: wall clock 2026-10-27 12:53 UTC; the service pinned to 2026-10-22T05:00:00+00:00; the switch on at 5 % for `order_status`; git `2e2e5bc`. It is a data-level CSV dump (`pg_dump` is not installed here). The ServiceNow stand-in cannot be backed up from here: the drill's hand-offs will add cases to it.
+
+**The night.** The carrier's file for the 23rd never comes. The SFTP server already holds only `carrier-2026-10-20/21/22.csv`, so nothing is added or removed. The order store keeps the load of the 22nd. The service's clock is pinned to the morning of the 23rd.
+
+**What the real code does (read from the code, not yet run).** `tools._stale` counts a parcel's news age from the start of the news day and calls it stale beyond 30 hours; delivered parcels are final. News dated the 22nd turns stale at **06:00 UTC on the 23rd**. At 05:00 UTC it is 29 hours old: 7 of the 8 undelivered parcels are still fresh (the 8th has news from the 15th and is already stale), the date is not removed, and the pipeline's own check stays silent as well. After 06:00 UTC all 8 are stale: the tools drop the date and set `offer_person`. So at the usual morning pin the assistant is expected to give the 22nd's status as current. That would be the finding of the drill, not a planted fault.
+
+**What the service needs.**
+1. One restart with `DEMOSTORE_NOW=2026-10-23T05:00:00+00:00` (D1). Nothing else: no reload, no new file, no schema change; the `golive` tables exist, the switch stays on. On the deployed server the pin lives in `deploy/server.env`.
+2. Do not run `python pipeline.py` against the live SFTP with that pin: at 05:00 it would re-load the 22nd file and stamp it as loaded on the 23rd; after 06:00 it stops with "30.0 hours old" and writes nothing.
+3. After the fix, one more restart with the same pin for the clearing day (D4).
+
+**What the simulator needs (code, test first, after the decisions).** A drill day beyond day 14 with its own traffic, its own cap ceiling and its own truth; `golive.numbers` must report days after 14 as drill days and keep them out of the week and two-week window, otherwise the window slides to days 2-15 and the Phase 8 numbers are mixed with a day that is broken on purpose.
+
+**Decisions.**
+- **D1 - the pin.** 05:00 UTC on the 23rd (recommended: the usual morning; predicted to fail) or after 06:00 UTC (predicted to hold: the guard the unit tests already cover).
+- **D2 - the traffic.** The default generator gives day 15 only 1 order-status chat on an order that is not delivered, so it would test almost nothing (14-day average: 46 %). Proposed: 12 assistant conversations, all order status, 9 on orders with an undelivered parcel, 3 on delivered orders as a control (the guard must leave those alone).
+- **D3 - the truth for the night.** A hidden file for the 23rd (what the carrier would have sent: some parcels moved on), kept out of the SFTP folder and used only for scoring. A reply is wrong when it states a status or date that differs from it, and a hedge ("the news is old") excuses it, as everywhere else. The partly-shipped rule and the negation rule are unchanged.
+- **D4 - the clearing day.** After the fix, day 16 under the same night, 10 assistant conversations, so the page's latest-day alert can clear. Cap: 143 used + 12 + 10 = 165 = 150 + the 15 allowed. About $0.4 per day in model calls.
+
 ## Phase 8 - the decision and the report (item 5)
 - [ ] If all lines hold for the two weeks: switch to 25 % and add `return_request` to the live intents (drafts only; the writer account's only use is still `LL_RTN_REQ_STG`).
 - [ ] `docs/week-2-report.md` from the page's numbers (script, not by hand): operator hours saved a week (resolved assistant chats x `PERSON_MINUTES`, scaled from the 5 % sample), and what 100 % would mean, with the assumptions (simulated traffic, seeded ratings, scale-up, tiny samples) said out loud.
