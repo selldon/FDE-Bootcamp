@@ -3,6 +3,7 @@
     python golive_sim.py --dry-run                 the plan (visitors, groups, model calls, cost); writes nothing, calls nothing
     python golive_sim.py --days 1-7                run sim days 1..7 against the service (live: assistant visitors call Claude)
     python golive_sim.py --refresh-repeat          compute the control group's repeat-contact rate from the old ServiceNow chats
+    python golive_sim.py --rescore                 score the stored chats again from the replies in `traces` (no model call)
 
 Each visitor has an id, a day, a question and (for "where is my order") 1-3 follow-ups, taken from the profiles in
 `data/` and the sandbox's hard profiles. The simulation knows the true status of every order. Only the assistant
@@ -12,16 +13,17 @@ its outcome is drawn from `sim_assumptions.json`. Every row written carries `"si
 At most `assistant_cap` assistant conversations in all: a day that would pass the cap is not run, and the runner says so.
 """
 import argparse
-import csv
 import json
 import random
 import re
+import shutil
 import sys
 import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import carrier
 import golive
 import llm
 import pilot
@@ -30,6 +32,7 @@ from golive import ASSISTANT, CONTROL
 HERE = Path(__file__).parent
 ASSUMPTIONS = HERE / "sim_assumptions.json"
 OUT = HERE / "data" / "golive_sim.jsonl"
+CARRIER_FOLDER = HERE / "sandbox" / "systems" / "carrier" / "upload"  # the carrier's nightly files, as on its SFTP server
 SHARE = 0.05
 ORDER_STATUS = "order_status"
 RESOLVED_OUTCOMES = ("give_status", "start_return")
@@ -61,16 +64,29 @@ def build_truth(orders, carrier):
         else:
             status = FAMILY.get(o["status"], o["status"])
         dates = {o["promised"], *(p["date"] for p in parcels)} - {None, ""}
-        truth[o["number"]] = {"status": status, "dates": sorted(dates), "customer": o["customer"]}
+        everything_delivered = len(parcels) == len(o["tracking"]) and all(p["status"] == "delivered" for p in parcels)
+        truth[o["number"]] = {"status": status, "dates": sorted(dates), "customer": o["customer"],
+                              "all_delivered": bool(parcels) and everything_delivered}
     return truth
 
 
-def load_truth(orders_path=HERE / "data" / "orders.json", carrier_path=HERE / "data" / "carrier.csv"):
+def newest_carrier(folder=CARRIER_FOLDER):
+    """(file name, rows) of the carrier's newest night, the file the service loads, with the dates as ISO strings.
+
+    The truth must come from the same night the service reads: the repo's `data/carrier.csv` is the night of the 21st, one
+    night behind the service on the morning of the 22nd, and every correct answer about that night was scored wrong."""
+    names = sorted(p.name for p in Path(folder).glob("carrier-*.csv") if carrier.NAME.match(p.name))
+    if not names:
+        raise SystemExit(f"no carrier file in {folder}: the truth cannot be built")
+    rows = carrier.parse((Path(folder) / names[-1]).read_bytes(), names[-1])
+    return names[-1], [{**r, "date": r["date"].isoformat()} for r in rows]
+
+
+def load_truth(orders_path=HERE / "data" / "orders.json", carrier_folder=CARRIER_FOLDER):
     with open(orders_path) as f:
         orders = json.load(f)
-    with open(carrier_path) as f:
-        carrier = list(csv.DictReader(f))
-    return orders, build_truth(orders, carrier)
+    _, rows = newest_carrier(carrier_folder)
+    return orders, build_truth(orders, rows)
 
 
 # ---- scoring: a status given as fact that differs from the truth, counted by code ------------------------------------
@@ -86,9 +102,13 @@ STATUS_CLAIMS = {
 # A reply that says the news is old is not a status given as fact.
 HEDGE = re.compile(r"\b(?:old|out of date|outdated|stale|cannot confirm|can't confirm|not sure|may have changed"
                    r"|might have changed|not up to date|no recent)\b", re.IGNORECASE)
+# A partly shipped order whose parcels are all delivered: "delivered" is right if the reply names the part-shipped status.
+PARTLY_NAMED = re.compile(r"\bpart(?:ly|ially)?[\s-]+shipped\b|\bpartly\b|\bpartially\b", re.IGNORECASE)
 MONTHS = {m: i for i, m in enumerate(["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov",
                                       "dec"], 1)}
-_MON = "(" + "|".join(MONTHS) + ")[a-z]*"
+# whole month words or their usual short forms - never a prefix: "Nova 32" is a monitor, not "Nov 32"
+_MON = (r"(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?"
+        r"|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b")
 ISO_DATE = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
 DAY_MONTH = re.compile(rf"\b(\d{{1,2}})(?:st|nd|rd|th)?\s+(?:of\s+)?{_MON}\b(?:,?\s+(\d{{4}}))?", re.IGNORECASE)
 MONTH_DAY = re.compile(rf"\b{_MON}\.?\s+(\d{{1,2}})(?:st|nd|rd|th)?\b(?:,?\s+(\d{{4}}))?", re.IGNORECASE)
@@ -110,6 +130,8 @@ def score_reply(reply, truth):
         return {"wrong": False, "status_wrong": False, "date_wrong": False, "claims": []}
     claims = [k for k, rx in STATUS_CLAIMS.items() if rx.search(reply)]
     allowed = {truth["status"]} | ({"on_the_way", "processing"} if truth["status"] == "partly" else set())
+    if truth["status"] == "partly" and truth.get("all_delivered") and PARTLY_NAMED.search(reply):
+        allowed.add("delivered")  # every parcel is delivered and the reply says the order still reads part shipped
     year = (truth["dates"][0] if truth["dates"] else "2026")[:4]
     stated = dates_in(reply, year)
     status_wrong = bool(claims) and not set(claims) <= allowed
@@ -339,6 +361,11 @@ def run_visitor(visitor, gateway):
 def run_day(day, visitors, gateway, store, truth, assumptions, seed):
     """One sim day against the service. Returns the rows of the day (all `simulated: true`)."""
     sessions = [(v, *run_visitor(v, gateway)) for v in visitors]
+    return outcome_rows(day, sessions, store, truth, assumptions, seed)
+
+
+def outcome_rows(day, sessions, store, truth, assumptions, seed):
+    """The labelled rows of a day from its sessions: (visitor, chat id, the replies the customer was given)."""
     stored = {r["chat_id"]: r for r in store.chats(simulated=True)}
     rows = []
     for v, sid, replies in sessions:
@@ -378,6 +405,75 @@ def append_out(path, rows):
         f.writelines(json.dumps(row) + "\n" for row in rows)
 
 
+def write_labels(store, rows):
+    """Put each chat's labels in the service table, which is what the page reads: without them every line is empty.
+
+    A control chat's outcome replaces "queued" (the rule's outcome); an assistant chat keeps the outcome the service
+    wrote. `repeat_contact` is not written: repeat contact is not measured (the old chats are 15 customers), so the
+    table holds no number for it. Returns how many chats the table did not have."""
+    lost = 0
+    for r in rows:
+        fields = {"rating": r["rating"], "confidently_wrong": r["confidently_wrong"], "needs_person": r["needs_person"]}
+        if r["group"] == CONTROL:
+            fields["outcome"] = r["outcome"]
+        if not store.update_chat(r["chat_id"], **fields):
+            lost += 1
+    return lost
+
+
+def rescore(assumptions, store, truth, replies_of, out, orders, profiles, share=SHARE):
+    """Score the stored chats again from the replies the customers were given (`replies_of(chat id)`), no model call,
+    and put the labels in the table. Returns the new rows; `replace_out` writes them.
+
+    A chat that should have replies and has none is not scored as right: nothing was measured, so it stops."""
+    old = read_out(out)
+    if not old:
+        raise SystemExit(f"{out} has no rows to rescore")
+    chat_of = {(r["sim_day"], r["visitor_id"]): r["chat_id"] for r in old}
+    stored = {c["chat_id"]: c for c in store.chats(simulated=True)}
+    seed, rows, silent = assumptions["seed"], [], []
+    for day in sorted({r["sim_day"] for r in old}):
+        sessions = []
+        for v in make_visitors(day, assumptions, orders, profiles, share, seed):
+            sid = chat_of[(day, v.id)]
+            replies = replies_of(sid) if v.group == ASSISTANT else []
+            if v.group == ASSISTANT and v.intent == ORDER_STATUS and not replies and not stored.get(sid, {}).get("handed_off"):
+                silent.append(sid)
+            sessions.append((v, sid, replies))
+        rows += outcome_rows(day, sessions, store, truth, assumptions, seed)
+    if silent:
+        raise SystemExit(f"no replies found for {len(silent)} assistant order-status chats that were not handed off "
+                         f"({', '.join(silent[:3])}...): nothing was rescored")
+    write_labels(store, rows)
+    return rows
+
+
+def replace_out(out, rows):
+    """Write the rescored rows over `out`, after copying the old file aside once. Returns the copy's path."""
+    out = Path(out)
+    kept = out.with_name(out.name + ".before-rescore")
+    if kept.exists():
+        raise SystemExit(f"{kept} is already set aside: not overwritten")
+    shutil.copy2(out, kept)
+    out.write_text("".join(json.dumps(r) + "\n" for r in rows))
+    return kept
+
+
+def trace_replies(url):
+    """{chat id: the text of every reply the model gave in that chat} from the `traces` table (read only)."""
+    import psycopg
+    by_chat = {}
+    with psycopg.connect(url) as conn:
+        for sid, raw in conn.execute("SELECT session_id, reply FROM traces WHERE kind = 'chat' ORDER BY at"):
+            try:
+                blocks = json.loads(raw)
+            except (TypeError, ValueError):
+                blocks = [{"type": "text", "text": raw}]
+            by_chat.setdefault(sid, []).extend(b["text"] for b in blocks
+                                               if isinstance(b, dict) and b.get("type") == "text" and b.get("text"))
+    return lambda sid: by_chat.get(sid, [])
+
+
 def run(days, assumptions, gateway, store, out=OUT, share=SHARE, orders=None, truth=None, profiles=None, say=print):
     """Run sim days one at a time. A day already in `out` is refused; a day that would pass the cap stops the run."""
     if assumptions["control_repeat_rate"] is None:
@@ -400,6 +496,9 @@ def run(days, assumptions, gateway, store, out=OUT, share=SHARE, orders=None, tr
             return
         rows = run_day(day, visitors, gateway, store, truth, assumptions, seed)
         append_out(out, rows)
+        lost = write_labels(store, rows)
+        if lost:
+            say(f"sim day {day}: {lost} chats are not in the service table (the service did not record them)")
         used += mine
         say(f"sim day {day}: {len(rows)} visitors, {mine} assistant conversations ({used} of "
             f"{assumptions['assistant_cap']}), confidently wrong {sum(r['confidently_wrong'] for r in rows)}")
@@ -433,12 +532,22 @@ def main(argv=None):
     ap.add_argument("--outbox", default="data/outbox.jsonl")
     ap.add_argument("--out", default=str(OUT))
     ap.add_argument("--refresh-repeat", action="store_true")
+    ap.add_argument("--rescore", action="store_true", help="score the stored chats again from the traces; no model call")
     args = ap.parse_args(argv)
     if args.refresh_repeat:
         rate, n = refresh_repeat()
         print(f"control repeat rate within 7 days: {rate:.3f} of {n} old chats (written to sim_assumptions.json)")
         return 0
     assumptions = load_assumptions()
+    if args.rescore:
+        import config
+        orders, truth = load_truth()
+        rows = rescore(assumptions, golive.GoLiveStore(), truth, trace_replies(config.store_url()), args.out, orders,
+                       load_profiles(), args.share)
+        kept = replace_out(args.out, rows)
+        print(f"rescored {len(rows)} rows against {newest_carrier()[0]}: confidently wrong "
+              f"{sum(r['confidently_wrong'] for r in rows)}; the old file is {kept}")
+        return 0
     days = parse_days(args.days, assumptions["days"]) if args.days else list(range(1, assumptions["days"] + 1))
     already = sum(1 for r in read_out(args.out) if r["group"] == ASSISTANT)
     if args.dry_run:

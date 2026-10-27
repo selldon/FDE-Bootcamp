@@ -267,3 +267,120 @@ def test_dry_run_needs_no_claude_and_writes_nothing(isolated, monkeypatch, capsy
     printed = capsys.readouterr().out
     assert "SIMULATED" in printed and "expected model calls" in printed and "cost estimate: $" in printed
     assert not out.exists() and not list(isolated.glob("*.jsonl"))
+
+
+# ---- week one, corrected: product names are not dates, the truth is the night the service loads, labels reach the table ----
+
+@pytest.mark.parametrize("sentence, dates", [
+    ("The Nova 32 monitor and two Nova 24 monitors, the Nova 27 too.", set()),  # "Nov" + "a" + a number was read as a date
+    ("The Nova 32 monitor was delivered on 22 October 2026.", {"2026-10-22"}),
+    ("Out for delivery on Oct 22 and promised for 24th October.", {"2026-10-22", "2026-10-24"}),
+    ("Sent on March 5, back by Sept. 9, 2026.", {"2026-03-05", "2026-09-09"}),
+    ("The carrier's last update is from 2026-10-22.", {"2026-10-22"}),
+])
+def test_a_product_name_is_not_read_as_a_date(sentence, dates):
+    assert sim.dates_in(sentence, "2026") == dates
+
+
+def write_night(folder, day, header, lines):
+    (folder / f"carrier-{day}.csv").write_bytes((header + "\n" + "\n".join(lines) + "\n").encode("cp1252"))
+
+
+def test_the_truth_is_built_from_the_newest_carrier_night_the_file_the_service_loads(tmp_path):
+    write_night(tmp_path, "2026-10-21", "tracking,status,place,date", ["T1,in transit,Leeds depot,2026-10-21"])
+    write_night(tmp_path, "2026-10-22", "tracking,status,pickup_point,place,date",
+                ["T1,out for delivery,,Düsseldorf depot,2026-10-22"])  # another column set, and a cp1252 letter
+    name, rows = sim.newest_carrier(tmp_path)
+    assert name == "carrier-2026-10-22.csv"
+    assert rows[0]["status"] == "out for delivery" and rows[0]["date"] == "2026-10-22"  # a string, as build_truth wants
+    orders = [{"number": "DS-1", "customer": "a", "status": "shipped", "promised": "2026-10-23", "tracking": ["T1"]}]
+    truth = sim.build_truth(orders, rows)
+    assert truth["DS-1"]["dates"] == ["2026-10-22", "2026-10-23"]
+
+
+def test_an_empty_carrier_folder_is_an_error_not_an_empty_truth(tmp_path):
+    with pytest.raises(SystemExit, match="carrier"):
+        sim.newest_carrier(tmp_path)
+
+
+def test_the_default_truth_is_the_night_of_the_22nd():
+    _, truth = sim.load_truth()
+    assert "2026-10-22" in truth["DS-20476"]["dates"] and "2026-10-21" not in truth["DS-20476"]["dates"]
+
+
+PARTLY = [{"number": "DS-3", "customer": "c", "status": "partly shipped", "promised": "2026-10-24",
+           "tracking": ["T3", "T4"]}]
+
+
+def partly_truth(*statuses):
+    carrier = [{"tracking": t, "status": s, "date": "2026-10-22"} for t, s in zip(("T3", "T4"), statuses, strict=False)]
+    return sim.build_truth(PARTLY, carrier)["DS-3"]
+
+
+@pytest.mark.parametrize("statuses, reply_text, is_wrong", [
+    # every fact matches the carrier, and the reply names that the order still says part shipped: right
+    (("delivered", "delivered"), 'The carrier shows both parcels delivered on 2026-10-22. The order still says "part shipped".',
+     False),
+    (("delivered", "delivered"), "Both parcels were delivered on 2026-10-22, although the order is still partly shipped.",
+     False),
+    # the mismatch is hidden: wrong, as before
+    (("delivered", "delivered"), "Your parcels have been delivered.", True),
+    # the carrier does not say both are delivered: the claim is wrong even if the mismatch is named
+    (("delivered", "in transit"), 'Both parcels have been delivered. The order status says "part shipped".', True),
+    # a wrong date still counts
+    (("delivered", "delivered"), 'Both parcels were delivered on 2026-10-19. The order says "part shipped".', True),
+])
+def test_a_partly_shipped_reply_is_right_when_its_facts_match_and_it_names_the_mismatch(statuses, reply_text, is_wrong):
+    assert sim.score_reply(reply_text, partly_truth(*statuses))["wrong"] is is_wrong
+
+
+def test_a_run_writes_the_labels_into_the_table_but_not_a_repeat_contact(
+        assumptions, world, isolated, fake_golive, monkeypatch):
+    orders, truth, profiles = world
+    install_model(monkeypatch, truthful)
+    out = isolated / "out.jsonl"
+    sim.run([1], assumptions, Gateway(isolated / "outbox.jsonl"), fake_golive, out, SHARE, orders, truth, profiles,
+            lambda m: None)
+    by_id = {r["chat_id"]: r for r in sim.read_out(out)}
+    stored = fake_golive.chats()
+    assert stored and all(c["rating"] == by_id[c["chat_id"]]["rating"] for c in stored)
+    control = [c for c in stored if c["group_name"] == CONTROL]
+    assert control and all(c["outcome"] == by_id[c["chat_id"]]["outcome"] != "queued" for c in control)
+    assert any(c["outcome"] == "resolved" for c in control)  # the rule's outcome, not "waiting in the queue"
+    assert all(c["needs_person"] == by_id[c["chat_id"]]["needs_person"] for c in stored)
+    assert all(c["repeat_contact"] is None for c in stored)  # not measured: nothing is written for it
+
+
+def test_rescoring_changes_the_labels_from_the_replies_and_keeps_the_old_file_aside(
+        assumptions, world, isolated, fake_golive, monkeypatch):
+    orders, truth, profiles = world
+    install_model(monkeypatch, truthful)
+    out = isolated / "out.jsonl"
+    sim.run([1], assumptions, Gateway(isolated / "outbox.jsonl"), fake_golive, out, SHARE, orders, truth, profiles,
+            lambda m: None)
+    assert not any(r["confidently_wrong"] for r in sim.read_out(out))
+    chats = {c["chat_id"] for c in fake_golive.chats() if c["group_name"] == ASSISTANT and c["intent"] == "order_status"}
+    assert chats
+    new = sim.rescore(assumptions, fake_golive, truth, lambda sid: ["Good news: your order has been delivered."],
+                      out, orders, profiles, SHARE)
+    flagged = {r["chat_id"] for r in new if r["confidently_wrong"]}
+    delivered = {n for n, t in truth.items() if t["status"] == "delivered"}
+    assert flagged and all(r["order"] not in delivered for r in new if r["chat_id"] in flagged)
+    assert {c["chat_id"] for c in fake_golive.chats() if c["confidently_wrong"]} == flagged  # the table follows
+    assert [r for r in new if r["group"] == CONTROL] == [r for r in sim.read_out(out) if r["group"] == CONTROL]
+    kept = sim.replace_out(out, new)
+    assert kept.exists() and not any(r["confidently_wrong"] for r in sim.read_out(kept))  # the old rows, untouched
+    assert {r["chat_id"] for r in sim.read_out(out) if r["confidently_wrong"]} == flagged
+    with pytest.raises(SystemExit, match="aside"):
+        sim.replace_out(out, new)  # the first copy is never overwritten
+
+
+def test_rescoring_refuses_a_chat_with_no_replies_instead_of_scoring_it_as_right(
+        assumptions, world, isolated, fake_golive, monkeypatch):
+    orders, truth, profiles = world
+    install_model(monkeypatch, truthful)
+    out = isolated / "out.jsonl"
+    sim.run([1], assumptions, Gateway(isolated / "outbox.jsonl"), fake_golive, out, SHARE, orders, truth, profiles,
+            lambda m: None)
+    with pytest.raises(SystemExit, match="no replies"):
+        sim.rescore(assumptions, fake_golive, truth, lambda sid: [], out, orders, profiles, SHARE)

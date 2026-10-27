@@ -12,6 +12,15 @@ mypy, tsc) or a named command. Tick boxes as tasks are done. One phase at a time
 - **Signed margins (Lena)**: unanswered at most 3 points worse than control; rating at most 0.2 lower (1-5 scale).
 - **Customers**: seeded scripts from the profiles (a question + 1-3 follow-ups, true order status known). Only the assistant group's turns call Claude, through `/chat` and `llm.py`.
 
+### Decisions from week one (27 Oct 2026, with the user) - for Lena
+Week one's first scoring said 19 of 39 assistant order-status chats were confidently wrong. Reading them, 18 of the 19 were the scorer's mistakes, not the assistant's, and the page showed "holds" only because the labels never reached it. These rules came out of that.
+- **The truth is the night the service loaded.** Answers are scored against the carrier's newest nightly file in the carrier folder (the 22nd for week one, the same file the service reads), not the repo's `data/carrier.csv` (the 21st, one night behind). Against the old file, correct answers about the 22nd were marked wrong.
+- **Only real month words are dates.** "Oct", "October", "Sept." count; a product name such as "Nova 32" is not "Nov 32". It had marked correct answers wrong whenever a reply named a Nova monitor.
+- **Partly shipped orders.** A reply about a partly shipped order is right when every fact it gives matches the carrier's file of that night, and it names the mismatch (the order still says part shipped) instead of hiding it. Still wrong: "delivered" with the mismatch hidden; "delivered" when the carrier does not show every parcel delivered; a date the file does not have. (`score_reply` in `golive_sim.py`, with tests for each case.)
+- **Repeat contact is not measured.** The old ServiceNow chats come from 15 customers: "the same customer wrote again within 7 days" is true of 0.99 of them, "the same customer about the same order" of 0.003. Neither is a baseline and none is invented. The page shows the row as not measured, with that reason; the table holds no repeat values; it is not one of the rollback lines.
+- **A zero that measured nothing is not a pass.** The simulator writes its outcome labels (rating, confidently wrong, needs a person, control outcome) into `golive_chats` after every day, because the page reads only that table. A rescore stops if an assistant chat that should have replies has none, instead of scoring it right.
+- **A failed model call is a hand-off, not an error.** The chat goes to a person with the chat so far and stays in the assistant group, so the lines count it.
+
 ## Where we start (read)
 - `app.py`: `/chat` has `session_id`, no visitor id and no group; `get_session` keeps sessions in memory; `/api/pilot*` serve the shadow page from `ShadowStore`.
 - `handoff.open_case` -> `servicenow.create_case` (POSTs a case). The live-queue stand-in is `POST /api/now/table/interaction` (page `/live`, account `fde_tasks`); to check in phase 2 that `servicenow.CASES` is that table.
