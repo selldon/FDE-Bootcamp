@@ -75,8 +75,8 @@ Phases 1-5 run one at a time, stopping after each. Phases 6-8 (the two weeks, th
 - [x] Check: the page shows both groups for 14 days; row counts per day add up; assistant conversations <= 150; no line is hand-edited.
 
 ## Phase 7 - the drill (item 4) - its own phase
-- [ ] Restore point: dump of `product`, and the time on the clock noted. Add one sim night with no carrier file (`DEMOSTORE_NOW` pinned to that day; the file simply missing, as `newest_rows` would see it).
-- [ ] Run that day's assistant chats against the real code. Read the numbers: did a stale status go out as fact?
+- [x] Restore point: dump of `product`, and the time on the clock noted. Add one sim night with no carrier file (`DEMOSTORE_NOW` pinned to that day; the file simply missing, as `newest_rows` would see it).
+- [x] Run that day's assistant chats against the real code. Read the numbers: did a stale status go out as fact? **Yes: 8 of 12 (see `docs/drill-notes.md`).**
 - [ ] If yes (alert): switch the assistant off from the page (time it; new chats go to a person within seconds), write the failing test first (`test_tools.py` / `test_pipeline.py`), fix the cause (start from the quick-fixes rows), replay `data/conversations.json` and the bad day's chats with `replay.py`, then switch on. If no: record that the guard held and still time off -> on.
 - [ ] Write down how long the assistant was off, in `docs/drill-notes.md` (times, cause, test, replay result).
 - [ ] Check: the new test fails before the fix and passes after; fast tests pass; `python replay.py` result recorded; the page shows the alert, then clears.
