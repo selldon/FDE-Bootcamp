@@ -28,6 +28,38 @@ On a laptop use this instead (the server file needs images that exist only there
 `.deploy.env` holds the commit that is running (`$SHA`) and the two image names. The jobs below are the same image with another
 command: `dc run --rm -T jobs python <job>.py`. We never start, stop or change DemoStore's own systems (`sandbox/systems/`).
 
+If the stack runs without the product compose (the chat service started on its own on port 8000, the widget on 5173), use
+port 8000 in every `curl` below; the `dc` commands need the compose and do not work there.
+
+**What was checked, and what was not.** On 27 Oct 2026 the commands were run one by one from a laptop with the chat service on
+port 8000. Worked: everything in entry 1 (the first check, the switch off and on, the read-back), the status-code check in entry 6
+and `gh run list --limit 10` in entry 7. Every other command is marked **Not checked yet** in its entry: it needs Docker
+(the session that checked could not use it), or it writes, restarts or deploys. Each is to be run on the server with Ravi Menon's team at the handover
+meeting; whoever runs one corrects the entry.
+
+**Two workflows are switched off.** `gh workflow list --all --repo termidy/FDE-Bootcamp` showed `deploy` and `nightly` as
+`disabled_manually` on 27 Oct 2026 (`checks` and `eval` are active). A disabled workflow starts nothing: `gh workflow run deploy`
+is refused, and the 02:17 UTC nightly replay does not run, so it cannot turn red. `docs/teardown.md` step 0 is where `deploy` is
+disabled; the repository does not say who disabled `nightly` or why. The same command lists them again:
+
+    gh workflow list --all --repo termidy/FDE-Bootcamp
+
+Enabling is a decision, not a step on the night:
+- `deploy`: the **account owner** (who runs the teardown) decides, with the Director of E-commerce Engineering. Enable it only when
+  the server is meant to be running. Once it is on, every merge to `main` deploys, and with the deploy role still in place a deploy
+  starts a new server if the old one is gone; the teardown removes the server's containers, DemoStore's systems on it, the order
+  store and all shadow rows (`docs/teardown.md`, step 2). Look first at whether the server exists (`docs/teardown.md`, step 3).
+- `nightly`: the **Director of E-commerce Engineering** decides. It calls Claude every night with the repository's
+  `ANTHROPIC_API_KEY` secret (about 0.40 USD a run, see entry 7), and a red run emails whoever last changed the schedule (gap 1).
+
+The command, once the decision is made (the same line with the other name for the other workflow):
+
+    gh workflow enable deploy --repo termidy/FDE-Bootcamp
+
+To see it worked, the same `gh workflow list --all` shows it `active`. To read the last run of a switched-off workflow, name its
+file, not its name: `gh run list --workflow deploy.yml --limit 1 --repo termidy/FDE-Bootcamp` works while `--workflow deploy`
+answers "could not find any workflows named deploy".
+
 The go-live page is `http://localhost:8080/golive`; the numbers behind it are `GET /api/golive`, the switch is
 `GET` and `POST /api/golive/switch`. The pilot page (`/pilot`) is not an alert.
 
@@ -66,6 +98,10 @@ the Finance and Returns Controller; the engineer who owns the fix brings them th
 shows `"on": false`; on the page the row "Assistant" shows OFF, with the note "The assistant is now off (the service answered in N s)". The
 red banner stays until a day with chats comes in clean, which is expected.
 
+**Not checked yet.** The page itself: that the row "Assistant" shows OFF with the note "The assistant is now off (the service
+answered in N s)", and the "Switch the assistant on" button. Only the `curl` calls were run. To run on the server with Ravi Menon's
+team at the handover meeting.
+
 **Who next.** Tell the Head of Customer Support (chats now go to the live queue in ServiceNow). The fix is the Director of
 E-commerce Engineering's.
 
@@ -102,6 +138,10 @@ on the night. Do not run two loads at once (there is no lock yet).
 **How to see it worked.** The run prints `pipeline ok: N orders, N parcels` and `echo $?` gives `0`; the `watermark()` command
 above now shows a time from the last minutes.
 
+**Not checked yet.** Every `dc run --rm -T jobs python …` command in this entry: the two first checks (the carrier's file names and
+`watermark()`) and `pipeline.py` (a write: it loads the order store). The messages the entry quotes are tested against the code, not
+against a real run. To run on the server with Ravi Menon's team at the handover meeting.
+
 **Who next.** The Director of E-commerce Engineering (carrier feed); the database administrator (Ledgerline unreachable or
 changed).
 
@@ -130,6 +170,9 @@ rebuilds the index, or run it now:
 **How to see it worked.** `dc run --rm -T jobs python policy_index.py --check` prints `return windows: code and pages agree` and
 exits `0`.
 
+**Not checked yet.** `policy_index.py --check` (read-only) and `policy_index.py` (a write: it replaces the index), both through `dc run
+--rm -T jobs`. To run on the server with Ravi Menon's team at the handover meeting.
+
 **Who next.** The Head of Customer Support (the return rules); the Finance and Returns Controller when the change touches
 refunds.
 
@@ -154,12 +197,21 @@ E-commerce Engineering.
 **How to see it worked.** The run prints `N sections stored; per market before {...}, after {...}` and then `return windows: code
 and pages agree`, and exits `0`.
 
+**Not checked yet.** `dc run --rm -T jobs python policy_index.py`, the first check, which is also a write (it replaces the index
+when it succeeds). To run on the server with Ravi Menon's team at the handover meeting.
+
 **Who next.** The page owner (Head of Customer Support's team); the Director of E-commerce Engineering for Confluence or the
 database.
 
 ---
 
 ## 5. `the assistant failed; the chat goes to a person` (in the chat container's log)
+
+**First, is `deploy` on?** The redeploy below needs it, and on 27 Oct 2026 it was `disabled_manually`. Check with
+`gh workflow list --all --repo termidy/FDE-Bootcamp`. To enable it: `gh workflow enable deploy --repo termidy/FDE-Bootcamp`, but
+the account owner decides, with the Director of E-commerce Engineering, and only when the server is meant to be running (see
+"Two workflows are switched off" in "Before you start"). Not checked yet: the enable command. To run on the server with Ravi
+Menon's team at the handover meeting.
 
 **What it means.** Something on the assistant's path raised (for example a model call that is refused, out of credit or timed out). The
 chat is handed to a person with everything said so far and the customer is told so; this is a log line, not a banner. The page's
@@ -182,21 +234,29 @@ credit in the Claude Console, then redeploys the commit that is running:
 The deploy ends with one real chat and is red when it fails. If the redeploy recreates the chat container, open chats lose their
 history (sessions live in memory, `docs/quick-fixes.md`).
 
-**Not checked.** The redeploy step (and whether it recreates the container after only the key changed) was not run: we cannot run a
+**Not checked yet.** The redeploy step (and whether it recreates the container after only the key changed) was not run: we cannot run a
 deploy here. The on-call engineer in E-commerce Engineering checks it on the first real redeploy during the two weeks we are still
-backup, and corrects this entry.
+backup, and corrects this entry. Also not run: both `dc logs … | grep` first checks, `echo $SHA` (it needs the server's
+`.deploy.env`) and the `dc logs --since 10m` count. To run on the server with Ravi Menon's team at the handover meeting.
 
 **How to see it worked.** After ten minutes with the assistant on:
 
     dc logs --since 10m chat 2>&1 | grep -c 'the assistant failed'
 
-prints `0`, and `gh run list --workflow deploy --limit 1 --repo termidy/FDE-Bootcamp` shows `completed success`.
+prints `0`, and `gh run list --workflow deploy.yml --limit 1 --repo termidy/FDE-Bootcamp` shows `completed success` (name the file:
+while `deploy` is disabled, `--workflow deploy` is refused).
 
 **Who next.** The Director of E-commerce Engineering; the account owner of the Anthropic key.
 
 ---
 
 ## 6. A container is unhealthy: `chat` or `shadow`
+
+**First, is `deploy` on?** Only the rollback at the end of the `chat` part needs it, and on 27 Oct 2026 it was `disabled_manually`.
+To enable it: `gh workflow enable deploy --repo termidy/FDE-Bootcamp`, decided by the account owner with the Director of
+E-commerce Engineering (see "Two workflows are switched off" in "Before you start"). If the server is the thing that is gone, a
+rollback is not a rollback: it would start a new server. Not checked yet: the enable command. To run on the server with Ravi
+Menon's team at the handover meeting.
 
 **First check, for both.**
 
@@ -233,11 +293,23 @@ side. The pilot page falls behind; when it runs again it reads every chat opened
 The second line matters because the heartbeat is also written after a tick with errors, so `healthy` does not mean no errors.
 After a restart `dc ps` shows `shadow running healthy` within two minutes and the log shows a new tick line.
 
+**Not checked yet.** `dc ps`, `dc logs`, both `dc restart` commands (restarts), and the two rollback commands (`gh run list --workflow
+deploy --limit 5 --json …`, then `gh workflow run deploy …`, a deploy). Only the status-code `curl` was run, against the chat service
+on port 8000, and it printed `200`. To run on the server with Ravi Menon's team at the handover meeting.
+
 **Who next.** The Director of E-commerce Engineering. The Head of Customer Support only needs to hear about `chat`.
 
 ---
 
 ## 7. A red check in GitHub: `checks`, `nightly` or `deploy`
+
+**First, are `nightly` and `deploy` on?** On 27 Oct 2026 both were `disabled_manually`, so neither can turn red: no red `nightly`
+means nothing while it is off, not that the model and the pages are fine. Check with
+`gh workflow list --all --repo termidy/FDE-Bootcamp`. To enable: `gh workflow enable nightly --repo termidy/FDE-Bootcamp` and
+`gh workflow enable deploy --repo termidy/FDE-Bootcamp`. Who decides: for `nightly`, the Director of E-commerce Engineering (it spends
+the Anthropic key every night); for `deploy`, the account owner with the Director, only when the server is meant to be running (see
+"Two workflows are switched off" in "Before you start"). Not checked yet: the two enable commands. To run on the server with Ravi
+Menon's team at the handover meeting.
 
 **What it means.** Three different things, and the first line of the run says which.
 - `checks` on a pull request: a change with a red check must not be merged; `main` is untouched and customers feel nothing.
@@ -267,8 +339,16 @@ is at least 36 of 40 right; one or two misses either way are normal for the mode
   go-live page also shows the alert, go to entry 1.
 - `deploy`: if the cause is not clear from the log in a few minutes, roll back as in entry 6.
 
-**How to see it worked.** `gh run list --workflow nightly --limit 1 --repo termidy/FDE-Bootcamp` (or `--workflow deploy`)
-shows `completed success`; a deploy log ends with `check ok`.
+**How to see it worked.** `gh run list --workflow nightly.yml --limit 1 --repo termidy/FDE-Bootcamp` (or `--workflow deploy.yml`)
+shows `completed success`; a deploy log ends with `check ok`. Name the file: while a workflow is disabled, `--workflow nightly`
+is refused ("could not find any workflows named nightly"); the file name still finds its last run.
+
+**Not checked yet.** `gh run view <run-id> --log-failed` (every run in the list was green, so there was no failed run to read),
+the `nightly` commands `python replay.py --gate`, `python policy_index.py --check` and `gh run list --workflow nightly --limit 5`
+(the replay spends about 0.40 USD and needs DemoStore's systems and the key), the `eval / replay` summary page, and a `deploy`
+log ending in `check ok`. Worked: `gh run list --limit 10 --repo termidy/FDE-Bootcamp` and, with the file name, `gh run list
+--workflow deploy.yml --limit 1` and `--workflow nightly.yml --limit 1`. To run on the server with Ravi Menon's team at the handover
+meeting.
 
 **Who next.** The Director of E-commerce Engineering's team (the change); the Head of Customer Support when the cause is a policy
 page.
@@ -291,6 +371,7 @@ to act on when it happens. Each has an owner by role, proposed.
 | 7 | **Health checks say less than they seem to.** `chat` is healthy while the database, Claude, Confluence or the carrier are down; `shadow` is healthy after ticks with errors; chat sessions are never purged, so memory grows until a restart. | `compose.yaml:19-24`, `:45-50`; `shadow.py:447-451` (the heartbeat is written after every tick); `docs/quick-fixes.md` (the `SESSIONS` row) | On-call engineer |
 | 8 | **The page's banner covers one line, and nobody is required to read it.** The other signed lines (hand-off, unanswered, rating) show "does not hold" in a table with no banner. | `golive.py:441-442`; `widget/src/GoLive.tsx:120`, `:216` | Support shift lead on the morning shift |
 | 9 | **A page edit that breaks the return rules is caught up to an hour later,** by the hourly index job only. | `docs/quick-fixes.md` (the row on `policy_index.py:223`); `policy_index.py:214-220` | Head of Customer Support |
+| 10 | **Two workflows are off, so two alerts cannot happen.** `deploy` and `nightly` were `disabled_manually` on 27 Oct 2026. With `nightly` off nothing replays the 40 conversations on a day nobody pushes, and the rollback and redeploy in entries 5 and 6 are refused. Nobody has decided whether they come back on. | `gh workflow list --all`; `docs/teardown.md` (step 0, `deploy`); `.github/workflows/nightly.yml` | `deploy`: account owner; `nightly`: Director of E-commerce Engineering |
 
 ---
 
