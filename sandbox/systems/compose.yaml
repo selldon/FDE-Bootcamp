@@ -5,6 +5,7 @@
 #   mail        Mailpit: it takes the one-time codes and shows every mail on a web page            localhost:8025
 #   ourdb       our own PostgreSQL with pgvector: database "assistant" (labs), "product" (builds)  localhost:5432
 #   servicenow  stand-in for ServiceNow: old chats, approval tasks, hand-off cases, live chats     localhost:8020
+#               (new customers' live chats for shadow mode: SNOW_INCOMING_EVERY=120 docker compose ... up -d servicenow)
 #   atlas       stand-in for Atlas, the store platform: catalog, prices, contract prices           localhost:8030
 #   confluence  stand-in for Confluence: the policy pages with their valid dates                   localhost:8040
 #   outage      the Claude API on a busy day (every call 429), only for lesson 1-9-3:
@@ -54,6 +55,8 @@ services:
     build: ./sims
     image: demostore-sims
     command: uvicorn sim:app --app-dir /systems/servicenow --host 0.0.0.0 --port 8020
+    environment:
+      SNOW_INCOMING_EVERY: ${SNOW_INCOMING_EVERY:-0}   # shadow mode (FDE 1-9-12): a customer opens a live chat every N seconds
     ports:
       - "8020:8020"
     volumes:
