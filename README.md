@@ -116,6 +116,22 @@ Not in the image: `.env`, the tests, the labs (`sandbox/`), `data/*.jsonl`, the 
 so no start downloads it. A second `up` after a change rebuilds only what changed. The one-time codes of `/verify` and `/erase`
 are written to a file inside the chat container (see `docs/quick-fixes.md`).
 
+## Deploy
+
+A merge to `main` runs `.github/workflows/deploy.yml`. It builds both images and tags them with the commit, pushes them to
+Amazon ECR, makes sure the one server runs (an EC2 instance tagged `project=fde-course`, found, started or created), and on the
+server starts DemoStore's systems and then our services with the images of that commit. The last step sends one real chat
+through the widget and checks that the shadow worker runs; the workflow is red when that fails. GitHub gets into AWS without a
+key (OpenID Connect, only for `main`); the Anthropic key is read from SSM on the server and is never in an image, in GitHub or
+in a log. No port is open to the internet and there is no SSH: commands go through SSM.
+
+- **Rollback:** Actions, `deploy`, Run workflow, `commit` = the full sha of an older commit. The images are not rebuilt; they
+  must already be in ECR (the pull fails with the tag name if not). Rolling forward is the same with a newer sha.
+- **Shadow report:** Run workflow with `report` ticked prints the 20 newest shadow chats (the customer's message, the assistant's
+  action and answer, the agent's reply). In shadow mode the assistant answers every new live chat and nobody sees the answer.
+- **Cost:** the server runs only while we work on it, a few cents an hour. A person ends it: [`docs/teardown.md`](docs/teardown.md) lists the
+  commands in order and what each removes.
+
 ## Checks on every pull request
 
 Every change reaches `main` through a pull request, and GitHub runs the checks itself (`.github/workflows/`). A hook skipped on
