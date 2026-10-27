@@ -32,13 +32,13 @@ sees the answer. The support team works as before.
 - GitHub gets into AWS without a key: the role in the repository variable `AWS_DEPLOY_ROLE_ARN`, only for `main` of
   this repository (OpenID Connect; a GitHub environment would change the identity the role trusts, so none). Region
   `us-east-1`.
-- The role may: push to the two ECR repositories; start a `t3.medium` or `t3.large` instance only with the tag
+- The role may: push to the two ECR repositories; start an `m7i-flex.large` instance only with the tag
   `project=fde-course` on the instance and on its disk; run commands on such an instance through SSM Run Command; stop
   and terminate it; read (describe) EC2. Nothing else: it cannot create users, keys, roles, policies or security group
   rules, and it cannot read SSM parameters itself.
 - The server's own role is `fde-course-ec2` (instance profile of the same name): it pulls from ECR, talks to SSM, and
   reads the Claude API key from SSM Parameter Store, `/fde-course/anthropic-api-key` (SecureString).
-- DemoStore's systems need about 7 GB of memory and 15 GB of disk: a `t3.large` with a 30 GB disk.
+- DemoStore's systems need about 7 GB of memory and 15 GB of disk: an `m7i-flex.large` (2 vCPUs, 8 GB; the account is on the free plan, which allows only free-tier types, and `t3.large` is not one) with a 30 GB disk.
 
 ## Limits
 
