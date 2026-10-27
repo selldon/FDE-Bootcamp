@@ -22,3 +22,7 @@ sandbox/data/traffic.json
 sandbox/sponsor-report.md
 builds/
 .venv/
+
+# go-live: restore points and the simulator log hold simulated customers and are never committed
+backups/
+data/golive_sim.jsonl*
