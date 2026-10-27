@@ -9,6 +9,14 @@ Put your Claude API key into `.env` (copy `.env.example`). Never commit `.env`.
 
 New to the course? Start with [For learners](#for-learners) at the end of this file.
 
+## Running it after the handover
+
+- [`docs/runbook.md`](docs/runbook.md): for the person on call. One entry per alert (what it means, the first check, how to act,
+  how to see it worked, who next), the gaps where nothing raises an alert, and who owns what after we leave.
+- [`docs/adr/0001-the-middleware-is-the-only-code-that-reads-orders-from-ledgerline.md`](docs/adr/0001-the-middleware-is-the-only-code-that-reads-orders-from-ledgerline.md):
+  why `ledgerline.py` is the only code that reads orders from Ledgerline, the exceptions, and what would make us decide again.
+  A fast test (`test_ledgerline_only.py`) keeps the rule; another (`test_runbook.py`) keeps the runbook true.
+
 ## The hourly pipeline
 
 `python pipeline.py` reads Ledgerline and the carrier's newest file, runs the four checks and, only if all pass, loads the
